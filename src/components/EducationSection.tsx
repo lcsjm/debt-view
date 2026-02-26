@@ -58,7 +58,7 @@ const ScrollingRow = ({ cards, direction }: { cards: typeof investmentCards; dir
 
 const EducationSection = () => {
   return (
-    <section id="education" className="py-24 bg-muted/30 overflow-hidden">
+    <section id="education" className="bg-[url('/public/education-bg.png')]  py-24 bg-muted/30 overflow-hidden">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <h2 className="fluid-title-lg font-heading font-bold text-center text-foreground mb-16">
