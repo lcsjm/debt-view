@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn } from "lucide-react";
 import serasaLogo from "@/assets/serasa-logo.png";
+import { useNavigate } from "react-router-dom";
 
 const MagneticIcon = ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => {
   const ref = useRef<HTMLButtonElement>(null);
@@ -9,6 +10,7 @@ const MagneticIcon = ({ children, onClick }: { children: React.ReactNode; onClic
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 300, damping: 20 });
   const springY = useSpring(y, { stiffness: 300, damping: 20 });
+  const nav = useNavigate()
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!ref.current) return;
@@ -47,6 +49,7 @@ const navItems = [
 ];
 
 const Header = () => {
+  const nav = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollTo = (href: string) => {
@@ -54,6 +57,10 @@ const Header = () => {
     const el = document.querySelector(href);
     el?.scrollIntoView({ behavior: "smooth" });
   };
+
+  function toLogin(){
+    nav('/auth')
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md shadow-lg">
@@ -77,13 +84,13 @@ const Header = () => {
             </MagneticIcon>
           ))}
         </nav>
-
         {/* Entrar button with breathing */}
         <div className="flex items-center gap-3">
           <motion.button
+            onClick={() => toLogin()}
             className="btn-raspberry-serasa hidden sm:flex items-center gap-2 text-sm"
             animate={{ scale: [1, 1.02, 1] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}   
           >
             <motion.span
               animate={{ y: [0, -6, 0] }}

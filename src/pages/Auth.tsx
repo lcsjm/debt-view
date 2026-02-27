@@ -1,38 +1,43 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 export type User = {
   email?: string;
   pass?: string;
 };
+
 export default function Auth() {
-const [login, setLogin] = useState(true);
-const [user, setUser] = useState<User>();
-const [users, setUsers] = useState<User[]>([]);
+  const nav = useNavigate();
+  const [login, setLogin] = useState(true);
+  const [user, setUser] = useState<User>();
+  const [users, setUsers] = useState<User[]>([]);
 
-function checkedLogin() {
-  let loged = users.find(
-    (u) => u.email == user?.email && u.pass === user?.pass,
-  );
-  if (loged) {
-    showToast("Parabéns! Verificado");
-  } else {
-    showToast("Inválido");
+  function checkedLogin() {
+    let loged = users.find(
+      u => u.email == user?.email && u.pass === user?.pass,
+    );
+    if (loged) {
+      showToast("Parabéns! Verificado");
+    } else {
+      showToast("Inválido");
+      nav('/dash');
+    }
   }
-}
 
-function handleRegister() {
-  if (user?.email && user?.pass) setUsers([...users, user]);
-}
+  function handleRegister() {
+    if (user?.email && user?.pass) setUsers([...users, user]);
+  }
 
-const [pToast, setPToast] = useState("");
+  const [pToast, setPToast] = useState("");
 
-function showToast(msg: string) {
-  setPToast(msg);
+  function showToast(msg: string) {
+    setPToast(msg);
 
-  setTimeout(() => {
-    setPToast("");
-  }, 5000);
-}
+    setTimeout(() => {
+      setPToast("");
+    }, 5000);
+  }
+  
   return (
     <>
       {pToast.length && (
@@ -70,4 +75,3 @@ function showToast(msg: string) {
     </>
   );
 }
-
