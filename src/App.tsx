@@ -6,7 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
-import Dash from "./pages/Dash"
+import About from "./pages/About";
+import Dash from "./pages/Dash";
+import './App.css'
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -21,6 +24,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
            <Route path= '/auth' element = {<Auth/>} />
            <Route path= '/dash' element={<Dash/>} />
+           <Route path= '/about' element={<About/>} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
