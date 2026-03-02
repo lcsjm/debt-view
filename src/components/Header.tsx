@@ -59,7 +59,7 @@ const Header = () => {
   };
 
   function toLogin(){
-    nav('/auth')
+    nav('/login')
   }
 
   return (
