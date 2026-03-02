@@ -62,6 +62,11 @@ const Header = () => {
     nav('/login')
   }
 
+  function toAbout(){
+    nav('/about')
+  }
+
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md shadow-lg">
       <div className="container mx-auto flex items-center justify-between py-3 px-4">
@@ -83,6 +88,13 @@ const Header = () => {
               </div>
             </MagneticIcon>
           ))}
+
+          <MagneticIcon key="sobre" onClick={() => toAbout()}>
+              <div className="flex items-center gap-1.5 text-sm font-medium">
+                <BookOpen size={20} />
+                <span>Sobre</span>
+              </div>
+            </MagneticIcon>
         </nav>
         {/* Entrar button with breathing */}
         <div className="flex items-center gap-3">

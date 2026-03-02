@@ -40,3 +40,24 @@
 .read-the-docs {
   color: #888;
 }
+.col{
+   display: flex;
+    width: 100%;
+    max-width: 1366px;
+    flex-flow: row wrap;
+    align-items: center;
+    gap: 20px;
+}
+
+div.col.lg-4 > div{
+    flex-basis: calc(25% - 20px); 
+}
+
+.shadow {
+    box-shadow: 2px 2px 6px 1px rgba(0,0,0,0.5);
+    -webkit-box-shadow: 2px 2px 6px 1px rgba(0,0,0,0.5);
+    -moz-box-shadow: 2px 2px 6px 1px rgba(0,0,0,0.5);
+}
+div.col.lg-3 > div{
+    flex-basis: calc(33.3333% - 20px); 
+}
