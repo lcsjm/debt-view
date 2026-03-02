@@ -58,3 +58,6 @@ div.col.lg-4 > div{
     -webkit-box-shadow: 2px 2px 6px 1px rgba(0,0,0,0.5);
     -moz-box-shadow: 2px 2px 6px 1px rgba(0,0,0,0.5);
 }
+div.col.lg-3 > div{
+    flex-basis: calc(33.3333% - 20px); 
+}
