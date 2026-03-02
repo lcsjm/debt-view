@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import About from "./pages/About";
+import Resultado from "./pages/Resultado";
 import Dash from "./pages/Dash";
 import Debts from "./pages/Debts";
 import './App.css'
@@ -23,10 +24,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
-           <Route path= '/auth' element = {<Auth/>} />
+           <Route path= '/login' element = {<Auth/>} />
            <Route path= '/dash' element={<Dash/>} />
            <Route path= '/about' element={<About/>} />
            <Route path= '/debts' element={<Debts/>} />
+            <Route path= '/resultado' element={<Resultado/>} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
