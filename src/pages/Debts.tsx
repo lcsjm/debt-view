@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 
 export type Debts = {
   credor?: string;
-  valorOriginal?: 
+  valorOriginal?: number;
+  valorAttJuros?: number;
+  taxaJuros?: number;
+  dataVenc?: Date;
   status?: string;
 };
 
@@ -39,7 +42,7 @@ export default function Debts() {
       </p>
       <input
         type="string"
-        onChange={(e) => setCredor({credor: e.target.value  })}
+        onChange={(e) => setCredor({...Debts, credor: e.target.value  })}
       />
     </>
   );
