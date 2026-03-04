@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import serasaLogo from "@/assets/serasa-logo.png";
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
@@ -10,7 +9,7 @@ const slides = [
   {
     image: hero1,
     title: "Controle suas finanças",
-    subtitle: "Analise seus gastos e tome decisões mais inteligentes com o DebtView Experian.",
+    subtitle: "Analise seus gastos e tome decisões mais inteligentes com o DebtView.",
   },
   {
     image: hero2,
@@ -37,21 +36,6 @@ const HeroSection = () => {
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Parallax background logo */}
-      <motion.div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
-        style={{ y: 0 }}
-        initial={{ y: 0 }}
-      >
-        <img
-          src={serasaLogo}
-          alt=""
-          className="w-[600px] opacity-[0.04] select-none"
-          style={{ transform: "translateZ(0)" }}
-          id="parallax-logo"
-        />
-      </motion.div>
-
       {/* Carousel backgrounds */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -116,9 +100,8 @@ const HeroSection = () => {
             <button
               key={i}
               onClick={() => setCurrent(i)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                i === current ? "bg-raspberry w-8" : "bg-primary-foreground/40"
-              }`}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${i === current ? "bg-raspberry w-8" : "bg-primary-foreground/40"
+                }`}
             />
           ))}
         </div>
