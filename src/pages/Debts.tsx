@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import './App.css'
 
 export type Debts = {
   credor?: string;
@@ -43,6 +44,26 @@ export default function Debts() {
       <input
         type="string"
         onChange={(e) => setCredor({...Debts, credor: e.target.value  })}
+      />
+      <input
+        type="number"
+        onChange={(e) => setCredor({...Debts, valorOriginal: e.target.value  })}
+      />
+      <input
+        type="number"
+        onChange={(e) => setCredor({...Debts, valorAttJuros: e.target.value  })}
+      />
+      <input
+        type="number"
+        onChange={(e) => setCredor({...Debts, taxaJuros: e.target.value  })}
+      />
+       <input
+        type="Date"
+        onChange={(e) => setCredor({...Debts, dataVenc: e.target.value  })}
+      />
+        <input
+        type="string"
+        onChange={(e) => setCredor({...Debts, status: e.target.value  })}
       />
     </>
   );
