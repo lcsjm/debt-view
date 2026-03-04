@@ -26,13 +26,10 @@ export default function Debts() {
     }, 5000);
   }
 
-<<<<<<< HEAD
   //=== "" ? undefined : parseFloat(e.target.value) nos input numbers, é necessario, pra impedir not null
   //pro date: value={debts.dataVenc? debts.dataVenc.toISOString().slice(0, 10) // yyyy-mm-dd: ""} e ? new Date(e.target.value) : undefined, é necessário, se sim, pq?
   //css da div do button: style={{ marginTop: 16 }} - adaptar para tailwind
 
-=======
->>>>>>> 744845533b8e998277a354769fbe8102a0b9973d
   return (
     <>
       {pToast && (
@@ -51,47 +48,37 @@ export default function Debts() {
 
       <p>Digite o seu credor</p>
       <input
-<<<<<<< HEAD
         type="text"
         value={debts.credor ?? ""}
         onChange={(e) =>
           setDebts((setDebts) => ({ ...debts, credor: e.target.value }))
         }
-=======
         type="string"
         onChange={(e) => setCredor({ ...Debts, credor: e.target.value })}
->>>>>>> 744845533b8e998277a354769fbe8102a0b9973d
       />
 
       <p>Digite o valor da sua dívida</p>
       <input
         type="number"
-<<<<<<< HEAD
         value={debts.valorOriginal ?? ""}
         onChange={(e) =>
           setDebts((setDebts) => ({...debts, valorOriginal: e.target.value === "" ? undefined : parseFloat(e.target.value)}))}
-=======
         onChange={(e) => setCredor({ ...Debts, valorOriginal: e.target.value })}
->>>>>>> 744845533b8e998277a354769fbe8102a0b9973d
       />
 
       <p>Digite o valor atual do juros aplicado a sua dívida</p>
       <input
         type="number"
-<<<<<<< HEAD
         value={debts.valorAttJuros ?? ""}
         onChange={(e) =>
           setDebts((setDebts) => ({...debts, valorAttJuros: e.target.value === "" ? undefined : parseFloat(e.target.value)}))
         }
-=======
         onChange={(e) => setCredor({ ...Debts, valorAttJuros: e.target.value })}
->>>>>>> 744845533b8e998277a354769fbe8102a0b9973d
       />
 
       <p>Digite a taxa de juros aplicada a sua dívida</p>
       <input
         type="number"
-<<<<<<< HEAD
         value={debts.taxaJuros ?? ""}
         onChange={(e) =>
           setDebts((setDebts) => ({...debts, taxaJuros:e.target.value === "" ? undefined : parseFloat(e.target.value)}))}
@@ -112,7 +99,6 @@ export default function Debts() {
         onChange={(e) =>
           setDebts((setDebts) => ({ ...debts, status: e.target.value }))
         }
-=======
         onChange={(e) => setCredor({ ...Debts, taxaJuros: e.target.value })}
       />
       <input
@@ -122,7 +108,6 @@ export default function Debts() {
       <input
         type="string"
         onChange={(e) => setCredor({ ...Debts, status: e.target.value })}
->>>>>>> 744845533b8e998277a354769fbe8102a0b9973d
       />
 
       <div>
