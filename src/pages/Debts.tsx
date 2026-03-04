@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import './App.css'
+import "../App.css";
 
 export type Debts = {
   credor?: string;
@@ -12,59 +12,100 @@ export type Debts = {
 };
 
 export default function Debts() {
-  const [credor, setCredor] = useState();
-  const [valorOriginal, setvalorOriginal] = useState();
-  const [valorAttJuros, setValorAttJuros] = useState();
-  const [taxaJuros, setTaxaJuros] = useState();
-  const [dataVenc, setDataVenc] = useState();
-  const [status, setStatus] = useState();
+  const [debts, setDebts] = useState<Debts>({});
   const [pToast, setPToast] = useState("");
 
   function showToast(msg: string) {
     setPToast(msg);
-
     setTimeout(() => {
       setPToast("");
     }, 5000);
   }
-  
+
+  //=== "" ? undefined : parseFloat(e.target.value) nos input numbers, é necessario, pra impedir not null
+  //pro date: value={debts.dataVenc? debts.dataVenc.toISOString().slice(0, 10) // yyyy-mm-dd: ""} e ? new Date(e.target.value) : undefined, é necessário, se sim, pq?
+  //css da div do button: style={{ marginTop: 16 }} - adaptar para tailwind
+
   return (
     <>
-      {pToast.length && (
+      {pToast && (
         <div className="toast">
           <p id="toast">{pToast}</p>
         </div>
       )}
+
       <h1>Acompanhe sua dívida</h1>
       <Link to={"/"}>Voltar</Link>
+
       <p>
-        aqui estão todos os seus dados para acompanhar o andamento de seus
-        endividamentos
+        aqui estão todos os seus dados para acompanhar o andamento das suas
+        dívidas
       </p>
+
+      <p>Digite o seu credor</p>
       <input
-        type="string"
-        onChange={(e) => setCredor({...Debts, credor: e.target.value  })}
+        type="text"
+        value={debts.credor ?? ""}
+        onChange={(e) =>
+          setDebts((setDebts) => ({ ...debts, credor: e.target.value }))
+        }
       />
+
+      <p>Digite o valor da sua dívida</p>
       <input
         type="number"
-        onChange={(e) => setCredor({...Debts, valorOriginal: e.target.value  })}
+        value={debts.valorOriginal ?? ""}
+        onChange={(e) =>
+          setDebts((setDebts) => ({...debts, valorOriginal: e.target.value === "" ? undefined : parseFloat(e.target.value)}))}
       />
+
+      <p>Digite o valor atual do juros aplicado a sua dívida</p>
       <input
         type="number"
-        onChange={(e) => setCredor({...Debts, valorAttJuros: e.target.value  })}
+        value={debts.valorAttJuros ?? ""}
+        onChange={(e) =>
+          setDebts((setDebts) => ({...debts, valorAttJuros: e.target.value === "" ? undefined : parseFloat(e.target.value)}))
+        }
       />
+
+      <p>Digite a taxa de juros aplicada a sua dívida</p>
       <input
         type="number"
-        onChange={(e) => setCredor({...Debts, taxaJuros: e.target.value  })}
+        value={debts.taxaJuros ?? ""}
+        onChange={(e) =>
+          setDebts((setDebts) => ({...debts, taxaJuros:e.target.value === "" ? undefined : parseFloat(e.target.value)}))}
       />
-       <input
-        type="Date"
-        onChange={(e) => setCredor({...Debts, dataVenc: e.target.value  })}
+
+      <p>Digite a data de vencimento da sua dívida</p>
+      <input
+        type="date"
+        
+        onChange={(e) =>
+          setDebts((setDebts) => ({...debts,dataVenc: e.target.value}))}
       />
-        <input
-        type="string"
-        onChange={(e) => setCredor({...Debts, status: e.target.value  })}
+
+      <p>Digite o status da sua dívida</p>
+      <input
+        type="text"
+        value={debts.status ?? ""}
+        onChange={(e) =>
+          setDebts((setDebts) => ({ ...debts, status: e.target.value }))
+        }
       />
+
+      <div>
+        <button
+          onClick={() => {
+            if (!debts.credor) {
+              showToast("Informe o credor!");
+              return;
+            }
+            showToast("Seus dados foram salvos");
+          }}
+        >
+          Salvar
+        </button>
+      </div>
     </>
   );
 }
