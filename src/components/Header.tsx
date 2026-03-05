@@ -61,8 +61,8 @@ const Header = () => {
     el?.scrollIntoView({ behavior: "smooth" });
   };
 
-  function toLogin() {
-    nav('/login')
+  function toLogin(){
+    nav('/auth')
   }
 
   function toAbout() {
