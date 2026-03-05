@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { Eye, EyeOff, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, CornerDownLeft } from "lucide-react";
 
 const STEPS = [
   { key: "email", label: "Email", required: true },
@@ -164,7 +164,26 @@ const Auth = () => {
 
   const handleBack = () => {
     if (step > 0) goTo(step - 1);
+    else navigate("/");
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (animating || !entered) return;
+      if (e.target instanceof HTMLButtonElement) return;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        handleBack();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   const progress = ((step + 1) / STEPS.length) * 100;
   const currentStep = STEPS[step];
@@ -275,18 +294,16 @@ const Auth = () => {
             {GENDER_OPTIONS.map((opt) => (
               <label
                 key={opt}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${
-                  currentVal === opt
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${currentVal === opt
                     ? "bg-[#E80070]/20 border-[#E80070]/60 text-white"
                     : "bg-white/5 border-white/20 text-white/70 hover:bg-white/10"
-                }`}
+                  }`}
               >
                 <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                    currentVal === opt
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${currentVal === opt
                       ? "border-[#E80070] bg-[#E80070]"
                       : "border-white/40"
-                  }`}
+                    }`}
                 >
                   {currentVal === opt && (
                     <div className="w-2 h-2 rounded-full bg-white" />
@@ -311,18 +328,16 @@ const Auth = () => {
             {RACE_OPTIONS.map((opt) => (
               <label
                 key={opt}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${
-                  currentVal === opt
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${currentVal === opt
                     ? "bg-[#E80070]/20 border-[#E80070]/60 text-white"
                     : "bg-white/5 border-white/20 text-white/70 hover:bg-white/10"
-                }`}
+                  }`}
               >
                 <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                    currentVal === opt
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${currentVal === opt
                       ? "border-[#E80070] bg-[#E80070]"
                       : "border-white/40"
-                  }`}
+                    }`}
                 >
                   {currentVal === opt && (
                     <div className="w-2 h-2 rounded-full bg-white" />
@@ -363,11 +378,10 @@ const Auth = () => {
 
       {/* Glassmorphism card with spring entry */}
       <div
-        className={`relative z-10 w-full max-w-md mx-4 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-          entered
+        className={`relative z-10 w-full max-w-md mx-4 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${entered
             ? "opacity-100 scale-100"
             : "opacity-0 scale-90"
-        }`}
+          }`}
       >
         <div className="backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl p-8 shadow-2xl shadow-black/40">
           {/* Header */}
@@ -399,11 +413,10 @@ const Auth = () => {
               {STEPS.map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    i <= step
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i <= step
                       ? "bg-[#E80070] scale-100"
                       : "bg-white/20 scale-75"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -416,31 +429,24 @@ const Auth = () => {
 
           {/* Navigation buttons */}
           <div className="flex items-center justify-between mt-8 gap-4">
-            {step > 0 ? (
-              <MagneticButton variant="secondary" onClick={handleBack}>
-                <ArrowLeft size={18} />
-                Voltar
-              </MagneticButton>
-            ) : (
-              <MagneticButton
-                variant="secondary"
-                onClick={() => navigate("/")}
-              >
-                <ArrowLeft size={18} />
-                Início
-              </MagneticButton>
-            )}
+            <MagneticButton variant="secondary" onClick={handleBack}>
+              <ArrowLeft size={18} />
+              {step > 0 ? "Voltar" : "Início"}
+              <span className="text-xs opacity-50 ml-1 whitespace-nowrap">(Esc)</span>
+            </MagneticButton>
 
             <MagneticButton onClick={handleNext}>
               {step === STEPS.length - 1 ? (
                 <>
                   Finalizar
                   <Check size={18} />
+                  <CornerDownLeft size={16} className="opacity-70 ml-1" />
                 </>
               ) : (
                 <>
                   Próximo
                   <ArrowRight size={18} />
+                  <CornerDownLeft size={16} className="opacity-70 ml-1" />
                 </>
               )}
             </MagneticButton>
