@@ -104,21 +104,34 @@ const Header = () => {
           <button
             type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="relative flex h-9 w-16 items-center rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            style={{
+              backgroundColor: theme === "dark" ? "hsl(var(--raspberry))" : "hsl(var(--primary-light))",
+            }}
             aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 700, damping: 30 }}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm"
+              style={{
+                marginLeft: theme === "dark" ? "auto" : "0",
+              }}
+            >
+              {theme === "dark" ? (
+                <Moon className="h-4 w-4 text-raspberry" />
+              ) : (
+                <Sun className="h-4 w-4 text-primary" />
+              )}
+            </motion.div>
           </button>
 
           {/* Chat trigger */}
-          <button
-            type="button"
-            onClick={toggleChat}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Abrir assistente"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </button>
+          <MagneticIcon onClick={toggleChat}>
+            <div className="flex items-center justify-center text-primary-foreground/90 hover:text-primary-foreground" aria-label="Abrir assistente">
+              <MessageCircle className="h-5 w-5" />
+            </div>
+          </MagneticIcon>
           <motion.button
             onClick={() => toLogin()}
             className="btn-raspberry-serasa hidden sm:flex items-center gap-2 text-sm"

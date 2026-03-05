@@ -2,8 +2,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Droplets, PiggyBank, Building2, TrendingUp, Rocket, TrendingDown, Percent, Receipt, Handshake, Calculator, Home } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
+import bgImage from "../assets/Gemini_Generated_Image_vrhyppvrhyppvrhy.png";
 
 const investmentCards = [
+// ... (keeping existing cards) ...
   { title: "Educação", icon: <GraduationCap size={28} />, desc: "Investir em conhecimento é o maior retorno que você pode ter." },
   { title: "Liquidez diária", icon: <Droplets size={28} />, desc: "Investimentos com resgate imediato para sua reserva de emergência." },
   { title: "Poupança", icon: <PiggyBank size={28} />, desc: "O primeiro passo para guardar dinheiro, simples e acessível." },
@@ -29,7 +31,7 @@ const ScrollingRow = ({ cards, direction }: { cards: typeof investmentCards; dir
 
   return (
     <div
-      className="overflow-hidden"
+      className="overflow-hidden py-8 -my-8"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -58,31 +60,48 @@ const ScrollingRow = ({ cards, direction }: { cards: typeof investmentCards; dir
 
 const EducationSection = () => {
   return (
-    <section id="education" className="bg-[url('/public/education-bg.png')]  py-24 bg-muted/30 overflow-hidden">
-      <div className="container mx-auto px-4">
-        <ScrollReveal>
-          <h2 className="fluid-title-lg font-heading font-bold text-center text-foreground mb-16">
-            Educação Financeira
-          </h2>
-        </ScrollReveal>
+    <section id="education" className="relative py-24 overflow-hidden">
+      {/* Background Image with Dark Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
+        style={{ 
+          backgroundImage: `url(${bgImage})`,
+          zIndex: -2 
+        }}
+      />
+      {/* Dim overlay to increase contrast for glassmorphism */}
+      <div className="absolute inset-0 bg-black/60 dark:bg-black/70" style={{ zIndex: -1 }} />
+
+      <div className="relative z-10 w-full">
+        <div className="container mx-auto px-4">
+          <ScrollReveal>
+            <h2 className="fluid-title-lg font-heading font-bold text-center text-foreground mb-16">
+              Educação Financeira
+            </h2>
+          </ScrollReveal>
+        </div>
 
         {/* Investimentos */}
         <ScrollReveal delay={0.1}>
-          <div className="mb-16">
+          <div className="mb-16 w-full">
             <h3 className="fluid-title-md font-heading font-bold text-center text-foreground mb-8">
               Investimentos
             </h3>
-            <ScrollingRow cards={investmentCards} direction="left" />
+            <div className="w-full relative">
+              <ScrollingRow cards={investmentCards} direction="left" />
+            </div>
           </div>
         </ScrollReveal>
 
         {/* Conceitos */}
         <ScrollReveal delay={0.2}>
-          <div>
+          <div className="w-full">
             <h3 className="fluid-title-md font-heading font-bold text-center text-foreground mb-8">
               Conceitos
             </h3>
-            <ScrollingRow cards={conceptCards} direction="right" />
+            <div className="w-full relative">
+              <ScrollingRow cards={conceptCards} direction="right" />
+            </div>
           </div>
         </ScrollReveal>
       </div>
