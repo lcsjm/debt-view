@@ -40,10 +40,10 @@ const HeroSection = () => {
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
-          initial={{ opacity: 0, scale: 1.05 }}
+          initial={{ opacity: 0, scale: 1.1 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
           className="absolute inset-0 z-0"
         >
           <img
@@ -51,7 +51,7 @@ const HeroSection = () => {
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 dark:from-background/95 via-primary/60 dark:via-background/70 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
@@ -60,32 +60,66 @@ const HeroSection = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-2xl"
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2,
+                  delayChildren: 0.1,
+                },
+              },
+              exit: {
+                opacity: 0,
+                y: -20,
+                transition: { duration: 0.4 },
+              },
+            }}
+            className="max-w-3xl"
           >
-            <h1 className="fluid-title-xl font-heading font-extrabold text-primary-foreground mb-6 drop-shadow-lg">
+            <motion.h1
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="fluid-title-xl font-heading font-extrabold text-primary-foreground mb-8 drop-shadow-xl"
+            >
               {slides[current].title}
-            </h1>
-            <p className="fluid-body text-primary-foreground/90 mb-8 max-w-lg">
+            </motion.h1>
+
+            <motion.p
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="fluid-body text-primary-foreground/90 mb-10 max-w-xl leading-relaxed"
+            >
               {slides[current].subtitle}
-            </p>
-            <div className="flex flex-wrap gap-4">
+            </motion.p>
+
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 15 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+              }}
+              className="flex flex-wrap gap-5"
+            >
               <button
-                className="btn-raspberry-serasa text-base"
+                className="btn-raspberry-serasa text-base px-8 py-3.5"
                 onClick={() => document.querySelector("#calculator")?.scrollIntoView({ behavior: "smooth" })}
               >
                 Começar agora
               </button>
               <button
-                className="btn-serasa bg-primary-foreground/15 text-primary-foreground border border-primary-foreground/30 hover:bg-primary-foreground/25"
+                className="btn-serasa bg-primary-foreground/15 text-primary-foreground border border-primary-foreground/30 hover:bg-primary-foreground/25 text-base px-8 py-3.5 backdrop-blur-sm"
                 onClick={() => document.querySelector("#education")?.scrollIntoView({ behavior: "smooth" })}
               >
                 Saiba mais
               </button>
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
       </div>
