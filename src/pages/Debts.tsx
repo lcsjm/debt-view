@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-<<<<<<< HEAD
 import "../App.css";
-=======
-import '../App.css'
->>>>>>> 744845533b8e998277a354769fbe8102a0b9973d
 
 export type Debts = {
   credor?: string;
