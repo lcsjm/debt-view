@@ -6,19 +6,6 @@ import AnalysisSection from "@/components/AnalysisSection";
 import EducationSection from "@/components/EducationSection";
 
 const Index = () => {
-  // Parallax effect for the logo in hero
-  useEffect(() => {
-    const handleScroll = () => {
-      const logo = document.getElementById("parallax-logo");
-      if (logo) {
-        const scrollY = window.scrollY;
-        logo.style.transform = `translateY(${scrollY * 0.4}px)`;
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -31,10 +18,7 @@ const Index = () => {
       <footer className="bg-primary py-10">
         <div className="container mx-auto px-4 text-center">
           <p className="text-primary-foreground/60 text-sm">
-            © 2026 DebtView Experian. Todos os direitos reservados.
-          </p>
-          <p className="text-primary-foreground/40 text-xs mt-2">
-            Powered by Serasa Experian
+            © 2026 DebtView. Todos os direitos reservados.
           </p>
         </div>
       </footer>

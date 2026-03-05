@@ -1,8 +1,9 @@
 import { useRef, useState, useCallback } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn } from "lucide-react";
-import serasaLogo from "@/assets/serasa-logo.png";
+import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn, Sun, Moon, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
+import { useChat } from "@/components/chat-context";
 
 const MagneticIcon = ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => {
   const ref = useRef<HTMLButtonElement>(null);
@@ -51,6 +52,8 @@ const navItems = [
 const Header = () => {
   const nav = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const { toggle: toggleChat } = useChat();
 
   const scrollTo = (href: string) => {
     setMenuOpen(false);
@@ -62,7 +65,7 @@ const Header = () => {
     nav('/auth')
   }
 
-  function toAbout(){
+  function toAbout() {
     nav('/about')
   }
 
@@ -72,9 +75,8 @@ const Header = () => {
       <div className="container mx-auto flex items-center justify-between py-3 px-4">
         {/* Logo */}
         <a href="#hero" className="flex items-center gap-3" onClick={() => scrollTo("#hero")}>
-          <img src={serasaLogo} alt="Serasa Experian" className="h-10 w-auto" />
           <span className="font-heading font-bold text-primary-foreground text-lg hidden sm:inline">
-            DebtView Experian
+            DebtView
           </span>
         </a>
 
@@ -90,19 +92,51 @@ const Header = () => {
           ))}
 
           <MagneticIcon key="sobre" onClick={() => toAbout()}>
-              <div className="flex items-center gap-1.5 text-sm font-medium">
-                <BookOpen size={20} />
-                <span>Sobre</span>
-              </div>
-            </MagneticIcon>
+            <div className="flex items-center gap-1.5 text-sm font-medium">
+              <BookOpen size={20} />
+              <span>Sobre</span>
+            </div>
+          </MagneticIcon>
         </nav>
         {/* Entrar button with breathing */}
         <div className="flex items-center gap-3">
+          {/* Theme toggle */}
+          <button
+            type="button"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="relative flex h-9 w-16 items-center rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            style={{
+              backgroundColor: theme === "dark" ? "hsl(var(--raspberry))" : "hsl(var(--primary-light))",
+            }}
+            aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+          >
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 700, damping: 30 }}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm"
+              style={{
+                marginLeft: theme === "dark" ? "auto" : "0",
+              }}
+            >
+              {theme === "dark" ? (
+                <Moon className="h-4 w-4 text-raspberry" />
+              ) : (
+                <Sun className="h-4 w-4 text-primary" />
+              )}
+            </motion.div>
+          </button>
+
+          {/* Chat trigger */}
+          <MagneticIcon onClick={toggleChat}>
+            <div className="flex items-center justify-center text-primary-foreground/90 hover:text-primary-foreground" aria-label="Abrir assistente">
+              <MessageCircle className="h-5 w-5" />
+            </div>
+          </MagneticIcon>
           <motion.button
             onClick={() => toLogin()}
             className="btn-raspberry-serasa hidden sm:flex items-center gap-2 text-sm"
             animate={{ scale: [1, 1.02, 1] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}   
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
             <motion.span
               animate={{ y: [0, -6, 0] }}
