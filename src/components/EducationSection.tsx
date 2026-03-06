@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Droplets, PiggyBank, Building2, TrendingUp, Rocket, TrendingDown, Percent, Receipt, Handshake, Calculator, Home } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
-import bgImage from "../assets/Gemini_Generated_Image_vrhyppvrhyppvrhy.png";
+//import bgImage from "../assets/Gemini_Generated_Image_vrhyppvrhyppvrhy.png";
 
 const investmentCards = [
 // ... (keeping existing cards) ...
@@ -65,7 +65,7 @@ const EducationSection = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{ 
-          backgroundImage: `url(${bgImage})`,
+          /*backgroundImage: `url(${bgImage})`,*/
           zIndex: -2 
         }}
       />
