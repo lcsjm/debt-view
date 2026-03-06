@@ -71,7 +71,7 @@ const Header = () => {
 
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md shadow-lg">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 dark:bg-background/95 backdrop-blur-md shadow-lg dark:shadow-none border-b border-transparent dark:border-border/40 transition-colors duration-300">
       <div className="container mx-auto flex items-center justify-between py-3 px-4">
         {/* Logo */}
         <a href="#hero" className="flex items-center gap-3" onClick={() => scrollTo("#hero")}>
@@ -164,7 +164,7 @@ const Header = () => {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 25, mass: 0.8 }}
-            className="md:hidden overflow-hidden bg-primary/98 border-t border-primary-foreground/10"
+            className="md:hidden overflow-hidden bg-primary/98 dark:bg-background/98 border-t border-primary-foreground/10 dark:border-border/40"
           >
             <div className="container mx-auto py-4 px-4 flex flex-col gap-2">
               {navItems.map((item) => (
