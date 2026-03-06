@@ -86,10 +86,18 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        moveBg: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '100% 50%' },
+        },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-down": "accordion-down 5s ease-out",
+        "accordion-up": "accordion-up 5s ease-out",
+        'dynamic-bg': 'moveBg 30s cubic-bezier(0,1.03,1,0) infinite alternate',
+      },
+      backgroundImage: {
+        'dynamic-colors': 'linear-gradient(270deg, #000000, #1D4F91, #000000, #426DA9, #000000, #77127B, #000000, #C1188B, #000000, #E80070, #000000)',
       },
     },
   },

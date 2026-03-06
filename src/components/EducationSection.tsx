@@ -60,7 +60,7 @@ const ScrollingRow = ({ cards, direction }: { cards: typeof investmentCards; dir
 
 const EducationSection = () => {
   return (
-    <section id="education" className="relative py-24 overflow-hidden">
+    <section id="education" className="w-full min-h-screen bg-dynamic-colors bg-[length:1000%_1000%] animate-dynamic-bg">
       {/* Background Image with Dark Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
