@@ -132,8 +132,8 @@ const Auth = () => {
       setErrors({ email: "Email inválido" });
       return false;
     }
-    if (s.key === "password" && val.length < 6) {
-      setErrors({ password: "Mínimo 6 caracteres" });
+    if (s.key === "password" && val.length < 8) {
+      setErrors({ password: "Mínimo 8 caracteres" });
       return false;
     }
     return true;
@@ -352,7 +352,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen w-full flex items-center justify-center overflow-hidden relative">
       {/* Animated dark gradient background */}
-      <div className="absolute inset-0 auth-gradient-bg" />
+      <div className="absolute inset-0 auth-gradient-bg bg-slate-800" />
 
       {/* Subtle floating orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
