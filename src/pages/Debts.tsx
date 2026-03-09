@@ -7,7 +7,7 @@ export type Debts = {
   valorOriginal?: number;
   valorAttJuros?: number;
   taxaJuros?: number;
-  dataVenc?: Date;
+  dataVenc?: string;
   status?: string;
 };
 
@@ -105,6 +105,6 @@ export default function Debts() {
           Salvar
         </button>
       </div>
-    </>
+    </div>
   );
 }

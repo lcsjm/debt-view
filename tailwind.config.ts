@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ["Montserrat", "sans-serif"],
-        body: ["Open Sans", "sans-serif"],
+        heading: ["Inter", "sans-serif"],
+        body: ["Inter", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -86,10 +86,21 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        moveBg: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '100% 50%' },
+        },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-down": "accordion-down 15s ease-out",
+        "accordion-up": "accordion-up 15s ease-out",
+        'dynamic-bg': 'moveBg 20s cubic-bezier(0,1.03,1,0) infinite alternate',
+        // cubic-bezier estático: cubic-bezier(0,.48,1,.52)
+        // `transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${slideClass}`
+      },
+      backgroundImage: {
+        'dynamic-colors': 'linear-gradient(270deg, #000000, #1D4F91, #000000, #426DA9, #000000,  #77127B, #000000, #C1188B, #000000, #E80070, #000000)',
+        //270deg, #000000, #1D4F91, #000000, #426DA9, #000000, #77127B, #000000, #C1188B, #000000, #E80070, #000000
       },
     },
   },
