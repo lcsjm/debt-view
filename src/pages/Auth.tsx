@@ -4,7 +4,6 @@ import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, CornerDownLeft } from "lucide-react";
 import supabase  from "../../utils/supabase" 
-<<<<<<< HEAD
 export type User = {
         email?: string;
         pass?: string;
@@ -43,8 +42,6 @@ const [pToast, setPToast] = useState('');
         
   // é preciso realocar, separar Auth e Profile
 
-=======
->>>>>>> 743fd8585adf5fce07233c1aa1db8317fc5af4f3
 
 const STEPS = [
   { key: "email", label: "Email", required: true },
@@ -199,7 +196,6 @@ const Auth = () => {
     if (step < activeSteps.length - 1) {
       goTo(step + 1);
     } else {
-<<<<<<< HEAD
       
     const {error} = await supabase.auth.signUp({
       email:user.email,
@@ -220,39 +216,6 @@ const Auth = () => {
   
   
   
-=======
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-        if (error) {
-          toast({ title: "Erro ao entrar", description: error.message });
-        } else {
-          toast({ title: "Bem-vindo de volta!", description: "Login realizado com sucesso." });
-          setTimeout(() => navigate("/"), 1000);
-        }
-      } else {
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (error) {
-          toast({
-            title: "Erro ao realizar o cadastro",
-            description: error.message,
-          });
-        } else {
-          toast({
-            title: "Cadastro realizado!",
-            description: "Sua conta foi criada com sucesso.",
-          });
-          setTimeout(() => navigate("/"), 1500);
-        }
-      }
-    }
->>>>>>> 743fd8585adf5fce07233c1aa1db8317fc5af4f3
   };
 
   const handleBack = () => {
