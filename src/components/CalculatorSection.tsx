@@ -114,7 +114,7 @@ const CalculatorSection = () => {
                   initial={{ opacity: 0, x: 30 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -30 }}
-                  className="neu-card p-8"
+                  className="neu-card p-6 sm:p-8 md:p-12"
                 >
                   <div className="text-center mb-6">
                     <span className="text-4xl mb-3 block">{questions[step].icon}</span>
@@ -133,7 +133,7 @@ const CalculatorSection = () => {
                           const val = Math.min(Number(e.target.value), 1000000000);
                           setForm({ ...form, [questions[step].key]: val });
                         }}
-                        className="neu-btn w-full py-4 pl-12 pr-4 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full rounded-2xl border bg-background/50 backdrop-blur-sm px-4 py-4 pl-12 text-lg font-semibold text-foreground shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 hover:border-border/80"
                         placeholder="0,00"
                       />
                     </div>
@@ -153,7 +153,7 @@ const CalculatorSection = () => {
                 <motion.div
                   initial={{ opacity: 0, x: 30 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="neu-card p-8"
+                  className="neu-card p-6 sm:p-8 md:p-12"
                 >
                   <div className="text-center mb-6">
                     <span className="text-4xl mb-3 block">📊</span>
@@ -165,16 +165,16 @@ const CalculatorSection = () => {
                   <div className="flex gap-4 justify-center mb-6">
                     <button
                       onClick={() => setForm({ ...form, wantsXlsx: true })}
-                      className={`neu-btn px-8 py-3 font-semibold transition-all duration-300 ${
-                        form.wantsXlsx === true ? "ring-2 ring-primary bg-primary/10 text-primary" : "text-foreground"
+                      className={`rounded-2xl border px-8 py-3 font-semibold transition-all duration-300 shadow-sm ${
+                        form.wantsXlsx === true ? "ring-2 ring-primary border-primary bg-primary/10 text-primary" : "text-foreground bg-background hover:border-border/80"
                       }`}
                     >
                       Sim
                     </button>
                     <button
                       onClick={() => setForm({ ...form, wantsXlsx: false })}
-                      className={`neu-btn px-8 py-3 font-semibold transition-all duration-300 ${
-                        form.wantsXlsx === false ? "ring-2 ring-primary bg-primary/10 text-primary" : "text-foreground"
+                      className={`rounded-2xl border px-8 py-3 font-semibold transition-all duration-300 shadow-sm ${
+                        form.wantsXlsx === false ? "ring-2 ring-primary border-primary bg-primary/10 text-primary" : "text-foreground bg-background hover:border-border/80"
                       }`}
                     >
                       Não
@@ -213,8 +213,8 @@ const CalculatorSection = () => {
               <AlertsPanel renda={form.renda} gastosFixos={form.gastosFixos} gastosVariaveis={form.gastosVariaveis} />
 
               {/* Charts */}
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <div className="neu-card p-6">
+              <div className="grid md:grid-cols-2 gap-8 lg:gap-12 mb-8 lg:mb-12">
+                <div className="neu-card p-6 lg:p-8 flex flex-col items-center">
                   <h3 className="font-heading font-semibold text-foreground mb-4 text-center">Distribuição</h3>
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
@@ -228,7 +228,7 @@ const CalculatorSection = () => {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="neu-card p-6">
+                <div className="neu-card p-6 lg:p-8 flex flex-col items-center">
                   <h3 className="font-heading font-semibold text-foreground mb-4 text-center">Comparativo</h3>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={barData}>

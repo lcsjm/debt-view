@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, CornerDownLeft } from "lucide-react";
 import supabase  from "../../utils/supabase" 
+<<<<<<< HEAD
 export type User = {
         email?: string;
         pass?: string;
@@ -42,6 +43,8 @@ const [pToast, setPToast] = useState('');
         
   // é preciso realocar, separar Auth e Profile
 
+=======
+>>>>>>> 743fd8585adf5fce07233c1aa1db8317fc5af4f3
 
 const STEPS = [
   { key: "email", label: "Email", required: true },
@@ -133,6 +136,7 @@ const Auth = () => {
   const [entered, setEntered] = useState(false);
   const [slideDir, setSlideDir] = useState<"left" | "right">("left");
   const [animating, setAnimating] = useState(false);
+  const [isLogin, setIsLogin] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -160,8 +164,10 @@ const Auth = () => {
     setErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
+  const activeSteps = isLogin ? STEPS.slice(0, 2) : STEPS;
+
   const validate = (): boolean => {
-    const s = STEPS[step];
+    const s = activeSteps[step];
     const val = formData[s.key as keyof typeof formData];
     if (s.required && !val.trim()) {
       setErrors({ [s.key]: "Este campo é obrigatório" });
@@ -190,9 +196,10 @@ const Auth = () => {
 
   const handleNext = async () => {
     if (!validate()) return;
-    if (step < STEPS.length - 1) {
+    if (step < activeSteps.length - 1) {
       goTo(step + 1);
     } else {
+<<<<<<< HEAD
       
     const {error} = await supabase.auth.signUp({
       email:user.email,
@@ -213,6 +220,39 @@ const Auth = () => {
   
   
   
+=======
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        if (error) {
+          toast({ title: "Erro ao entrar", description: error.message });
+        } else {
+          toast({ title: "Bem-vindo de volta!", description: "Login realizado com sucesso." });
+          setTimeout(() => navigate("/"), 1000);
+        }
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          toast({
+            title: "Erro ao realizar o cadastro",
+            description: error.message,
+          });
+        } else {
+          toast({
+            title: "Cadastro realizado!",
+            description: "Sua conta foi criada com sucesso.",
+          });
+          setTimeout(() => navigate("/"), 1500);
+        }
+      }
+    }
+>>>>>>> 743fd8585adf5fce07233c1aa1db8317fc5af4f3
   };
 
   const handleBack = () => {
@@ -238,8 +278,8 @@ const Auth = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
-  const progress = ((step + 1) / STEPS.length) * 100;
-  const currentStep = STEPS[step];
+  const progress = ((step + 1) / activeSteps.length) * 100;
+  const currentStep = activeSteps[step];
   const currentVal = formData[currentStep.key as keyof typeof formData];
   const error = errors[currentStep.key];
 
@@ -443,14 +483,32 @@ const Auth = () => {
               className="font-bold text-white mb-2"
               style={{ fontSize: "clamp(1.5rem, 4vw, 2.2rem)" }}
             >
-              Criar Conta
+              {isLogin ? "Entrar" : "Criar Conta"}
             </h1>
             <p
-              className="text-white/50"
+              className="text-white/50 mb-4"
               style={{ fontSize: "clamp(0.8rem, 2vw, 0.95rem)" }}
             >
-              Passo {step + 1} de {STEPS.length}
+              Passo {step + 1} de {activeSteps.length}
             </p>
+            <div className="flex justify-center gap-2 bg-white/5 p-1 rounded-full border border-white/10 w-max mx-auto">
+              <button
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  !isLogin ? "bg-[#E80070] text-white" : "text-white/60 hover:text-white"
+                }`}
+                onClick={() => { setIsLogin(false); setStep(0); setErrors({}); }}
+              >
+                Cadastro
+              </button>
+              <button
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  isLogin ? "bg-[#E80070] text-white" : "text-white/60 hover:text-white"
+                }`}
+                onClick={() => { setIsLogin(true); setStep(0); setErrors({}); }}
+              >
+                Login
+              </button>
+            </div>
           </div>
 
           {/* Progress bar */}
@@ -489,7 +547,7 @@ const Auth = () => {
             </MagneticButton>
 
             <MagneticButton onClick={handleNext}>
-              {step === STEPS.length - 1 ? (
+              {step === activeSteps.length - 1 ? (
                 <>
                   Finalizar
                   <Check size={18} />

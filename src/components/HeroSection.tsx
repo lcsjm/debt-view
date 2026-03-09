@@ -56,7 +56,7 @@ const HeroSection = () => {
       </AnimatePresence>
 
       {/* Content */}
-      <div className="container mx-auto relative z-10 px-4 py-32">
+      <div className="container mx-auto relative z-10 px-4 py-24 md:py-32 lg:py-40">
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
