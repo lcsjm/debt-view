@@ -42,10 +42,10 @@ const MagneticIcon = ({ children, onClick, className }: { children: React.ReactN
 };
 
 const navItems = [
-  { icon: <Home size={20} />, label: "Início", href: "#hero" },
-  { icon: <BarChart3 size={20} />, label: "Calculadora", href: "#calculator" },
-  { icon: <MessageSquare size={20} />, label: "Análise", href: "#analysis" },
-  { icon: <BookOpen size={20} />, label: "Educação", href: "#education" },
+  { icon: <Home size={20} />, label: "Início", href: "/#hero" },
+  { icon: <BarChart3 size={20} />, label: "Calculadora", href: "/#calculator" },
+  { icon: <MessageSquare size={20} />, label: "Análise", href: "/#analysis" },
+  { icon: <BookOpen size={20} />, label: "Educação", href: "/#education" },
 ];
 
 const Sidebar = () => {

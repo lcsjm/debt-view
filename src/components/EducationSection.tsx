@@ -69,7 +69,7 @@ const EducationSection = () => {
           zIndex: -2 
         }}
       />
-      {/* Dim overlay to increase contrast for glassmorphism */}
+      {/* Dim overlay to increase contrast for  morphism */}
       <div className="absolute inset-0 bg-black/60 dark:bg-black/70" style={{ zIndex: -1 }} />
 
       <div className="relative z-10 w-full">
