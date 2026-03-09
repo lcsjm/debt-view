@@ -13,6 +13,7 @@ import Debts from "./pages/Debts";
 import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthRoute from "./components/AuthRoute";
+import { AuthProvider } from "./context/AuthContext";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { ChatProvider } from "@/components/chat-context";
@@ -30,11 +31,12 @@ const App = () => (
           <Sonner />
           <ChatSidebar />
           <StrictMode>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
+            <AuthProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
               <Route path='/auth' element={
                 <AuthRoute>
                 <Auth />
@@ -53,8 +55,9 @@ const App = () => (
                 <ProtectedRoute>
                 <Resultado />
                 </ProtectedRoute>} />
-            </Routes>
-          </BrowserRouter>
+                </Routes>
+              </BrowserRouter>
+            </AuthProvider>
           </StrictMode>
         </TooltipProvider>
       </QueryClientProvider>

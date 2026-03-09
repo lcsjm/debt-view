@@ -9,38 +9,7 @@ export type User = {
         pass?: string;
       }
 
-const nav = useNavigate();
-const [login, setLogin] = useState(true);
-const [check, setCheck] = useState(0);
-const [user, setUser] = useState<User>();
-const [users, setUsers] = useState <User[]>([]);
-const [pToast, setPToast] = useState('');
-    function showToast(msg: string) {
-        setPToast(msg)
-
-        setTimeout(() => {
-            setPToast('')
-        }, 5000)
-
-    }
-
-     function checkedLogin() {;
-        if (check < 3) {;
-            setCheck(check + 1);
-
-        } else {;
-            showToast('Acabaram as tentativas');
-            return;
-        }
-
-        if (!user?.email || !user?.pass){
-          showToast ("mail e senha são obrigatórios")
-          return
-        } 
-      
-      }
-        
-  // é preciso realocar, separar Auth e Profile
+// é preciso realocar, separar Auth e Profile
 
 
 const STEPS = [
@@ -196,21 +165,48 @@ const Auth = () => {
     if (step < activeSteps.length - 1) {
       goTo(step + 1);
     } else {
-      
-    const {error} = await supabase.auth.signUp({
-      email:user.email,
-      password: user.pass
-    })
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
-    if(error) showToast ("Erro ao realizar o cadastro")
-    
-    toast({
-      title: "Cadastro realizado!",
-      description: "Sua conta foi criada com sucesso.",
-    });
+        if (error) {
+          toast({
+            title: "Erro",
+            description: "Erro ao realizar o login: " + error.message,
+          });
+          return;
+        }
 
-    setTimeout(() => navigate("/"), 1500);
-  }
+        toast({
+          title: "Login realizado!",
+          description: "Bem-vindo de volta.",
+        });
+
+        setTimeout(() => navigate("/dash"), 1500);
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          toast({
+            title: "Erro",
+            description: "Erro ao realizar o cadastro: " + error.message,
+          });
+          return;
+        }
+        
+        toast({
+          title: "Cadastro realizado!",
+          description: "Sua conta foi criada com sucesso.",
+        });
+
+        setTimeout(() => navigate("/dash"), 1500);
+      }
+    }
 
 
   
