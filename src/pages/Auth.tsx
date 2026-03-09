@@ -103,6 +103,7 @@ const Auth = () => {
   const [slideDir, setSlideDir] = useState<"left" | "right">("left");
   const [animating, setAnimating] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -164,8 +165,10 @@ const Auth = () => {
     if (!validate()) return;
 
     if (step === 0) {
+      setIsLoading(true);
       const { data, error } = await supabase.rpc('check_user_exists', { user_email: formData.email });
-      
+      setIsLoading(false);
+
       if (error) {
         toast({
           title: "Erro",
@@ -498,14 +501,16 @@ const Auth = () => {
 
           {/* Navigation buttons */}
           <div className="flex items-center justify-between mt-8 gap-4">
-            <MagneticButton variant="secondary" onClick={handleBack}>
+            <MagneticButton variant="secondary" onClick={handleBack} disabled={isLoading}>
               <ArrowLeft size={18} />
               {step > 0 ? "Voltar" : "Início"}
               <span className="text-xs opacity-50 ml-1 whitespace-nowrap">(Esc)</span>
             </MagneticButton>
 
-            <MagneticButton onClick={handleNext}>
-              {step === activeSteps.length - 1 ? (
+            <MagneticButton onClick={handleNext} disabled={isLoading}>
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1" />
+              ) : step === activeSteps.length - 1 ? (
                 <>
                   Finalizar
                   <Check size={18} />
