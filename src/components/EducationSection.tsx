@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Droplets, PiggyBank, Building2, TrendingUp, Rocket, TrendingDown, Percent, Receipt, Handshake, Calculator, Home } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
-//import bgImage from "../assets/Gemini_Generated_Image_vrhyppvrhyppvrhy.png";
 
 const investmentCards = [
 // ... (keeping existing cards) ...
@@ -60,17 +59,28 @@ const ScrollingRow = ({ cards, direction }: { cards: typeof investmentCards; dir
 
 const EducationSection = () => {
   return (
-    <section id="education" className="w-full min-h-screen bg-dynamic-colors bg-[length:1000%_1000%] animate-dynamic-bg">
-      {/* Background Image with Dark Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
-        style={{ 
-          /*backgroundImage: `url(${bgImage})`,*/
-          zIndex: -2 
-        }}
-      />
-      {/* Dim overlay to increase contrast for  morphism */}
-      <div className="absolute inset-0 bg-black/60 dark:bg-black/70" style={{ zIndex: -1 }} />
+    <section id="education" className="relative w-full min-h-screen py-24 flex flex-col justify-center bg-background overflow-hidden border-t border-border/10">
+      {/* Smooth transition from the previous section */}
+      <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+
+      {/* Vibrant Serasa Ambient Orbs for Premium Glassmorphism Depth */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Dark Blue - #1D4F91 */}
+        <div className="absolute w-[45vw] h-[45vw] max-w-[500px] max-h-[500px] rounded-full bg-[#1D4F91]/30 dark:bg-[#1D4F91]/25 blur-[100px] -top-20 -left-10 animate-[float_22s_ease-in-out_infinite]" />
+        
+        {/* Purple - #77127B */}
+        <div className="absolute w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-[#77127B]/25 dark:bg-[#77127B]/20 blur-[120px] top-[10%] right-[-15%] animate-[float_26s_ease-in-out_infinite_reverse]" />
+        
+        {/* Magenta - #E80070 */}
+        <div className="absolute w-[35vw] h-[35vw] max-w-[450px] max-h-[450px] rounded-full bg-[#E80070]/25 dark:bg-[#E80070]/20 blur-[90px] bottom-[-10%] left-[5%] animate-[float_20s_ease-in-out_infinite]" />
+        
+        {/* Light Blue - #426DA9 */}
+        <div className="absolute w-[30vw] h-[30vw] max-w-[400px] max-h-[400px] rounded-full bg-[#426DA9]/30 dark:bg-[#426DA9]/25 blur-[90px] bottom-[15%] right-[15%] animate-[float_24s_ease-in-out_infinite_reverse]" />
+        
+        {/* Raspberry - #C1188B */}
+        <div className="absolute w-[25vw] h-[25vw] max-w-[350px] max-h-[350px] rounded-full bg-[#C1188B]/30 dark:bg-[#C1188B]/25 blur-[80px] top-[40%] left-[45%] animate-[float_18s_ease-in-out_infinite]" />
+      </div>
+
 
       <div className="relative z-10 w-full">
         <div className="container mx-auto px-4">
