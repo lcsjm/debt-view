@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-<<<<<<< HEAD
 import "../App.css";
-=======
-import '../App.css'
->>>>>>> 744845533b8e998277a354769fbe8102a0b9973d
 
 export type Debts = {
   credor?: string;
@@ -26,7 +22,6 @@ export default function Debts() {
     }, 5000);
   }
 
-  //=== "" ? undefined : parseFloat(e.target.value) nos input numbers, é necessario, pra impedir not null
   //pro date: value={debts.dataVenc? debts.dataVenc.toISOString().slice(0, 10) // yyyy-mm-dd: ""} e ? new Date(e.target.value) : undefined, é necessário, se sim, pq?
   //css da div do button: style={{ marginTop: 16 }} - adaptar para tailwind
 
@@ -51,19 +46,16 @@ export default function Debts() {
         type="text"
         value={debts.credor ?? ""}
         onChange={(e) =>
-          setDebts((setDebts) => ({ ...debts, credor: e.target.value }))
+          setDebts({ ...debts, credor: e.target.value })
         }
-        type="string"
-        onChange={(e) => setCredor({ ...Debts, credor: e.target.value })}
       />
 
       <p>Digite o valor da sua dívida</p>
       <input
         type="number"
         value={debts.valorOriginal ?? ""}
-        onChange={(e) =>
-          setDebts((setDebts) => ({...debts, valorOriginal: e.target.value === "" ? undefined : parseFloat(e.target.value)}))}
-        onChange={(e) => setCredor({ ...Debts, valorOriginal: e.target.value })}
+      
+        onChange={(e) => setDebts({ ...Debts, valorOriginal: parseFloat(e.target.value )})}
       />
 
       <p>Digite o valor atual do juros aplicado a sua dívida</p>
@@ -71,9 +63,8 @@ export default function Debts() {
         type="number"
         value={debts.valorAttJuros ?? ""}
         onChange={(e) =>
-          setDebts((setDebts) => ({...debts, valorAttJuros: e.target.value === "" ? undefined : parseFloat(e.target.value)}))
+          setDebts((setDebts) => ({...debts, valorAttJuros: parseFloat(e.target.value)}))
         }
-        onChange={(e) => setCredor({ ...Debts, valorAttJuros: e.target.value })}
       />
 
       <p>Digite a taxa de juros aplicada a sua dívida</p>
@@ -81,7 +72,7 @@ export default function Debts() {
         type="number"
         value={debts.taxaJuros ?? ""}
         onChange={(e) =>
-          setDebts((setDebts) => ({...debts, taxaJuros:e.target.value === "" ? undefined : parseFloat(e.target.value)}))}
+          setDebts((setDebts) => ({...debts, taxaJuros: parseFloat(e.target.value)}))}
       />
 
       <p>Digite a data de vencimento da sua dívida</p>
@@ -89,7 +80,7 @@ export default function Debts() {
         type="date"
         
         onChange={(e) =>
-          setDebts((setDebts) => ({...debts,dataVenc: e.target.value}))}
+          setDebts((setDebts) => {...debts, dataVenc: e.target.value})}
       />
 
       <p>Digite o status da sua dívida</p>
@@ -97,17 +88,8 @@ export default function Debts() {
         type="text"
         value={debts.status ?? ""}
         onChange={(e) =>
-          setDebts((setDebts) => ({ ...debts, status: e.target.value }))
+          setDebts({...debts, status: e.target.value})      
         }
-        onChange={(e) => setCredor({ ...Debts, taxaJuros: e.target.value })}
-      />
-      <input
-        type="Date"
-        onChange={(e) => setCredor({ ...Debts, dataVenc: e.target.value })}
-      />
-      <input
-        type="string"
-        onChange={(e) => setCredor({ ...Debts, status: e.target.value })}
       />
 
       <div>
