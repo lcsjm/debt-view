@@ -11,10 +11,13 @@ import Resultado from "./pages/Resultado";
 import Dash from "./pages/Dash";
 import Debts from "./pages/Debts";
 import './App.css'
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthRoute from "./components/AuthRoute";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { ChatProvider } from "@/components/chat-context";
 import { ChatSidebar } from "@/components/chat-sidebar";
+import { StrictMode } from "react";
 
 const queryClient = new QueryClient();
 
@@ -26,18 +29,33 @@ const App = () => (
           <Toaster />
           <Sonner />
           <ChatSidebar />
+          <StrictMode>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-              <Route path='/auth' element={<Auth />} />
-              <Route path='/dash' element={<Dash />} />
+              <Route path='/auth' element={
+                <AuthRoute>
+                <Auth />
+                </AuthRoute>
+                } />
+              <Route path='/dash' element={
+              <ProtectedRoute>
+                <Dash />
+             </ProtectedRoute>} />
               <Route path='/about' element={<About />} />
-              <Route path='/debts' element={<Debts />} />
-              <Route path='/resultado' element={<Resultado />} />
+              <Route path='/debts' element={
+                <ProtectedRoute>
+                <Debts />
+                </ProtectedRoute>} />
+              <Route path='/resultado' element={
+                <ProtectedRoute>
+                <Resultado />
+                </ProtectedRoute>} />
             </Routes>
           </BrowserRouter>
+          </StrictMode>
         </TooltipProvider>
       </QueryClientProvider>
     </ChatProvider>

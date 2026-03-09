@@ -9,6 +9,9 @@ export type User = {
         pass?: string;
       }
 
+const nav = useNavigate();
+const [login, setLogin] = useState(true);
+const [check, setCheck] = useState(0);
 const [user, setUser] = useState<User>();
 const [users, setUsers] = useState <User[]>([]);
 const [pToast, setPToast] = useState('');
@@ -20,8 +23,23 @@ const [pToast, setPToast] = useState('');
         }, 5000)
 
     }
-      
 
+     function checkedLogin() {;
+        if (check < 3) {;
+            setCheck(check + 1);
+
+        } else {;
+            showToast('Acabaram as tentativas');
+            return;
+        }
+
+        if (!user?.email || !user?.pass){
+          showToast ("mail e senha são obrigatórios")
+          return
+        } 
+      
+      }
+        
   // é preciso realocar, separar Auth e Profile
 
 
@@ -170,31 +188,31 @@ const Auth = () => {
     }, 300);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validate()) return;
     if (step < STEPS.length - 1) {
       goTo(step + 1);
     } else {
-      toast({
-        title: "Cadastro realizado!",
-        description: "Sua conta foi criada com sucesso.",
-      });
+      
+    const {error} = await supabase.auth.signUp({
+      email:user.email,
+      password: user.pass
+    })
 
-  async function handleRegister() {;
-        if(user?.email && user?.pass)
-            setUsers([...users, user]);
+    if(error) showToast ("Erro ao realizar o cadastro")
+    
+    toast({
+      title: "Cadastro realizado!",
+      description: "Sua conta foi criada com sucesso.",
+    });
 
-        const {data, error} = await supabase.auth.signUp({
-  email:user.email,
-  password: user.pass
-  })}
+    setTimeout(() => navigate("/"), 1500);
+  }
 
 
-  if(error) showToast ("Erro ao realizar o cadastro")
-  else showToast ("Cadastrado com sucesso")
-
-            setTimeout(() => navigate("/"), 1500);
-    }
+  
+  
+  
   };
 
   const handleBack = () => {
