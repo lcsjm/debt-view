@@ -162,6 +162,23 @@ const Auth = () => {
 
   const handleNext = async () => {
     if (!validate()) return;
+
+    if (step === 0) {
+      const { data, error } = await supabase.rpc('check_user_exists', { user_email: formData.email });
+      
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível verificar o email. Tente novamente.",
+        });
+        return;
+      }
+      
+      setIsLogin(!!data);
+      goTo(step + 1);
+      return;
+    }
+
     if (step < activeSteps.length - 1) {
       goTo(step + 1);
     } else {
@@ -442,32 +459,14 @@ const Auth = () => {
               className="font-bold text-white mb-2"
               style={{ fontSize: "clamp(1.5rem, 4vw, 2.2rem)" }}
             >
-              {isLogin ? "Entrar" : "Criar Conta"}
+              {step === 0 ? "Acessar" : isLogin ? "Bem-vindo de volta" : "Criar Conta"}
             </h1>
             <p
               className="text-white/50 mb-4"
               style={{ fontSize: "clamp(0.8rem, 2vw, 0.95rem)" }}
             >
-              Passo {step + 1} de {activeSteps.length}
+              {step === 0 ? "Digite seu email para continuar" : `Passo ${step + 1} de ${activeSteps.length}`}
             </p>
-            <div className="flex justify-center gap-2 bg-white/5 p-1 rounded-full border border-white/10 w-max mx-auto">
-              <button
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  !isLogin ? "bg-[#E80070] text-white" : "text-white/60 hover:text-white"
-                }`}
-                onClick={() => { setIsLogin(false); setStep(0); setErrors({}); }}
-              >
-                Cadastro
-              </button>
-              <button
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  isLogin ? "bg-[#E80070] text-white" : "text-white/60 hover:text-white"
-                }`}
-                onClick={() => { setIsLogin(true); setStep(0); setErrors({}); }}
-              >
-                Login
-              </button>
-            </div>
           </div>
 
           {/* Progress bar */}
