@@ -3,6 +3,27 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, CornerDownLeft } from "lucide-react";
+import supabase  from "../../utils/supabase" 
+export type User = {
+        email?: string;
+        pass?: string;
+      }
+
+const [user, setUser] = useState<User>();
+const [users, setUsers] = useState <User[]>([]);
+const [pToast, setPToast] = useState('');
+    function showToast(msg: string) {
+        setPToast(msg)
+
+        setTimeout(() => {
+            setPToast('')
+        }, 5000)
+
+    }
+      
+
+  // é preciso realocar, separar Auth e Profile
+
 
 const STEPS = [
   { key: "email", label: "Email", required: true },
@@ -158,7 +179,21 @@ const Auth = () => {
         title: "Cadastro realizado!",
         description: "Sua conta foi criada com sucesso.",
       });
-      setTimeout(() => navigate("/"), 1500);
+
+  async function handleRegister() {;
+        if(user?.email && user?.pass)
+            setUsers([...users, user]);
+
+        const {data, error} = await supabase.auth.signUp({
+  email:user.email,
+  password: user.pass
+  })}
+
+
+  if(error) showToast ("Erro ao realizar o cadastro")
+  else showToast ("Cadastrado com sucesso")
+
+            setTimeout(() => navigate("/"), 1500);
     }
   };
 
