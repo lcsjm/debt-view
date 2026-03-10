@@ -22,7 +22,6 @@ export default function Debts() {
     }, 5000);
   }
 
-  //pro date: value={debts.dataVenc? debts.dataVenc.toISOString().slice(0, 10) // yyyy-mm-dd: ""} e ? new Date(e.target.value) : undefined, é necessário, se sim, pq?
   //css da div do button: style={{ marginTop: 16 }} - adaptar para tailwind
 
   return (

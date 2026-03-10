@@ -54,8 +54,8 @@
     --sidebar-border: 213 50% 25%;
     --sidebar-ring: 213 43% 46%;
 
-    --glass-bg: 0 0% 100% / 0.45;
-    --glass-border: 0 0% 100% / 0.4;
+    --glass-bg: 15 100% 70% / 0;
+    --glass-border: 40 30% 30% / 0.3;
 
     --neu-light: 0 0% 100%;
     --neu-dark: 220 14% 82%;
@@ -95,8 +95,8 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 213 50% 15%;
     --sidebar-ring: 213 43% 46%;
-    --glass-bg: 0 0% 0% / 0.4;
-    --glass-border: 0 0% 100% / 0.1;
+    --glass-bg: 30 50% 50% / 0.2;
+    --glass-border: 30 50% 50% / 0.2;
     --neu-light: 213 66% 15%;
     --neu-dark: 213 66% 5%;
   }
