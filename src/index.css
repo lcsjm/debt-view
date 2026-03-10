@@ -95,8 +95,8 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 213 50% 15%;
     --sidebar-ring: 213 43% 46%;
-    --glass-bg: 0 0% 100% / 0.45;
-    --glass-border: 0 0% 100% / 0.4;
+    --glass-bg: 0 0% 0% / 0.4;
+    --glass-border: 0 0% 100% / 0.1;
     --neu-light: 213 66% 15%;
     --neu-dark: 213 66% 5%;
   }

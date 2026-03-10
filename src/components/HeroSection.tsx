@@ -36,7 +36,6 @@ const HeroSection = () => {
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Carousel backgrounds */}
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -44,14 +43,16 @@ const HeroSection = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.2, ease: "easeInOut" }}
-          className="absolute inset-0 z-0"
+          className="absolute inset-0 z-0 bg-background"
         >
           <img
             src={slides[current].image}
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 dark:from-background/95 via-primary/60 dark:via-background/70 to-transparent" />
+          {/* Light and dark mode gradient overlays with explicit opacity to fix Tailwind hsl parsing issues */}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-transparent opacity-[0.85] dark:opacity-0" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background to-transparent opacity-0 dark:opacity-[0.90]" />
         </motion.div>
       </AnimatePresence>
 
