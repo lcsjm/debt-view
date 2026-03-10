@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
+import { Eye, EyeOff, LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import supabase from "../../utils/supabase";
 
 const MagneticButton = ({ children, onClick, disabled, variant = "primary", className = "", type = "button" }: any) => {
@@ -58,7 +58,14 @@ const Login = () => {
       <div className="relative z-10 w-full max-w-md mx-4 transition-all duration-500">
         <div className="backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl p-8 shadow-2xl">
           <div className="animate-in fade-in zoom-in-95 duration-500">
-            <div className="text-center mb-8">
+            <div className="text-center mb-8 relative">
+              <button 
+                onClick={() => navigate("/")} 
+                className="absolute left-0 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                title="Voltar ao Início"
+              >
+                <ArrowLeft size={20} />
+              </button>
               <h1 className="text-3xl font-bold text-white mb-2">Acessar</h1>
               <p className="text-white/50">Bem-vindo de volta ao DebtView!</p>
             </div>
