@@ -51,7 +51,7 @@ const App = () => (
                 <ProtectedRoute>
                 <Debts />
                 </ProtectedRoute>} />
-              <Route path='/resultado' element={
+              <Route path='/Resultado' element={
                 <ProtectedRoute>
                 <Resultado />
                 </ProtectedRoute>} />
