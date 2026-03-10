@@ -147,7 +147,7 @@ const Auth = () => {
             </div>
           ) : (
             /* --- TELA DE CADASTRO (O SEU MULTI-STEP) --- */
-            <div className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
+            <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-white">Criar Conta</h2>
                 <p className="text-white/40 text-sm">Passo {step + 1} de {STEPS.length}</p>
@@ -164,8 +164,8 @@ const Auth = () => {
                 {STEPS[step].key === "gender" ? (
                     <div className="flex flex-col gap-2">
                         {GENDER_OPTIONS.map(opt => (
-                            <button key={opt} onClick={() => updateField("gender", opt)} 
-                                className={`p-3 rounded-xl border text-left transition-all ${formData.gender === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
+                            <button type="button" key={opt} onClick={() => updateField("gender", opt)} 
+                                className={`p-3 rounded-xl border text-left transition-all hover:bg-white/10 ${formData.gender === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
                                 {opt}
                             </button>
                         ))}
@@ -173,15 +173,29 @@ const Auth = () => {
                 ) : STEPS[step].key === "race" ? (
                     <div className="flex flex-col gap-2">
                         {RACE_OPTIONS.map(opt => (
-                            <button key={opt} onClick={() => updateField("race", opt)} 
-                                className={`p-3 rounded-xl border text-left transition-all ${formData.race === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
+                            <button type="button" key={opt} onClick={() => updateField("race", opt)} 
+                                className={`p-3 rounded-xl border text-left transition-all hover:bg-white/10 ${formData.race === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
                                 {opt}
                             </button>
                         ))}
                     </div>
+                ) : STEPS[step].key === "password" ? (
+                    <div className="relative">
+                        <input 
+                            type={showPassword ? "text" : "password"}
+                            className={inputClass}
+                            autoFocus
+                            value={formData.password}
+                            onChange={(e) => updateField("password", e.target.value)}
+                        />
+                        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
                 ) : (
                     <input 
-                        type={STEPS[step].key === "password" ? (showPassword ? "text" : "password") : STEPS[step].key === "birthdate" ? "date" : "text"}
+                        type={STEPS[step].key === "birthdate" ? "date" : STEPS[step].key === "email" ? "email" : "text"}
+                        inputMode={["cpf", "cep"].includes(STEPS[step].key) ? "numeric" : undefined}
                         className={inputClass}
                         autoFocus
                         value={(formData as any)[STEPS[step].key]}
@@ -195,11 +209,11 @@ const Auth = () => {
                 <MagneticButton variant="secondary" onClick={() => step === 0 ? setStep(-1) : setStep(step - 1)}>
                    <ArrowLeft size={18}/> {step === 0 ? "Login" : "Voltar"}
                 </MagneticButton>
-                <MagneticButton className="flex-1 justify-center" onClick={handleNextStep} disabled={isLoading}>
+                <MagneticButton type="submit" className="flex-1 justify-center" disabled={isLoading}>
                    {step === STEPS.length - 1 ? <><Check size={18}/> Finalizar</> : <><ArrowRight size={18}/> Próximo</>}
                 </MagneticButton>
               </div>
-            </div>
+            </form>
           )}
 
         </div>
