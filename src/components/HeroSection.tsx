@@ -57,7 +57,7 @@ const HeroSection = () => {
       </AnimatePresence>
 
       {/* Content */}
-      <div className="container mx-auto relative z-10 px-4 py-24 md:py-32 lg:py-40">
+      <div className="container mx-auto relative z-10 px-6 sm:px-10 md:px-16 lg:px-24 py-24 md:py-32 lg:py-40 flex flex-col justify-center h-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
@@ -79,7 +79,7 @@ const HeroSection = () => {
                 transition: { duration: 0.4 },
               },
             }}
-            className="max-w-3xl"
+            className="max-w-2xl text-left"
           >
             <motion.h1
               variants={{
@@ -96,7 +96,7 @@ const HeroSection = () => {
                 hidden: { opacity: 0, y: 20 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
               }}
-              className="fluid-body text-primary-foreground/90 mb-10 max-w-xl leading-relaxed"
+              className="fluid-body text-primary-foreground/90 mb-10 max-w-lg leading-relaxed"
             >
               {slides[current].subtitle}
             </motion.p>
