@@ -144,7 +144,7 @@ const Header = () => {
             >
               <LogIn size={18} />
             </motion.span>
-            Entrar
+            Acessar
           </motion.button>
 
           {/* Mobile menu toggle */}
@@ -183,7 +183,7 @@ const Header = () => {
                 className="btn-raspberry-serasa mt-2 flex items-center justify-center gap-2"
               >
                 <LogIn size={18} />
-                Entrar
+                Acessar
               </motion.button>
             </div>
           </motion.nav>

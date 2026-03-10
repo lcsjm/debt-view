@@ -82,7 +82,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    nav('/login');
+    nav('/');
   };
 
   return (
