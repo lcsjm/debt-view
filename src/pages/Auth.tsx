@@ -1,17 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
-import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, CornerDownLeft } from "lucide-react";
-import supabase  from "../../utils/supabase" 
-export type User = {
-        email?: string;
-        pass?: string;
-      }
+import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, CornerDownLeft, LogIn, UserPlus } from "lucide-react";
+import supabase from "../../utils/supabase";
 
-// é preciso realocar, separar Auth e Profile
-
-
+// --- CONFIGURAÇÕES E MÁSCARAS (Mantendo seu original) ---
 const STEPS = [
   { key: "email", label: "Email", required: true },
   { key: "password", label: "Senha", required: true },
@@ -26,102 +19,37 @@ const STEPS = [
 const GENDER_OPTIONS = ["Masculino", "Feminino", "Não-binário"];
 const RACE_OPTIONS = ["Parda", "Preta", "Branca", "Indígena", "Amarela"];
 
-function maskCPF(v: string) {
-  return v
-    .replace(/\D/g, "")
-    .slice(0, 11)
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-}
+function maskCPF(v: string) { return v.replace(/\D/g, "").slice(0, 11).replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2"); }
+function maskCEP(v: string) { return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2"); }
 
-function maskCEP(v: string) {
-  return v
-    .replace(/\D/g, "")
-    .slice(0, 8)
-    .replace(/(\d{5})(\d)/, "$1-$2");
-}
-
-const MagneticButton = ({
-  children,
-  onClick,
-  disabled,
-  variant = "primary",
-  className = "",
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-  variant?: "primary" | "secondary";
-  className?: string;
-}) => {
+// --- COMPONENTE DE BOTÃO MAGNÉTICO (Seu original) ---
+const MagneticButton = ({ children, onClick, disabled, variant = "primary", className = "", type = "button" }: any) => {
   const ref = useRef<HTMLButtonElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (disabled || !ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = (e.clientX - cx) * 0.25;
-      const dy = (e.clientY - cy) * 0.25;
-      setOffset({ x: dx, y: dy });
-    },
-    [disabled]
-  );
-
-  const handleMouseLeave = () => setOffset({ x: 0, y: 0 });
-
-  const base =
-    variant === "primary"
-      ? "bg-gradient-to-r from-[#E80070] to-[#C1188B] text-white shadow-lg shadow-[#E80070]/30"
-      : "bg-white/10 border border-white/30 text-white/90 hover:bg-white/20";
-
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (disabled || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const dx = (e.clientX - (rect.left + rect.width / 2)) * 0.25;
+    const dy = (e.clientY - (rect.top + rect.height / 2)) * 0.25;
+    setOffset({ x: dx, y: dy });
+  }, [disabled]);
+  const base = variant === "primary" ? "bg-gradient-to-r from-[#E80070] to-[#C1188B] text-white shadow-lg shadow-[#E80070]/30" : "bg-white/10 border border-white/30 text-white/90 hover:bg-white/20";
   return (
-    <button
-      ref={ref}
-      onClick={onClick}
-      disabled={disabled}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className={`px-6 py-3 rounded-xl font-semibold transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 ${base} ${className}`}
-      style={{
-        transform: `translate(${offset.x}px, ${offset.y}px)`,
-      }}
-    >
-      {children}
-    </button>
+    <button type={type} ref={ref} onClick={onClick} disabled={disabled} onMouseMove={handleMouseMove} onMouseLeave={() => setOffset({ x: 0, y: 0 })}
+      className={`px-6 py-3 rounded-xl font-semibold transition-all duration-150 active:scale-95 disabled:opacity-40 flex items-center gap-2 ${base} ${className}`}
+      style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+    >{children}</button>
   );
 };
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(-1); // -1 será a nossa tela de LOGIN
   const [showPassword, setShowPassword] = useState(false);
-  const [entered, setEntered] = useState(false);
-  const [slideDir, setSlideDir] = useState<"left" | "right">("left");
   const [animating, setAnimating] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    name: "",
-    cpf: "",
-    cep: "",
-    birthdate: "",
-    gender: "",
-    race: "",
-  });
-
+  const [formData, setFormData] = useState({ email: "", password: "", name: "", cpf: "", cep: "", birthdate: "", gender: "", race: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const t = setTimeout(() => setEntered(true), 50);
-    return () => clearTimeout(t);
-  }, []);
 
   const updateField = (key: string, value: string) => {
     let v = value;
@@ -131,400 +59,149 @@ const Auth = () => {
     setErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
-  const activeSteps = isLogin ? STEPS.slice(0, 2) : STEPS;
-
-  const validate = (): boolean => {
-    const s = activeSteps[step];
-    const val = formData[s.key as keyof typeof formData];
-    if (s.required && !val.trim()) {
-      setErrors({ [s.key]: "Este campo é obrigatório" });
-      return false;
-    }
-    if (s.key === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-      setErrors({ email: "Email inválido" });
-      return false;
-    }
-    if (s.key === "password" && val.length < 8) {
-      setErrors({ password: "Mínimo 8 caracteres" });
-      return false;
-    }
-    return true;
-  };
-
-  const goTo = (next: number) => {
-    if (animating) return;
-    setSlideDir(next > step ? "left" : "right");
-    setAnimating(true);
-    setTimeout(() => {
-      setStep(next);
-      setTimeout(() => setAnimating(false), 50);
-    }, 300);
-  };
-
-  const handleNext = async () => {
-    if (!validate()) return;
-
-    if (step === 0) {
-      setIsLoading(true);
-      const { data, error } = await supabase.rpc('check_user_exists', { user_email: formData.email });
-      setIsLoading(false);
-
-      if (error) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível verificar o email. Tente novamente.",
-        });
-        return;
-      }
-      
-      setIsLogin(!!data);
-      goTo(step + 1);
-      return;
-    }
-
-    if (step < activeSteps.length - 1) {
-      goTo(step + 1);
+  // --- LÓGICA DE LOGIN ---
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    });
+    if (error) {
+      toast({ title: "Erro", description: "Login inválido: " + error.message, variant: "destructive" });
     } else {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
+      toast({ title: "Bem-vindo!", description: "Login realizado." });
+      navigate("/dash");
+    }
+    setIsLoading(false);
+  };
 
-        if (error) {
-          toast({
-            title: "Erro",
-            description: "Erro ao realizar o login: " + error.message,
-          });
-          return;
-        }
-
-        toast({
-          title: "Login realizado!",
-          description: "Bem-vindo de volta.",
-        });
-
-        setTimeout(() => navigate("/dash"), 1500);
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (error) {
-          toast({
-            title: "Erro",
-            description: "Erro ao realizar o cadastro: " + error.message,
-          });
-          return;
-        }
-        
-        toast({
-          title: "Cadastro realizado!",
-          description: "Sua conta foi criada com sucesso.",
-        });
-
-        setTimeout(() => navigate("/dash"), 1500);
-      }
+  // --- LÓGICA DE CADASTRO (Seu original adaptado) ---
+  const handleNextStep = async () => {
+    // Validação simples
+    const currentStep = STEPS[step];
+    if (currentStep?.required && !formData[currentStep.key as keyof typeof formData]) {
+        setErrors({ [currentStep.key]: "Campo obrigatório" });
+        return;
     }
 
-
-  
-  
-  
-  };
-
-  const handleBack = () => {
-    if (step > 0) goTo(step - 1);
-    else navigate("/");
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (animating || !entered) return;
-      if (e.target instanceof HTMLButtonElement) return;
-
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleNext();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        handleBack();
+    if (step < STEPS.length - 1) {
+      setAnimating(true);
+      setTimeout(() => { setStep(step + 1); setAnimating(false); }, 300);
+    } else {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: { data: { full_name: formData.name, cpf: formData.cpf, gender: formData.gender, race: formData.race } }
+      });
+      if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
+      else {
+        toast({ title: "Sucesso!", description: "Cadastro realizado." });
+        navigate("/dash");
       }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  });
-
-  const progress = ((step + 1) / activeSteps.length) * 100;
-  const currentStep = activeSteps[step];
-  const currentVal = formData[currentStep.key as keyof typeof formData];
-  const error = errors[currentStep.key];
-
-  const inputClass =
-    "w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#E80070]/60 focus:border-transparent backdrop-blur-sm transition-all";
-
-  const renderField = () => {
-    const slideClass = animating
-      ? slideDir === "left"
-        ? "opacity-0 translate-x-8"
-        : "opacity-0 -translate-x-8"
-      : "opacity-100 translate-x-0";
-
-    return (
-      <div
-        className={`transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${slideClass}`}
-        key={step}
-      >
-        <label
-          className="block text-white/70 text-sm font-medium mb-2"
-          style={{ fontSize: "clamp(0.8rem, 1.5vw, 0.95rem)" }}
-        >
-          {currentStep.label}
-          {currentStep.required && (
-            <span className="text-[#E80070] ml-1">*</span>
-          )}
-        </label>
-
-        {currentStep.key === "email" && (
-          <input
-            type="email"
-            className={inputClass}
-            placeholder="seu@email.com"
-            value={currentVal}
-            onChange={(e) => updateField("email", e.target.value)}
-            autoFocus
-          />
-        )}
-
-        {currentStep.key === "password" && (
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              className={inputClass}
-              placeholder="Mínimo 6 caracteres"
-              value={currentVal}
-              onChange={(e) => updateField("password", e.target.value)}
-              autoFocus
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-        )}
-
-        {currentStep.key === "name" && (
-          <input
-            type="text"
-            className={inputClass}
-            placeholder="Seu nome completo"
-            value={currentVal}
-            onChange={(e) => updateField("name", e.target.value)}
-            autoFocus
-          />
-        )}
-
-        {currentStep.key === "cpf" && (
-          <input
-            type="text"
-            className={inputClass}
-            placeholder="000.000.000-00"
-            value={currentVal}
-            onChange={(e) => updateField("cpf", e.target.value)}
-            autoFocus
-          />
-        )}
-
-        {currentStep.key === "cep" && (
-          <input
-            type="text"
-            className={inputClass}
-            placeholder="00000-000"
-            value={currentVal}
-            onChange={(e) => updateField("cep", e.target.value)}
-            autoFocus
-          />
-        )}
-
-        {currentStep.key === "birthdate" && (
-          <input
-            type="date"
-            className={`${inputClass} [color-scheme:dark]`}
-            value={currentVal}
-            onChange={(e) => updateField("birthdate", e.target.value)}
-            autoFocus
-          />
-        )}
-
-        {currentStep.key === "gender" && (
-          <div className="flex flex-col gap-3">
-            {GENDER_OPTIONS.map((opt) => (
-              <label
-                key={opt}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${currentVal === opt
-                    ? "bg-[#E80070]/20 border-[#E80070]/60 text-white"
-                    : "bg-white/5 border-white/20 text-white/70 hover:bg-white/10"
-                  }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${currentVal === opt
-                      ? "border-[#E80070] bg-[#E80070]"
-                      : "border-white/40"
-                    }`}
-                >
-                  {currentVal === opt && (
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  )}
-                </div>
-                <input
-                  type="radio"
-                  name="gender"
-                  value={opt}
-                  checked={currentVal === opt}
-                  onChange={(e) => updateField("gender", e.target.value)}
-                  className="sr-only"
-                />
-                {opt}
-              </label>
-            ))}
-          </div>
-        )}
-
-        {currentStep.key === "race" && (
-          <div className="flex flex-col gap-3">
-            {RACE_OPTIONS.map((opt) => (
-              <label
-                key={opt}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${currentVal === opt
-                    ? "bg-[#E80070]/20 border-[#E80070]/60 text-white"
-                    : "bg-white/5 border-white/20 text-white/70 hover:bg-white/10"
-                  }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${currentVal === opt
-                      ? "border-[#E80070] bg-[#E80070]"
-                      : "border-white/40"
-                    }`}
-                >
-                  {currentVal === opt && (
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  )}
-                </div>
-                <input
-                  type="radio"
-                  name="race"
-                  value={opt}
-                  checked={currentVal === opt}
-                  onChange={(e) => updateField("race", e.target.value)}
-                  className="sr-only"
-                />
-                {opt}
-              </label>
-            ))}
-          </div>
-        )}
-
-        {error && (
-          <p className="text-[#E80070] text-sm mt-2 animate-fade-in">{error}</p>
-        )}
-      </div>
-    );
+      setIsLoading(false);
+    }
   };
+
+  const inputClass = "w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[#E80070] outline-none transition-all";
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center overflow-hidden relative">
-      {/* Animated dark gradient background */}
-      <div className="absolute inset-0 auth-gradient-bg bg-slate-800" />
+    <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 relative overflow-hidden">
+      {/* Background decorativo */}
+      <div className="absolute inset-0 auth-gradient-bg opacity-50" />
+      
+      <div className="relative z-10 w-full max-w-md mx-4 transition-all duration-500">
+        <div className="backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl p-8 shadow-2xl">
+          
+          {step === -1 ? (
+            /* --- TELA DE LOGIN --- */
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Acessar</h1>
+                <p className="text-white/50">Bem-vindo de volta!</p>
+              </div>
 
-      {/* Subtle floating orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute w-96 h-96 rounded-full bg-[#77127B]/20 blur-3xl -top-48 -left-48 animate-[float_20s_ease-in-out_infinite]" />
-        <div className="absolute w-80 h-80 rounded-full bg-[#1D4F91]/20 blur-3xl -bottom-40 -right-40 animate-[float_25s_ease-in-out_infinite_reverse]" />
-        <div className="absolute w-64 h-64 rounded-full bg-[#E80070]/10 blur-3xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-[float_15s_ease-in-out_infinite]" />
-      </div>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <input type="email" placeholder="Email" className={inputClass} required
+                  value={formData.email} onChange={(e) => updateField("email", e.target.value)} />
+                
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} placeholder="Senha" className={inputClass} required
+                    value={formData.password} onChange={(e) => updateField("password", e.target.value)} />
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
 
-      {/* Glassmorphism card with spring entry */}
-      <div
-        className={`relative z-10 w-full max-w-md mx-4 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${entered
-            ? "opacity-100 scale-100"
-            : "opacity-0 scale-90"
-          }`}
-      >
-        <div className="backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl p-8 shadow-2xl shadow-black/40">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1
-              className="font-bold text-white mb-2"
-              style={{ fontSize: "clamp(1.5rem, 4vw, 2.2rem)" }}
-            >
-              {step === 0 ? "Acessar" : isLogin ? "Bem-vindo de volta" : "Criar Conta"}
-            </h1>
-            <p
-              className="text-white/50 mb-4"
-              style={{ fontSize: "clamp(0.8rem, 2vw, 0.95rem)" }}
-            >
-              {step === 0 ? "Digite seu email para continuar" : `Passo ${step + 1} de ${activeSteps.length}`}
-            </p>
-          </div>
+                <MagneticButton type="submit" className="w-full justify-center" disabled={isLoading}>
+                  {isLoading ? "Entrando..." : <><LogIn size={18}/> Entrar</>}
+                </MagneticButton>
+              </form>
 
-          {/* Progress bar */}
-          <div className="mb-8">
-            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#E80070] to-[#C1188B] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                style={{ width: `${progress}%` }}
-              />
+              <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                <button onClick={() => setStep(0)} className="text-white/50 hover:text-[#E80070] transition-colors flex items-center justify-center gap-2 w-full">
+                  Não tem conta? <strong className="text-white">Cadastre-se aqui</strong> <UserPlus size={16}/>
+                </button>
+              </div>
             </div>
-            {/* Step dots */}
-            <div className="flex justify-between mt-3">
-              {STEPS.map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i <= step
-                      ? "bg-[#E80070] scale-100"
-                      : "bg-white/20 scale-75"
-                    }`}
-                />
-              ))}
+          ) : (
+            /* --- TELA DE CADASTRO (O SEU MULTI-STEP) --- */
+            <div className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-white">Criar Conta</h2>
+                <p className="text-white/40 text-sm">Passo {step + 1} de {STEPS.length}</p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full h-1 bg-white/10 rounded-full mb-8 overflow-hidden">
+                <div className="h-full bg-[#E80070] transition-all duration-500" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+              </div>
+
+              <div className="min-h-[120px]">
+                <label className="block text-white/70 text-sm mb-2">{STEPS[step].label}</label>
+                {/* Renderização dinâmica baseada no seu código original */}
+                {STEPS[step].key === "gender" ? (
+                    <div className="flex flex-col gap-2">
+                        {GENDER_OPTIONS.map(opt => (
+                            <button key={opt} onClick={() => updateField("gender", opt)} 
+                                className={`p-3 rounded-xl border text-left transition-all ${formData.gender === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                ) : STEPS[step].key === "race" ? (
+                    <div className="flex flex-col gap-2">
+                        {RACE_OPTIONS.map(opt => (
+                            <button key={opt} onClick={() => updateField("race", opt)} 
+                                className={`p-3 rounded-xl border text-left transition-all ${formData.race === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <input 
+                        type={STEPS[step].key === "password" ? (showPassword ? "text" : "password") : STEPS[step].key === "birthdate" ? "date" : "text"}
+                        className={inputClass}
+                        autoFocus
+                        value={(formData as any)[STEPS[step].key]}
+                        onChange={(e) => updateField(STEPS[step].key, e.target.value)}
+                    />
+                )}
+                {errors[STEPS[step].key] && <p className="text-[#E80070] text-xs mt-2">{errors[STEPS[step].key]}</p>}
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <MagneticButton variant="secondary" onClick={() => step === 0 ? setStep(-1) : setStep(step - 1)}>
+                   <ArrowLeft size={18}/> {step === 0 ? "Login" : "Voltar"}
+                </MagneticButton>
+                <MagneticButton className="flex-1 justify-center" onClick={handleNextStep} disabled={isLoading}>
+                   {step === STEPS.length - 1 ? <><Check size={18}/> Finalizar</> : <><ArrowRight size={18}/> Próximo</>}
+                </MagneticButton>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Field area */}
-          <div className="min-h-[180px] flex flex-col justify-center">
-            {renderField()}
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex items-center justify-between mt-8 gap-4">
-            <MagneticButton variant="secondary" onClick={handleBack} disabled={isLoading}>
-              <ArrowLeft size={18} />
-              {step > 0 ? "Voltar" : "Início"}
-              <span className="text-xs opacity-50 ml-1 whitespace-nowrap">(Esc)</span>
-            </MagneticButton>
-
-            <MagneticButton onClick={handleNext} disabled={isLoading}>
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1" />
-              ) : step === activeSteps.length - 1 ? (
-                <>
-                  Finalizar
-                  <Check size={18} />
-                  <CornerDownLeft size={16} className="opacity-70 ml-1" />
-                </>
-              ) : (
-                <>
-                  Próximo
-                  <ArrowRight size={18} />
-                  <CornerDownLeft size={16} className="opacity-70 ml-1" />
-                </>
-              )}
-            </MagneticButton>
-          </div>
         </div>
       </div>
     </div>
