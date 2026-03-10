@@ -5,7 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import { Pencil, Check } from "lucide-react";
 import { E } from "vitest/dist/chunks/environment.d.cL3nLXbE.js";
 
-export default function Resultado() {
+export default function Dashboard() {
   const [editMode, setEditMode] = useState(false);
 
   // Estado unificado para todas as finanças

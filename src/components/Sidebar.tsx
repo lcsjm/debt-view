@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useChat } from "@/components/chat-context";
+import supabase from "../../utils/supabase";
 
 // Componente para o efeito magnético nos ícones
 const MagneticIcon = ({ 
@@ -79,9 +80,8 @@ const Sidebar = () => {
     el?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleLogout = () => {
-    // Adicione aqui sua lógica de logout (ex: remover token, limpar storage)
-    console.log("Saindo...");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     nav('/login');
   };
 

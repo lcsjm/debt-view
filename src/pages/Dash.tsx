@@ -14,7 +14,7 @@ export default function Dash() {
       if (session) {
         setUser(session.user);
       } else {
-        navigate("/auth");
+        navigate("/login");
       }
     });
 
