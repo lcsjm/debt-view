@@ -43,8 +43,7 @@ const Login = () => {
     if (error) {
       toast({ title: "Erro", description: "Login inválido: " + error.message, variant: "destructive" });
     } else {
-      toast({ title: "Bem-vindo!", description: "Login realizado." });
-      navigate("/Dash");
+      navigate("/dashboard");
     }
     setIsLoading(false);
   };

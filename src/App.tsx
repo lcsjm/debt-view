@@ -9,7 +9,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import About from "./pages/About";
 import Dashboard from "./pages/dashboard";
-import Dash from "./pages/Dash";
 import Debts from "./pages/Debts";
 import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -48,10 +47,6 @@ const App = () => (
                   <Register />
                 </AuthRoute>
               } />
-              <Route path='/dash' element={
-              <ProtectedRoute>
-                <Dash />
-             </ProtectedRoute>} />
               <Route path='/about' element={<About />} />
               <Route path='/debts' element={
                 <ProtectedRoute>

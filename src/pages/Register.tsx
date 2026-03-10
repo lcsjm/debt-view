@@ -76,8 +76,7 @@ const Register = () => {
       });
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else {
-        toast({ title: "Sucesso!", description: "Cadastro realizado." });
-        navigate("/Dash");
+        navigate("/dashboard");
       }
       setIsLoading(false);
     }
