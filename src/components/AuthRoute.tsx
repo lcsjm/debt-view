@@ -10,7 +10,7 @@ export default function AuthRoute({ children }: { children: ReactNode }) {
   }
 
   if (user) {
-    return <Navigate to="/dash" replace />;
+    return <Navigate to="/resultado" replace />;
   }
 
   return <>{children}</>;
