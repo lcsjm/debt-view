@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import "../App.css";
 
 export type Debts = {
-  credor?: string;
-  valorOriginal?: number;
-  valorAttJuros?: number;
-  taxaJuros?: number;
-  dataVenc?: string;
+  creditor?: string;
+  type?: string;
+  value?: number;
+  amount?: number;
+  rate?: number;
+  date?: string;
   status?: string;
 };
 
@@ -44,41 +45,48 @@ export default function Debts() {
         <p>Digite o seu credor</p>
         <input
           type="text"
-          value={debts.credor ?? ""}
-          onChange={(e) => setDebts({ ...debts, credor: e.target.value })}
+          value={debts.creditor ?? ""}
+          onChange={(e) => setDebts({ ...debts, creditor: e.target.value })}
+        />
+
+        <p>Digite o tipo da sua dívida</p>
+        <input
+          type="text"
+          value={debts.type ?? ""}
+          onChange={(e) => setDebts({ ...debts, type: e.target.value })}
         />
 
         <p>Digite o valor da sua dívida</p>
         <input
           type="number"
-          value={debts.valorOriginal ?? ""}
+          value={debts.value ?? ""}
           onChange={(e) =>
-            setDebts({ ...Debts, valorOriginal: parseFloat(e.target.value) })
+            setDebts({ ...Debts, value: parseFloat(e.target.value) })
           }
         />
 
         <p>Digite o valor atual do juros aplicado a sua dívida</p>
         <input
           type="number"
-          value={debts.valorAttJuros ?? ""}
+          value={debts.amount ?? ""}
           onChange={(e) =>
-            setDebts({ ...debts, valorAttJuros: parseFloat(e.target.value) })
+            setDebts({ ...debts, amount: parseFloat(e.target.value) })
           }
         />
 
         <p>Digite a taxa de juros aplicada a sua dívida</p>
         <input
           type="number"
-          value={debts.taxaJuros ?? ""}
+          value={debts.rate ?? ""}
           onChange={(e) =>
-            setDebts({ ...debts, taxaJuros: parseFloat(e.target.value) })
+            setDebts({ ...debts, rate: parseFloat(e.target.value) })
           }
         />
 
         <p>Digite a data de vencimento da sua dívida</p>
         <input
           type="date"
-          onChange={(e) => setDebts({ ...debts, dataVenc: e.target.value })}
+          onChange={(e) => setDebts({ ...debts, date: e.target.value })}
         />
 
         <p>Digite o status da sua dívida</p>
@@ -91,7 +99,7 @@ export default function Debts() {
         <div>
           <button
             onClick={() => {
-              if (!debts.credor) {
+              if (!debts.creditor) {
                 showToast("Informe o credor!");
                 return;
               }
