@@ -8,7 +8,8 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import About from "./pages/About";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/dashboard";
+import FinancePage from "./pages/FinancePage";
 import Debts from "./pages/Debts";
 import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -48,6 +49,7 @@ const App = () => (
                 </AuthRoute>
               } />
               <Route path='/about' element={<About />} />
+               <Route path='/FinancePage' element={<FinancePage />} />
               <Route path='/debts' element={
                 <ProtectedRoute>
                 <Debts />
