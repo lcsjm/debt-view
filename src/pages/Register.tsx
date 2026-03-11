@@ -187,8 +187,9 @@ const Register = () => {
             
             {step === 0 && (
               <div className="mt-4 text-center">
-                <button type="button" onClick={() => navigate("/login")} className="text-white/50 hover:text-white text-sm transition-colors">
-                  Já tem conta? Entrar
+                <button type="button" onClick={() => navigate("/login")} className="text-white/50">
+                  Já possui uma conta? 
+                  <strong className="text-white hover:text-[#E80070] transition-colors"> Entrar</strong>
                 </button>
               </div>
             )}

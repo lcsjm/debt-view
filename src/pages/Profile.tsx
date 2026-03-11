@@ -1,4 +1,6 @@
-import { useState } from "react"
+import { useState } from "react";
+import supabase from "utils/supabase";
+import { useAuth } from "../context/AuthContext";
 
 export type Profile = {
     name?: string,
@@ -10,8 +12,22 @@ export type Profile = {
 }
 
 export default function Profile (){
+    const {user, signOutUser} = useAuth
 // Variável que recebe um tipo própio é um objeto
     const [prof, setProf] = useState<Profile>({});
+
+    async function handleProfile(){
+        const data = {...prof, user_id: user?.id}
+        const {error} = await supabase.from('profiles').insert(data);
+
+        if (error){
+            alert(error.message);
+            return
+        }
+
+        alert ('Cadastrado com sucesso')
+    }
+
     return (
         <>
             <input 
@@ -58,7 +74,7 @@ export default function Profile (){
                 value={prof.race}
                 onChange={(e) => setProf({...prof, race: e.target.value})}/>
             
-      
+            < button onClick={handleProfile}>Cadastrar</button>
         </>
     )
 }
