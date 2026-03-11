@@ -1,6 +1,7 @@
 import { AlertTriangle, Calendar, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useSerasa } from "../hooks/useSerasa";
 
 const subscriptions = [
   { name: "Netflix", price: 39.9, active: true },
@@ -14,14 +15,26 @@ export function MoneyDrain() {
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   const [noSpendDays, setNoSpendDays] = useState<number[]>([3, 7, 12, 15, 18]);
 
+  const { debts, isLoading } = useSerasa();
+
   const toggleDay = (day: number) => {
     setNoSpendDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
   };
 
-  const totalJuros = 342;
+  // 3% average interest rate applied to current debts for visual estimate
+  const totalDebtAmount = debts?.reduce((acc, curr) => acc + Number(curr.current_amount || 0), 0) || 0;
+  const totalJuros = totalDebtAmount * 0.03;
   const cestasBasicas = Math.floor(totalJuros / 120);
+
+  if (isLoading) {
+      return (
+          <div className="w-full h-32 flex items-center justify-center bg-card rounded-xl border border-border">
+              <p className="text-muted-foreground animate-pulse">Carregando painel de vazamentos...</p>
+          </div>
+      )
+  }
 
   return (
     <section className="space-y-4">

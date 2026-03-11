@@ -69,16 +69,44 @@ const Register = () => {
       setTimeout(() => { setStep(step + 1); setAnimating(false); }, 300);
     } else {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: { data: { full_name: formData.name, cpf: formData.cpf, gender: formData.gender, race: formData.race } }
-      });
-      if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else {
+      try {
+        const cleanCpf = formData.cpf.replace(/\D/g, "");
+        const cleanCep = formData.cep.replace(/\D/g, "");
+
+        const { data, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: { full_name: formData.name, cpf: cleanCpf, gender: formData.gender, race: formData.race }
+          }
+        });
+
+        if (authError) throw authError;
+
+        if (data.user) {
+          const { error: profileError } = await supabase.from('profiles').insert({
+            user_id: data.user.id,
+            name: formData.name,
+            cpf: cleanCpf,
+            cep: cleanCep,
+            birth: formData.birthdate,
+            gender: formData.gender,
+            race: formData.race
+          });
+
+          if (profileError) {
+             console.error("Profile insertion error details:", profileError);
+             throw new Error(`Falha ao salvar perfil: ${profileError.message}`);
+          }
+        }
+
+        toast({ title: "Sucesso!", description: "Sua conta foi criada. Entrando..." });
         navigate("/dashboard");
+      } catch (err: any) {
+        toast({ title: "Erro no Cadastro", description: err.message, variant: "destructive" });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
   };
 

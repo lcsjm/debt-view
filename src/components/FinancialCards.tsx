@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useFinances } from "../hooks/useFinances";
+import { toast } from "@/hooks/use-toast";
 import { Pencil, X, Check, Landmark, TrendingUp, Receipt, ShoppingCart, CreditCard, PiggyBank } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -11,35 +13,62 @@ interface CardData {
 }
 
 const defaultCards: CardData[] = [
-  { id: "renda-fixa", label: "Renda Fixa", value: 3500, icon: Landmark, colorClass: "bg-primary" },
-  { id: "renda-variavel", label: "Renda Variável", value: 1200, icon: TrendingUp, colorClass: "bg-secondary" },
-  { id: "gastos-fixos", label: "Gastos Fixos", value: 2100, icon: Receipt, colorClass: "bg-accent" },
-  { id: "gastos-variaveis", label: "Gastos Variáveis", value: 800, icon: ShoppingCart, colorClass: "bg-brand-magenta" },
-  { id: "dividas", label: "Dívidas", value: 5400, icon: CreditCard, colorClass: "bg-destructive" },
-  { id: "investimentos", label: "Investimentos", value: 950, icon: PiggyBank, colorClass: "bg-brand-purple" },
+  { id: "fixed_income", label: "Renda Fixa", value: 0, icon: Landmark, colorClass: "bg-primary" },
+  { id: "variable_income", label: "Renda Variável", value: 0, icon: TrendingUp, colorClass: "bg-secondary" },
+  { id: "fixed_expense", label: "Gastos Fixos", value: 0, icon: Receipt, colorClass: "bg-accent" },
+  { id: "variable_expense", label: "Gastos Variáveis", value: 0, icon: ShoppingCart, colorClass: "bg-brand-magenta" },
+  { id: "debts", label: "Dívidas", value: 0, icon: CreditCard, colorClass: "bg-destructive" },
+  { id: "investments", label: "Investimentos", value: 0, icon: PiggyBank, colorClass: "bg-brand-purple" },
 ];
 
 export function FinancialCards() {
-  const [cards, setCards] = useState<CardData[]>(defaultCards);
+  const { finances, isLoading, saveFinances, isSaving } = useFinances();
+
   const [editing, setEditing] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
 
+  // Merge hook data into the default structure mapping
+  const currentCards = defaultCards.map(card => ({
+    ...card,
+    value: finances ? (finances[card.id as keyof typeof finances] as number || 0) : 0
+  }));
+
   const startEditing = () => {
     const values: Record<string, string> = {};
-    cards.forEach((c) => (values[c.id] = c.value.toString()));
+    currentCards.forEach((c) => (values[c.id] = c.value.toString()));
     setEditValues(values);
     setEditing(true);
   };
 
-  const saveEditing = () => {
-    setCards((prev) =>
-      prev.map((c) => ({ ...c, value: parseFloat(editValues[c.id]) || 0 }))
-    );
-    setEditing(false);
+  const saveEditing = async () => {
+    try {
+        const payload: any = {};
+        Object.keys(editValues).forEach(key => {
+            payload[key] = parseFloat(editValues[key]) || 0;
+        });
+        
+        // Preserve any existing ID / metadata not explicitly in cards
+        const fullPayload = { ...finances, ...payload };
+        
+        await saveFinances(fullPayload);
+        toast({ title: "Finanças atualizadas", description: "Seus dados foram salvos com sucesso!" });
+    } catch (e: any) {
+        toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
+    } finally {
+        setEditing(false);
+    }
   };
 
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  if (isLoading) {
+      return (
+          <div className="w-full h-32 flex items-center justify-center">
+              <p className="text-muted-foreground animate-pulse">Carregando painel financeiro...</p>
+          </div>
+      )
+  }
 
   return (
     <section className="space-y-4">
@@ -49,12 +78,15 @@ export function FinancialCards() {
         </h1>
         <button
           onClick={editing ? saveEditing : startEditing}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          disabled={isSaving}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {editing ? (
-            <>
-              <Check className="w-4 h-4" /> Salvar
-            </>
+             isSaving ? (
+                <>Salvando...</>
+             ) : (
+                <><Check className="w-4 h-4" /> Salvar</>
+             )
           ) : (
             <>
               <Pencil className="w-4 h-4" /> Editar
@@ -64,7 +96,7 @@ export function FinancialCards() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards.map((card, i) => (
+        {currentCards.map((card, i) => (
           <motion.div
             key={card.id}
             initial={{ opacity: 0, y: 20 }}

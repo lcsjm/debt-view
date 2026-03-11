@@ -1,13 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
-const pieData = [
-  { name: "Renda Fixa", value: 3500, color: "#1D4F91" },
-  { name: "Renda Variável", value: 1200, color: "#426DA9" },
-  { name: "Gastos Fixos", value: 2100, color: "#77127B" },
-  { name: "Gastos Variáveis", value: 800, color: "#C1188B" },
-  { name: "Dívidas", value: 5400, color: "#E80070" },
-  { name: "Investimentos", value: 950, color: "#1D4F91" },
-];
+import { useFinances } from "../hooks/useFinances";
 
 const barData = [
   { month: "Jan", receita: 4700, despesa: 3200 },
@@ -19,6 +12,30 @@ const barData = [
 ];
 
 export function ChartsSection() {
+  const { finances, isLoading } = useFinances();
+
+  const pieData = [
+    { name: "Renda Fixa", value: finances?.fixed_income || 0, color: "#1D4F91" },
+    { name: "Renda Variável", value: finances?.variable_income || 0, color: "#426DA9" },
+    { name: "Gastos Fixos", value: finances?.fixed_expense || 0, color: "#77127B" },
+    { name: "Gastos Variáveis", value: finances?.variable_expense || 0, color: "#C1188B" },
+    { name: "Dívidas", value: finances?.debts || 0, color: "#E80070" },
+    { name: "Investimentos", value: finances?.investments || 0, color: "#1D4F91" },
+  ];
+
+  if (isLoading) {
+    return (
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 opacity-50 pointer-events-none">
+            {/* Skeletons while loading */}
+            <div className="bg-card rounded-xl p-6 shadow-card border border-border h-[400px] flex items-center justify-center">
+                <p className="animate-pulse">Carregando Gráficos...</p>
+            </div>
+            <div className="bg-card rounded-xl p-6 shadow-card border border-border h-[400px] flex items-center justify-center">
+                <p className="animate-pulse">Carregando Gráficos...</p>
+            </div>
+        </section>
+    )
+  }
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Pie Chart */}
