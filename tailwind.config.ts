@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ["Inter", "sans-serif"],
-        body: ["Inter", "sans-serif"],
+        heading: ["DIN Next", "Roboto", "Arial", "sans-serif"],
+        body: ["DIN Next", "Roboto", "Arial", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -61,6 +61,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        brand: {
+          navy: "hsl(var(--brand-navy))",
+          blue: "hsl(var(--brand-blue))",
+          purple: "hsl(var(--brand-purple))",
+          magenta: "hsl(var(--brand-magenta))",
+          pink: "hsl(var(--brand-pink))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -90,11 +97,16 @@ export default {
           '0%': { backgroundPosition: '0% 50%' },
           '100%': { backgroundPosition: '100% 50%' },
         },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 15s ease-out",
         "accordion-up": "accordion-up 15s ease-out",
         'dynamic-bg': 'moveBg 20s cubic-bezier(0,1.03,1,0) infinite alternate',
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         // cubic-bezier estático: cubic-bezier(0,.48,1,.52)
         // `transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${slideClass}`
       },
