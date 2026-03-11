@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,19 +15,19 @@
     --popover: 0 0% 100%;
     --popover-foreground: 213 66% 15%;
 
-    --primary: 213 66% 34%;
+    --primary: 213 66% 34%; /* original: #1D4F91 approx */
     --primary-foreground: 0 0% 100%;
 
-    --primary-light: 213 43% 46%;
+    --primary-light: 213 43% 46%; /* original: #426DA9 approx */
     --primary-light-foreground: 0 0% 100%;
 
-    --secondary: 298 75% 28%;
+    --secondary: 298 75% 28%; /* original: #77127B approx */
     --secondary-foreground: 0 0% 100%;
 
-    --raspberry: 320 79% 43%;
+    --raspberry: 320 79% 43%; /* original: #C1188B approx */
     --raspberry-foreground: 0 0% 100%;
 
-    --magenta: 331 100% 45%;
+    --magenta: 331 100% 45%; /* original: #E80070 approx */
     --magenta-foreground: 0 0% 100%;
 
     --muted: 220 14% 90%;
@@ -59,6 +59,24 @@
 
     --neu-light: 0 0% 100%;
     --neu-dark: 220 14% 82%;
+
+    /* Brand colors (Lovable) */
+    --brand-navy: 216 67% 34%;
+    --brand-blue: 216 42% 46%;
+    --brand-purple: 290 72% 28%;
+    --brand-magenta: 330 75% 42%;
+    --brand-pink: 340 100% 45%;
+    --brand-white: 0 0% 100%;
+
+    /* Gradients (Lovable) */
+    --gradient-brand: linear-gradient(135deg, hsl(216 67% 34%), hsl(290 72% 28%), hsl(340 100% 45%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 20% 97%));
+    --gradient-accent: linear-gradient(135deg, hsl(290 72% 28%), hsl(340 100% 45%));
+
+    /* Shadows (Lovable) */
+    --shadow-card: 0 1px 3px hsl(216 67% 34% / 0.06), 0 4px 12px hsl(216 67% 34% / 0.04);
+    --shadow-card-hover: 0 4px 16px hsl(216 67% 34% / 0.1), 0 8px 24px hsl(216 67% 34% / 0.06);
+    --shadow-glow: 0 0 20px hsl(340 100% 45% / 0.15);
   }
 
   .dark {
@@ -99,6 +117,11 @@
     --glass-border: 30 50% 50% / 0.2;
     --neu-light: 213 66% 15%;
     --neu-dark: 213 66% 5%;
+
+    /* Adjusted Lovable Dark Gradients/Shadows (optional) */
+    --gradient-card: linear-gradient(145deg, hsl(213 66% 12%), hsl(213 66% 8%));
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.5), 0 4px 12px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 4px 16px hsl(0 0% 0% / 0.6), 0 8px 24px hsl(0 0% 0% / 0.5);
   }
 }
 
@@ -117,7 +140,7 @@
   h4,
   h5,
   h6 {
-    font-family: 'Inter', sans-serif;
+    font-family: 'DIN Next', 'Roboto', 'Arial', sans-serif;
   }
 }
 
@@ -267,6 +290,25 @@
         #0a0e1a 100%);
     background-size: 400% 400%;
     animation: gradientShift 20s ease infinite;
+  }
+
+  .gradient-brand {
+    background: var(--gradient-brand);
+  }
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
   }
 }
 

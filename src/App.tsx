@@ -5,10 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import About from "./pages/About";
-import Resultado from "./pages/Resultado";
-import Dash from "./pages/Dash";
+import Dashboard from "./pages/Dashboard";
 import Debts from "./pages/Debts";
 import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -37,23 +37,24 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
-              <Route path='/auth' element={
+              <Route path='/login' element={
                 <AuthRoute>
-                <Auth />
+                  <Login />
                 </AuthRoute>
-                } />
-              <Route path='/dash' element={
-              <ProtectedRoute>
-                <Dash />
-             </ProtectedRoute>} />
+              } />
+              <Route path='/register' element={
+                <AuthRoute>
+                  <Register />
+                </AuthRoute>
+              } />
               <Route path='/about' element={<About />} />
               <Route path='/debts' element={
                 <ProtectedRoute>
                 <Debts />
                 </ProtectedRoute>} />
-              <Route path='/Resultado' element={
+              <Route path='/dashboard' element={
                 <ProtectedRoute>
-                <Resultado />
+                <Dashboard />
                 </ProtectedRoute>} />
                 </Routes>
               </BrowserRouter>

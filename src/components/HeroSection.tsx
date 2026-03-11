@@ -36,25 +36,24 @@ const HeroSection = () => {
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={current}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
-          className="absolute inset-0 z-0 bg-background"
-        >
-          <img
+      {/* Base background to prevent white flashes during transition */}
+      <div className="absolute inset-0 z-0 bg-background">
+        <AnimatePresence>
+          <motion.img
+            key={current}
             src={slides[current].image}
             alt=""
-            className="w-full h-full object-cover"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full object-cover"
           />
-          {/* Light and dark mode gradient overlays with explicit opacity to fix Tailwind hsl parsing issues */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-transparent opacity-[0.85] dark:opacity-0" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background to-transparent opacity-0 dark:opacity-[0.90]" />
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+        {/* Light and dark mode gradient overlays kept outside animation to maintain consistent opacity */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-transparent opacity-[0.85] dark:opacity-0" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background to-transparent opacity-0 dark:opacity-[0.90]" />
+      </div>
 
       {/* Content */}
       <div className="container mx-auto relative z-10 px-6 sm:px-10 md:px-16 lg:px-24 py-24 md:py-32 lg:py-40 flex flex-col justify-center h-full">
