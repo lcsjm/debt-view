@@ -7,6 +7,7 @@ import supabase from "../../utils/supabase";
 const STEPS = [
   { key: "email", label: "Email", required: true },
   { key: "password", label: "Senha", required: true },
+  { key: "confirmPassword", label: "Confirmar Senha", required: true },
   { key: "name", label: "Nome completo", required: false },
   { key: "cpf", label: "CPF", required: false },
   { key: "cep", label: "CEP", required: false },
@@ -46,7 +47,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "", name: "", cpf: "", cep: "", birthdate: "", gender: "", race: "" });
+  const [formData, setFormData] = useState({ email: "", password: "", confirmPassword: "", name: "", cpf: "", cep: "", birthdate: "", gender: "", race: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const updateField = (key: string, value: string) => {
@@ -64,9 +65,32 @@ const Register = () => {
         return;
     }
 
+    if (currentStep.key === "password") {
+        const hasLength = formData.password.length >= 8;
+        const hasUpper = /[A-Z]/.test(formData.password);
+        const hasNumber = /[0-9]/.test(formData.password);
+        const hasSpecial = /[^A-Za-z0-9]/.test(formData.password);
+        
+        if (!hasLength || !hasUpper || !hasNumber || !hasSpecial) {
+            setErrors({ password: "A senha não atende a todos os requisitos." });
+            return;
+        }
+    }
+
+    if (currentStep.key === "confirmPassword") {
+        if (formData.password !== formData.confirmPassword) {
+            setErrors({ confirmPassword: "As senhas não coincidem." });
+            return;
+        }
+    }
+
     if (step < STEPS.length - 1) {
       setAnimating(true);
-      setTimeout(() => { setStep(step + 1); setAnimating(false); }, 300);
+      setTimeout(() => { 
+        setStep(step + 1); 
+        setShowPassword(false); // Reseta o olhinho entre as etapas
+        setAnimating(false); 
+      }, 300);
     } else {
       setIsLoading(true);
       try {
@@ -131,7 +155,10 @@ const Register = () => {
             </div>
 
             <div className="min-h-[120px]">
-              <label className="block text-white/70 text-sm mb-2">{STEPS[step].label}</label>
+              <label className="block text-white/70 text-sm mb-2">
+                {STEPS[step].label}
+                {STEPS[step].required && <span className="text-[#E80070] ml-1">*</span>}
+              </label>
               {STEPS[step].key === "gender" ? (
                   <div className="flex flex-col gap-2">
                       {GENDER_OPTIONS.map(opt => (
@@ -150,18 +177,29 @@ const Register = () => {
                           </button>
                       ))}
                   </div>
-              ) : STEPS[step].key === "password" ? (
-                  <div className="relative">
-                      <input 
-                          type={showPassword ? "text" : "password"}
-                          className={inputClass}
-                          autoFocus
-                          value={formData.password}
-                          onChange={(e) => updateField("password", e.target.value)}
-                      />
-                      <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors" onClick={() => setShowPassword(!showPassword)}>
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+              ) : STEPS[step].key === "password" || STEPS[step].key === "confirmPassword" ? (
+                  <div>
+                      <div className="relative">
+                          <input 
+                              type={showPassword ? "text" : "password"}
+                              className={inputClass}
+                              autoFocus
+                              value={(formData as any)[STEPS[step].key]}
+                              onChange={(e) => updateField(STEPS[step].key, e.target.value)}
+                          />
+                          <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors" onClick={() => setShowPassword(!showPassword)}>
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                      </div>
+                      
+                      {STEPS[step].key === "password" && (
+                          <div className="mt-4 flex flex-col gap-1 text-sm">
+                              <span className={formData.password.length >= 8 ? "text-green-400" : "text-white/60 transition-colors"}>• Mínimo de 8 caracteres</span>
+                              <span className={/[A-Z]/.test(formData.password) ? "text-green-400" : "text-white/60 transition-colors"}>• Letra maiúscula</span>
+                              <span className={/[0-9]/.test(formData.password) ? "text-green-400" : "text-white/60 transition-colors"}>• Número</span>
+                              <span className={/[^A-Za-z0-9]/.test(formData.password) ? "text-green-400" : "text-white/60 transition-colors"}>• Caractere especial (!, #, @, etc)</span>
+                          </div>
+                      )}
                   </div>
               ) : (
                   <input 

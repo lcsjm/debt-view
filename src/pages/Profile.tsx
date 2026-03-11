@@ -12,7 +12,7 @@ export type Profile = {
 }
 
 export default function Profile (){
-    const {user, signOutUser} = useAuth
+    const {user, signOutUser} = useAuth();
 // Variável que recebe um tipo própio é um objeto
     const [prof, setProf] = useState<Profile>({});
 
