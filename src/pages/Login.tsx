@@ -54,9 +54,9 @@ const Login = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 relative overflow-hidden">
       <div className="absolute inset-0 auth-gradient-bg opacity-50" />
       
-      <div className="relative z-10 w-full max-w-md mx-4 transition-all duration-500">
+      <div className="relative z-10 w-full max-w-md mx-4 transition-all duration-200">
         <div className="backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl p-8 shadow-2xl">
-          <div className="animate-in fade-in zoom-in-95 duration-500">
+          <div className="animate-in fade-in zoom-in-95 duration-300">
             <div className="text-center mb-8 relative">
               <button 
                 onClick={() => navigate("/")} 
@@ -87,8 +87,8 @@ const Login = () => {
             </form>
 
             <div className="mt-6 pt-6 border-t border-white/10 text-center">
-              <button onClick={() => navigate("/register")} className="text-white/50 hover:text-[#E80070] transition-colors flex items-center justify-center gap-2 w-full">
-                Não tem conta? <strong className="text-white">Cadastre-se aqui</strong> <UserPlus size={16}/>
+              <button onClick={() => navigate("/register")} className="text-white/50 flex items-center justify-center gap-2 w-full">
+                Não possui uma conta? <strong className="text-white hover:text-[#E80070] transition-colors ">Cadastre-se aqui</strong> <UserPlus size={16}/>
               </button>
             </div>
           </div>
