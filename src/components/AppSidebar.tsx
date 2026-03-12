@@ -24,10 +24,11 @@ const menuItems = [
 interface AppSidebarProps {
   activeSection: string;
   onSectionChange: (id: string) => void;
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
 }
 
-export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+export function AppSidebar({ activeSection, onSectionChange, collapsed, setCollapsed }: AppSidebarProps) {
   const { theme, setTheme } = useTheme();
   const nav = useNavigate();
 

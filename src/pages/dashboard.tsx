@@ -8,15 +8,19 @@ import  TransactionsSection  from "@/components/TransactionsSection";
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("painel");
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
       />
 
-      <main className="ml-[72px] md:ml-[260px] p-4 md:p-8 space-y-8 transition-all duration-300">
+      {/* A margem principal agora reage ao estado 'collapsed' */}
+      <main className={`transition-all duration-300 p-4 md:p-8 space-y-8 ${collapsed ? 'ml-[72px]' : 'ml-[72px] md:ml-[260px]'}`}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
