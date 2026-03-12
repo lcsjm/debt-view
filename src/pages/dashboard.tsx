@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FinancialCards } from "@/components/FinancialCards";
 import { ChartsSection } from "@/components/ChartsSection";
-import  ChallengerSection  from "@/components/ChallengerSection";
+import { ChallengerSection } from "@/components/ChallengerSection";
 import  TransactionsSection  from "@/components/TransactionsSection";
 
 export default function Dashboard() {

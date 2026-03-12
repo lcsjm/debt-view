@@ -1,16 +1,204 @@
 import { useState } from "react";
-import { useFinances } from "../hooks/useFinances";
-import { toast } from "@/hooks/use-toast";
-import { Pencil, X, Check, Landmark, TrendingUp, Receipt, ShoppingCart, CreditCard, PiggyBank } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
-export default function TrasactionsSection() {
-  const { finances } = useFinances();
+/* -------------------- Expense Analysis -------------------- */
+
+type Expense = {
+  categoria: string;
+  valor: number;
+  percent: number;
+};
+
+const barColors = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-red-500",
+  "bg-yellow-500",
+  "bg-purple-500",
+  "bg-blue-300",
+  "bg-green-300",
+  "bg-gray-400",
+];
+
+/* -------------------- Main Page -------------------- */
+
+export default function TransactionsPage() {
+  const [step, setStep] = useState<"start" | "questions" | "result">("start");
+
+  const [answers, setAnswers] = useState({
+    food: "",
+    entertainment: "",
+    subscriptions: "",
+  });
+
+  function handleChange(field: string, value: string) {
+    setAnswers((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
+
+  /* Converter respostas em despesas */
+
+  const expensesBase = [
+    { categoria: "Alimentação", valor: Number(answers.food) },
+    { categoria: "Entretenimento", valor: Number(answers.entertainment) },
+    { categoria: "Assinaturas", valor: Number(answers.subscriptions) },
+  ];
+
+  const total = expensesBase.reduce((acc, item) => acc + item.valor, 0);
+
+  const expenses: Expense[] = expensesBase.map((item) => ({
+    ...item,
+    percent: total ? (item.valor / total) * 100 : 0,
+  }));
+
+  function ExpenseAnalysis({ expenses }: { expenses: Expense[] }) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white p-8 rounded-2xl shadow-md border border-gray-100 max-w-6xl mx-auto"
+      >
+        <h2 className="text-xl font-semibold text-gray-800 mb-1">
+          Análise de Gastos
+        </h2>
+
+        <p className="text-sm text-gray-500 mb-6">
+          Distribuição dos seus gastos por categoria
+        </p>
+
+        <div className="space-y-3">
+          {expenses.map((exp, i) => (
+            <div key={exp.categoria} className="flex items-center gap-3">
+              <span className="text-xs text-gray-500 w-24 shrink-0 text-right">
+                {exp.categoria}
+              </span>
+
+              <div className="flex-1 h-6 bg-gray-200 rounded overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${exp.percent}%` }}
+                  transition={{ duration: 0.6, delay: i * 0.05 }}
+                  className={`h-full ${barColors[i % barColors.length]}`}
+                />
+              </div>
+
+              <span className="text-sm font-medium w-24 text-right">
+                R$ {exp.valor.toLocaleString("pt-BR")}
+              </span>
+
+              <span className="text-xs text-gray-500 w-12 text-right">
+                {exp.percent.toFixed(1)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
-    <section>
-      <h2>Crie sua transição financeira para geras desafios personalizados</h2>
-      <p>Tente completar desafios para melhorar sua saúde financeira.</p>
+    <section
+      id="transactions-section"
+      className="w-full max-w-6xl mx-auto mt-10 space-y-6 px-6"
+    >
+
+      {/* START */}
+
+      {step === "start" && (
+        <div className="bg-white p-8 rounded-2xl shadow-md border border-gray-100 text-center space-y-4">
+          <h2 className="text-2xl font-semibold text-gray-800">
+            Crie sua transição financeira
+          </h2>
+
+          <p className="text-gray-500">
+            Responda algumas perguntas para analisarmos seus gastos e gerar
+            desafios personalizados.
+          </p>
+
+          <button
+            onClick={() => setStep("questions")}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+          >
+            Começar agora
+          </button>
+        </div>
+      )}
+
+      {/* QUESTIONS */}
+
+      {step === "questions" && (
+        <div className="bg-white p-8 rounded-2xl shadow-md border border-gray-100 space-y-6">
+
+          <h2 className="text-xl font-semibold text-gray-800 text-center">
+            Questionário de gastos
+          </h2>
+
+          <div className="space-y-4">
+
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você gasta com alimentação?
+              </label>
+
+              <input
+                type="number"
+                value={answers.food}
+                onChange={(e) => handleChange("food", e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você gasta com entretenimento?
+              </label>
+
+              <input
+                type="number"
+                value={answers.entertainment}
+                onChange={(e) =>
+                  handleChange("entertainment", e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você paga em assinaturas?
+              </label>
+
+              <input
+                type="number"
+                value={answers.subscriptions}
+                onChange={(e) =>
+                  handleChange("subscriptions", e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+          </div>
+
+          <button
+            onClick={() => setStep("result")}
+            className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+          >
+            Ver análise de gastos
+          </button>
+
+        </div>
+      )}
+
+      {/* RESULT */}
+
+      {step === "result" && (
+        <ExpenseAnalysis expenses={expenses} />
+      )}
+
     </section>
   );
 }
