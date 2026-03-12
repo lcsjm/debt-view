@@ -71,7 +71,7 @@ const Auth = () => {
       toast({ title: "Erro", description: "Login inválido: " + error.message, variant: "destructive" });
     } else {
       toast({ title: "Bem-vindo!", description: "Login realizado." });
-      navigate("/dash");
+      navigate("/dashboard");
     }
     setIsLoading(false);
   };
@@ -98,7 +98,7 @@ const Auth = () => {
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else {
         toast({ title: "Sucesso!", description: "Cadastro realizado." });
-        navigate("/dash");
+        navigate("/dashboard");
       }
       setIsLoading(false);
     }
@@ -123,13 +123,13 @@ const Auth = () => {
               </div>
 
               <form onSubmit={handleLogin} className="space-y-4">
-                <input type="email" placeholder="Email" className={inputClass} required
+                <input type="email" placeholder="Email" className={inputClass} required aria-label="Email"
                   value={formData.email} onChange={(e) => updateField("email", e.target.value)} />
                 
                 <div className="relative">
-                  <input type={showPassword ? "text" : "password"} placeholder="Senha" className={inputClass} required
+                  <input type={showPassword ? "text" : "password"} placeholder="Senha" className={inputClass} required aria-label="Senha"
                     value={formData.password} onChange={(e) => updateField("password", e.target.value)} />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword(!showPassword)}>
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -148,18 +148,18 @@ const Auth = () => {
           ) : (
             /* --- TELA DE CADASTRO (O SEU MULTI-STEP) --- */
             <div className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
-              <div className="text-center mb-6">
+              <div className="text-center mb-6" aria-live="polite">
                 <h2 className="text-xl font-bold text-white">Criar Conta</h2>
                 <p className="text-white/40 text-sm">Passo {step + 1} de {STEPS.length}</p>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full h-1 bg-white/10 rounded-full mb-8 overflow-hidden">
+              <div className="w-full h-1 bg-white/10 rounded-full mb-8 overflow-hidden" aria-hidden="true">
                 <div className="h-full bg-[#E80070] transition-all duration-500" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
               </div>
 
               <div className="min-h-[120px]">
-                <label className="block text-white/70 text-sm mb-2">{STEPS[step].label}</label>
+                <label htmlFor={`input-${STEPS[step].key}`} className="block text-white/70 text-sm mb-2">{STEPS[step].label}</label>
                 {/* Renderização dinâmica baseada no seu código original */}
                 {STEPS[step].key === "gender" ? (
                     <div className="flex flex-col gap-2">
@@ -181,14 +181,17 @@ const Auth = () => {
                     </div>
                 ) : (
                     <input 
+                        id={`input-${STEPS[step].key}`}
                         type={STEPS[step].key === "password" ? (showPassword ? "text" : "password") : STEPS[step].key === "birthdate" ? "date" : "text"}
                         className={inputClass}
                         autoFocus
                         value={(formData as any)[STEPS[step].key]}
                         onChange={(e) => updateField(STEPS[step].key, e.target.value)}
+                        aria-invalid={!!errors[STEPS[step].key]}
+                        aria-describedby={errors[STEPS[step].key] ? `error-${STEPS[step].key}` : undefined}
                     />
                 )}
-                {errors[STEPS[step].key] && <p className="text-[#E80070] text-xs mt-2">{errors[STEPS[step].key]}</p>}
+                {errors[STEPS[step].key] && <p id={`error-${STEPS[step].key}`} role="alert" className="text-[#E80070] text-xs mt-2">{errors[STEPS[step].key]}</p>}
               </div>
 
               <div className="flex gap-3 mt-8">

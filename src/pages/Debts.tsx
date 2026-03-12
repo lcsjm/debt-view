@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import * as XLSX from "xlsx";
 import "../App.css";
 
 export type Debts = {
@@ -22,6 +23,16 @@ export default function Debts() {
       setPToast("");
     }, 5000);
   }
+
+  const exportToExcel = () => {
+    // Exporta o state atual (se houvesse um array, exportaria a lista)
+    const dataToExport = [debts];
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Dívidas");
+    XLSX.writeFile(workbook, "Minhas_Dividas.xlsx");
+    showToast("Relatório exportado com sucesso!");
+  };
 
   //css da div do button: style={{ marginTop: 16 }} - adaptar para tailwind
 
@@ -61,7 +72,7 @@ export default function Debts() {
           type="number"
           value={debts.value ?? ""}
           onChange={(e) =>
-            setDebts({ ...Debts, value: parseFloat(e.target.value) })
+            setDebts({ ...debts, value: parseFloat(e.target.value) })
           }
         />
 
@@ -96,7 +107,7 @@ export default function Debts() {
           onChange={(e) => setDebts({ ...debts, status: e.target.value })}
         />
 
-        <div>
+        <div className="flex gap-4 mt-4">
           <button
             onClick={() => {
               if (!debts.creditor) {
@@ -107,6 +118,13 @@ export default function Debts() {
             }}
           >
             Salvar
+          </button>
+          
+          <button 
+            onClick={exportToExcel}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded transition-colors"
+          >
+            Exportar Excel
           </button>
         </div>
       </div>

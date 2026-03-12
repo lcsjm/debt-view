@@ -2,11 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import About from "./pages/About";
 import Dashboard from "./pages/dashboard";
 import Debts from "./pages/Debts";
@@ -18,9 +17,52 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ChatProvider } from "@/components/chat-context";
 import { ChatSidebar } from "@/components/chat-sidebar";
-import { StrictMode } from "react";
 
 const queryClient = new QueryClient();
+
+const AppContent = () => {
+  const location = useLocation();
+  // Esconder o chat na rota de autenticação
+  const hideChatRoutes = ["/auth"]; 
+  const showChat = !hideChatRoutes.includes(location.pathname);
+
+  return (
+    <>
+      {showChat && <ChatSidebar />}
+      <Routes>
+        <Route path="/" element={<Index />} />
+        
+        {/* Nova rota unificada de Autenticação */}
+        <Route path="/auth" element={
+          <AuthRoute>
+            <Auth />
+          </AuthRoute>
+        } />
+        
+        {/* Redirecionar rotas antigas para a nova /auth */}
+        <Route path="/login" element={<Navigate to="/auth" replace />} />
+        <Route path="/register" element={<Navigate to="/auth" replace />} />
+        
+        <Route path="/about" element={<About />} />
+        
+        <Route path="/debts" element={
+          <ProtectedRoute>
+            <Debts />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        
+        {/* CATCH-ALL ROUTE (DEVE SER A ÚLTIMA A SER RENDERIZADA) */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
@@ -29,37 +71,11 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <ChatSidebar />
-          <StrictMode>
-            <AuthProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-              <Route path='/login' element={
-                <AuthRoute>
-                  <Login />
-                </AuthRoute>
-              } />
-              <Route path='/register' element={
-                <AuthRoute>
-                  <Register />
-                </AuthRoute>
-              } />
-              <Route path='/about' element={<About />} />
-              <Route path='/debts' element={
-                <ProtectedRoute>
-                <Debts />
-                </ProtectedRoute>} />
-              <Route path='/dashboard' element={
-                <ProtectedRoute>
-                <Dashboard />
-                </ProtectedRoute>} />
-                </Routes>
-              </BrowserRouter>
-            </AuthProvider>
-          </StrictMode>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </ChatProvider>
