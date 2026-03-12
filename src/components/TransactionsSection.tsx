@@ -29,6 +29,11 @@ export default function TransactionsPage() {
     food: "",
     entertainment: "",
     subscriptions: "",
+    housing:"",
+    delivery:"",
+    transportation:"",
+    health:"",
+    others:""
   });
 
   function handleChange(field: string, value: string) {
@@ -42,8 +47,13 @@ export default function TransactionsPage() {
 
   const expensesBase = [
     { categoria: "Alimentação", valor: Number(answers.food) },
-    { categoria: "Entretenimento", valor: Number(answers.entertainment) },
+    { categoria: "Serviços de streaming", valor: Number(answers.entertainment) },
     { categoria: "Assinaturas", valor: Number(answers.subscriptions) },
+    { categoria: "Moradia", valor: Number(answers.housing) },
+    { categoria: "Deliverys", valor: Number(answers.delivery) },
+    { categoria: "Saude", valor: Number(answers.health) },
+    { categoria: "Transporte", valor: Number(answers.transportation) },
+    { categoria: "Outros", valor: Number(answers.others) },
   ];
 
   const total = expensesBase.reduce((acc, item) => acc + item.valor, 0);
@@ -151,9 +161,84 @@ export default function TransactionsPage() {
               />
             </div>
 
+             <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você gasta com Moradia?
+              </label>
+
+              <input
+                type="number"
+                value={answers.housing}
+                onChange={(e) =>
+                  handleChange("housing", e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+             <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você gasta com saude?
+              </label>
+
+              <input
+                type="number"
+                value={answers.health}
+                onChange={(e) =>
+                  handleChange("health", e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+             <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você gasta com Transporte?
+              </label>
+
+              <input
+                type="number"
+                value={answers.transportation}
+                onChange={(e) =>
+                  handleChange("transportation", e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+             <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você gasta com delivery?
+              </label>
+
+              <input
+                type="number"
+                value={answers.delivery}
+                onChange={(e) =>
+                  handleChange("delivery", e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+             <div className="flex flex-col">
+              <label className="text-sm text-gray-600 mb-1">
+                Quanto você gasta com Outros?
+              </label>
+
+              <input
+                type="number"
+                value={answers.others}
+                onChange={(e) =>
+                  handleChange("others", e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
             <div className="flex flex-col">
               <label className="text-sm text-gray-600 mb-1">
-                Quanto você gasta com entretenimento?
+                Quanto você gasta com serviços de streaming?
               </label>
 
               <input
