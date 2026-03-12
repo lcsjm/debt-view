@@ -1,40 +1,8 @@
 # Anotações/Melhorias
 
+> Fonte: <https://github.com/v1cferr/serasa>
+
 - Guia de cores do Serasa: <https://www.experian.com/content/dam/marketing/global/brand-central/brand-guidelines/experian-guidelines-shortened-version.pdf>
-
-```
-Experian
-Dark Blue
-HEX #1D4F91
-RGB 29/79/145
-CMYK 100/73/0/10
-Pantone 7686 C
-Experian
-Light Blue
-HEX #426DA9
-RGB 66/109/169
-CMYK 87/51/0/0
-Pantone 7683 C
-Experian
-Purple
-HEX #77127B
-RGB 119/18/123
-CMYK 67/100/9/2
-Pantone 259 C
-Experian
-Raspberry
-HEX #C1188B
-RGB 193/24/139
-CMYK 27/95/0/0
-Pantone 241 C
-Experian
-Magenta
-HEX #E80070
-RGB 232/0/112
-CMYK 0/98/19/0
-Pantone 226 C
-```
-
 - Convite do Discord: <https://discord.gg/eKqAn7dERk>
 
 ## Alexia
