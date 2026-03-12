@@ -7,6 +7,7 @@ import  TransactionsSection  from "@/components/TransactionsSection";
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("painel");
+  const [expenses, setExpenses] = useState<any[]>([]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,10 +34,15 @@ export default function Dashboard() {
         <ChartsSection />
 
          {/* Challenger Section */}
-        <ChallengerSection />
+        <ChallengerSection
+        expenses={expenses}
+        />
 
         {/* TransactionsSection Section */}
-        <TransactionsSection />
+        <TransactionsSection
+        expenses={expenses}
+        setExpenses={setExpenses}
+         />
       </main>
     </div>
   );

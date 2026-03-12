@@ -9,6 +9,12 @@ type Expense = {
   percent: number;
 };
 
+/* 🔧 ADICIONADO: tipagem das props que vêm da Dashboard */
+type TransactionsSectionProps = {
+  expenses: Expense[];
+  setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
+};
+
 const barColors = [
   "bg-blue-500",
   "bg-green-500",
@@ -22,7 +28,12 @@ const barColors = [
 
 /* -------------------- Main Page -------------------- */
 
-export default function TransactionsPage() {
+/* 🔧 ALTERADO: componente agora recebe props da Dashboard */
+export default function TransactionsSection({
+  expenses,
+  setExpenses,
+}: TransactionsSectionProps) {
+
   const [step, setStep] = useState<"start" | "questions" | "result">("start");
 
   const [answers, setAnswers] = useState({
@@ -58,10 +69,11 @@ export default function TransactionsPage() {
 
   const total = expensesBase.reduce((acc, item) => acc + item.valor, 0);
 
-  const expenses: Expense[] = expensesBase.map((item) => ({
+  const expensesCalculated: Expense[] = expensesBase.map((item) => ({
     ...item,
     percent: total ? (item.valor / total) * 100 : 0,
   }));
+  /* 🔧 ADICIONADO: renomeei para expensesCalculated para não conflitar com a prop expenses */
 
   function ExpenseAnalysis({ expenses }: { expenses: Expense[] }) {
     return (
@@ -146,7 +158,7 @@ export default function TransactionsPage() {
             Questionário de gastos
           </h2>
 
-          <div className="space-y-4">
+           <div className="space-y-4">
 
             <div className="flex flex-col">
               <label className="text-sm text-gray-600 mb-1">
@@ -266,10 +278,18 @@ export default function TransactionsPage() {
               />
             </div>
 
+
           </div>
 
           <button
-            onClick={() => setStep("result")}
+            onClick={() => {
+              setStep("result");
+
+              /* 🔧 ADICIONADO:
+                 envia os gastos calculados para a Dashboard
+                 isso permite que a ChallengerSection detecte os gastos */
+              setExpenses(expensesCalculated);
+            }}
             className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
           >
             Ver análise de gastos
@@ -281,7 +301,8 @@ export default function TransactionsPage() {
       {/* RESULT */}
 
       {step === "result" && (
-        <ExpenseAnalysis expenses={expenses} />
+        /* 🔧 ALTERADO: usa expensesCalculated */
+        <ExpenseAnalysis expenses={expensesCalculated} />
       )}
 
     </section>
