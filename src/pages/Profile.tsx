@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import supabase from "utils/supabase";
 import { useAuth } from "../context/AuthContext";
 
@@ -15,6 +15,21 @@ export default function Profile (){
     const {user, signOutUser} = useAuth();
 // Variável que recebe um tipo própio é um objeto
     const [prof, setProf] = useState<Profile>({});
+
+    useEffect(() => {
+       if (user) syncProfile(user.id);
+    }, []);
+
+    function syncProfile(user_id: string){
+        const {data, error} = supabase.from('profiles').select('*').eq("user_id", user_id).single();
+
+        if (error){
+            alert(error.message)
+            return
+        }
+        //order('created at', {ascending: false})
+
+    }
 
     async function handleProfile(){
         const data = {...prof, user_id: user?.id}
