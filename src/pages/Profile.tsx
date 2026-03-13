@@ -17,19 +17,20 @@ export default function Profile (){
     const [prof, setProf] = useState<Profile>({});
 
     useEffect(() => {
-       if (user) syncProfile(user.id);
+       if (user) syncProfile(user.id)
     }, []);
 
-    function syncProfile(user_id: string){
-        const {data, error} = supabase.from('profiles').select('*').eq("user_id", user_id).single();
+    async function syncProfile(user_id: string):Promise<void>{
+        const {data, error} = await supabase.from('profiles').select('*').eq("user_id", user_id).single();
 
         if (error){
             alert(error.message)
             return
         }
         //order('created at', {ascending: false})
-
+        setProf(data)
     }
+
 
     async function handleProfile(){
         const data = {...prof, user_id: user?.id}
