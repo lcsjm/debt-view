@@ -1,14 +1,14 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, CornerDownLeft, LogIn, UserPlus } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, LogIn, UserPlus } from "lucide-react";
 import supabase from "../../utils/supabase";
 
-// --- CONFIGURAÇÕES E MÁSCARAS (Mantendo seu original) ---
 const STEPS = [
   { key: "email", label: "Email", required: true },
   { key: "password", label: "Senha", required: true },
-  { key: "name", label: "Nome", required: false },
+  { key: "confirmPassword", label: "Confirmar Senha", required: true },
+  { key: "name", label: "Nome completo", required: false },
   { key: "cpf", label: "CPF", required: false },
   { key: "cep", label: "CEP", required: false },
   { key: "birthdate", label: "Data de Nascimento", required: true },
@@ -19,10 +19,11 @@ const STEPS = [
 const GENDER_OPTIONS = ["Masculino", "Feminino", "Não-binário"];
 const RACE_OPTIONS = ["Parda", "Preta", "Branca", "Indígena", "Amarela"];
 
+// Funções de máscara
 function maskCPF(v: string) { return v.replace(/\D/g, "").slice(0, 11).replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2"); }
 function maskCEP(v: string) { return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2"); }
+function maskDate(v: string) { return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{2})(\d)/, "$1/$2").replace(/(\d{2})(\d)/, "$1/$2"); }
 
-// --- COMPONENTE DE BOTÃO MAGNÉTICO (Seu original) ---
 const MagneticButton = ({ children, onClick, disabled, variant = "primary", className = "", type = "button" }: any) => {
   const ref = useRef<HTMLButtonElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -44,17 +45,18 @@ const MagneticButton = ({ children, onClick, disabled, variant = "primary", clas
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(-1); // -1 será a nossa tela de LOGIN
+  const [step, setStep] = useState(-1); // -1 é a tela de LOGIN
   const [showPassword, setShowPassword] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "", name: "", cpf: "", cep: "", birthdate: "", gender: "", race: "" });
+  const [formData, setFormData] = useState({ email: "", password: "", confirmPassword: "", name: "", cpf: "", cep: "", birthdate: "", gender: "", race: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const updateField = (key: string, value: string) => {
     let v = value;
     if (key === "cpf") v = maskCPF(value);
     if (key === "cep") v = maskCEP(value);
+    if (key === "birthdate") v = maskDate(value); // Aplica a máscara de data
     setFormData((prev) => ({ ...prev, [key]: v }));
     setErrors((prev) => ({ ...prev, [key]: "" }));
   };
@@ -76,31 +78,92 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  // --- LÓGICA DE CADASTRO (Seu original adaptado) ---
+  // --- LÓGICA DE CADASTRO ---
   const handleNextStep = async () => {
-    // Validação simples
     const currentStep = STEPS[step];
+    
     if (currentStep?.required && !formData[currentStep.key as keyof typeof formData]) {
         setErrors({ [currentStep.key]: "Campo obrigatório" });
         return;
     }
 
+    if (currentStep.key === "birthdate") {
+        if (formData.birthdate.length !== 10) {
+            setErrors({ birthdate: "Insira uma data válida (DD/MM/AAAA)." });
+            return;
+        }
+    }
+
+    if (currentStep.key === "password") {
+        const hasLength = formData.password.length >= 8;
+        const hasUpper = /[A-Z]/.test(formData.password);
+        const hasNumber = /[0-9]/.test(formData.password);
+        const hasSpecial = /[^A-Za-z0-9]/.test(formData.password);
+       
+        if (!hasLength || !hasUpper || !hasNumber || !hasSpecial) {
+            setErrors({ password: "A senha não atende a todos os requisitos." });
+            return;
+        }
+    }
+
+    if (currentStep.key === "confirmPassword") {
+        if (formData.password !== formData.confirmPassword) {
+            setErrors({ confirmPassword: "As senhas não coincidem." });
+            return;
+        }
+    }
+
     if (step < STEPS.length - 1) {
       setAnimating(true);
-      setTimeout(() => { setStep(step + 1); setAnimating(false); }, 300);
+      setTimeout(() => {
+        setStep(step + 1);
+        setShowPassword(false);
+        setAnimating(false);
+      }, 300);
     } else {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: { data: { full_name: formData.name, cpf: formData.cpf, gender: formData.gender, race: formData.race } }
-      });
-      if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else {
-        toast({ title: "Sucesso!", description: "Cadastro realizado." });
+      try {
+        const cleanCpf = formData.cpf.replace(/\D/g, "");
+        const cleanCep = formData.cep.replace(/\D/g, "");
+
+        // Converte a data de DD/MM/AAAA para AAAA-MM-DD para salvar no banco corretamente
+        const [day, month, year] = formData.birthdate.split('/');
+        const isoDate = `${year}-${month}-${day}`;
+
+        const { data, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: { full_name: formData.name, cpf: cleanCpf, gender: formData.gender, race: formData.race }
+          }
+        });
+
+        if (authError) throw authError;
+
+        if (data.user) {
+          const { error: profileError } = await supabase.from('profiles').insert({
+            user_id: data.user.id,
+            name: formData.name,
+            cpf: cleanCpf,
+            cep: cleanCep,
+            birth: isoDate, // Salvando a data no formato internacional
+            gender: formData.gender,
+            race: formData.race
+          });
+
+          if (profileError) {
+             console.error("Profile insertion error details:", profileError);
+             throw new Error(`Falha ao salvar perfil: ${profileError.message}`);
+          }
+        }
+
+        toast({ title: "Sucesso!", description: "Sua conta foi criada. Entrando..." });
         navigate("/dashboard");
+      } catch (err: any) {
+        toast({ title: "Erro no Cadastro", description: err.message, variant: "destructive" });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
   };
 
@@ -108,7 +171,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 relative overflow-hidden">
-      {/* Background decorativo */}
       <div className="absolute inset-0 auth-gradient-bg opacity-50" />
       
       <div className="relative z-10 w-full max-w-md mx-4 transition-all duration-500">
@@ -129,7 +191,7 @@ const Auth = () => {
                 <div className="relative">
                   <input type={showPassword ? "text" : "password"} placeholder="Senha" className={inputClass} required aria-label="Senha"
                     value={formData.password} onChange={(e) => updateField("password", e.target.value)} />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -140,32 +202,35 @@ const Auth = () => {
               </form>
 
               <div className="mt-6 pt-6 border-t border-white/10 text-center">
-                <button onClick={() => setStep(0)} className="text-white/50 hover:text-[#E80070] transition-colors flex items-center justify-center gap-2 w-full">
-                  Não tem conta? <strong className="text-white">Cadastre-se aqui</strong> <UserPlus size={16}/>
+                <button onClick={() => setStep(0)} className="text-white/50 flex items-center justify-center gap-2 w-full hover:text-white transition-colors">
+                  Não tem conta? <strong className="text-white hover:text-[#E80070] transition-colors">Cadastre-se aqui</strong> <UserPlus size={16}/>
                 </button>
               </div>
             </div>
           ) : (
-            /* --- TELA DE CADASTRO (O SEU MULTI-STEP) --- */
-            <div className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
-              <div className="text-center mb-6" aria-live="polite">
+            /* --- TELA DE CADASTRO (MULTI-STEP) --- */
+            <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
+              <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-white">Criar Conta</h2>
                 <p className="text-white/40 text-sm">Passo {step + 1} de {STEPS.length}</p>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full h-1 bg-white/10 rounded-full mb-8 overflow-hidden" aria-hidden="true">
+              <div className="w-full h-1 bg-white/10 rounded-full mb-8 overflow-hidden">
                 <div className="h-full bg-[#E80070] transition-all duration-500" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
               </div>
 
               <div className="min-h-[120px]">
-                <label htmlFor={`input-${STEPS[step].key}`} className="block text-white/70 text-sm mb-2">{STEPS[step].label}</label>
-                {/* Renderização dinâmica baseada no seu código original */}
+                <label className="block text-white/70 text-sm mb-2">
+                  {STEPS[step].label}
+                  {STEPS[step].required && <span className="text-[#E80070] ml-1">*</span>}
+                </label>
+                
                 {STEPS[step].key === "gender" ? (
                     <div className="flex flex-col gap-2">
                         {GENDER_OPTIONS.map(opt => (
-                            <button key={opt} onClick={() => updateField("gender", opt)} 
-                                className={`p-3 rounded-xl border text-left transition-all ${formData.gender === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
+                            <button type="button" key={opt} onClick={() => updateField("gender", opt)}
+                                className={`p-3 rounded-xl border text-left transition-all hover:bg-white/10 ${formData.gender === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
                                 {opt}
                             </button>
                         ))}
@@ -173,36 +238,59 @@ const Auth = () => {
                 ) : STEPS[step].key === "race" ? (
                     <div className="flex flex-col gap-2">
                         {RACE_OPTIONS.map(opt => (
-                            <button key={opt} onClick={() => updateField("race", opt)} 
-                                className={`p-3 rounded-xl border text-left transition-all ${formData.race === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
+                            <button type="button" key={opt} onClick={() => updateField("race", opt)}
+                                className={`p-3 rounded-xl border text-left transition-all hover:bg-white/10 ${formData.race === opt ? "bg-[#E80070]/20 border-[#E80070] text-white" : "bg-white/5 border-white/10 text-white/60"}`}>
                                 {opt}
                             </button>
                         ))}
                     </div>
+                ) : STEPS[step].key === "password" || STEPS[step].key === "confirmPassword" ? (
+                    <div>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className={inputClass}
+                                autoFocus
+                                value={(formData as any)[STEPS[step].key]}
+                                onChange={(e) => updateField(STEPS[step].key, e.target.value)}
+                            />
+                            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors" onClick={() => setShowPassword(!showPassword)}>
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                       
+                        {STEPS[step].key === "password" && (
+                            <div className="mt-4 flex flex-col gap-1 text-sm">
+                                <span className={formData.password.length >= 8 ? "text-green-400" : "text-white/60 transition-colors"}>• Mínimo de 8 caracteres</span>
+                                <span className={/[A-Z]/.test(formData.password) ? "text-green-400" : "text-white/60 transition-colors"}>• Letra maiúscula</span>
+                                <span className={/[0-9]/.test(formData.password) ? "text-green-400" : "text-white/60 transition-colors"}>• Número</span>
+                                <span className={/[^A-Za-z0-9]/.test(formData.password) ? "text-green-400" : "text-white/60 transition-colors"}>• Caractere especial (!, #, @, etc)</span>
+                            </div>
+                        )}
+                    </div>
                 ) : (
-                    <input 
-                        id={`input-${STEPS[step].key}`}
-                        type={STEPS[step].key === "password" ? (showPassword ? "text" : "password") : STEPS[step].key === "birthdate" ? "date" : "text"}
+                    <input
+                        type={STEPS[step].key === "email" ? "email" : "text"}
+                        inputMode={["cpf", "cep", "birthdate"].includes(STEPS[step].key) ? "numeric" : undefined}
+                        placeholder={STEPS[step].key === "birthdate" ? "DD/MM/AAAA" : ""}
                         className={inputClass}
                         autoFocus
                         value={(formData as any)[STEPS[step].key]}
                         onChange={(e) => updateField(STEPS[step].key, e.target.value)}
-                        aria-invalid={!!errors[STEPS[step].key]}
-                        aria-describedby={errors[STEPS[step].key] ? `error-${STEPS[step].key}` : undefined}
                     />
                 )}
-                {errors[STEPS[step].key] && <p id={`error-${STEPS[step].key}`} role="alert" className="text-[#E80070] text-xs mt-2">{errors[STEPS[step].key]}</p>}
+                {errors[STEPS[step].key] && <p className="text-[#E80070] text-xs mt-2">{errors[STEPS[step].key]}</p>}
               </div>
 
               <div className="flex gap-3 mt-8">
                 <MagneticButton variant="secondary" onClick={() => step === 0 ? setStep(-1) : setStep(step - 1)}>
-                   <ArrowLeft size={18}/> {step === 0 ? "Login" : "Voltar"}
+                  <ArrowLeft size={18}/> {step === 0 ? "Login" : "Voltar"}
                 </MagneticButton>
-                <MagneticButton className="flex-1 justify-center" onClick={handleNextStep} disabled={isLoading}>
-                   {step === STEPS.length - 1 ? <><Check size={18}/> Finalizar</> : <><ArrowRight size={18}/> Próximo</>}
+                <MagneticButton type="submit" className="flex-1 justify-center" disabled={isLoading}>
+                  {step === STEPS.length - 1 ? <><Check size={18}/> Finalizar</> : <><ArrowRight size={18}/> Próximo</>}
                 </MagneticButton>
               </div>
-            </div>
+            </form>
           )}
 
         </div>
