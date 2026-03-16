@@ -36,8 +36,6 @@ export default function Dashboard() {
         {/* Financial Cards */}
         <FinancialCards />
 
-        <AssistentSection/>
-
         <DashAnalysis/>
 
         {/* TransactionsSection Section */}
