@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { FinancialCards } from "@/components/FinancialCards";
 import { ChartsSection } from "@/components/ChartsSection";
 import { ChallengerSection } from "@/components/ChallengerSection";
-import  TransactionsSection  from "@/components/TransactionsSection";
+import TransactionsSection from "@/components/TransactionsSection";
 import DashAnalysis from "@/components/DashAnalysis";
 import AssistentSection from "@/components/AssistentSection";
 import SerasaSection from "@/components/SerasaSection";
@@ -43,13 +43,13 @@ export default function Dashboard() {
         {/* Serasa Mock Debts */}
         <SerasaSection />
 
-        <AssistentSection 
-          financialData={null} 
-          isChatbotFloating={false} 
-          onFloatChatbot={() => {}} 
+        <AssistentSection
+          financialData={null}
+          isChatbotFloating={false}
+          onFloatChatbot={() => { }}
         />
 
-        <DashAnalysis/>
+        <DashAnalysis />
 
         {/* TransactionsSection Section */}
         <TransactionsSection />
