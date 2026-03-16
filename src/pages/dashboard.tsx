@@ -6,11 +6,15 @@ import { ChallengerSection } from "@/components/ChallengerSection";
 import  TransactionsSection  from "@/components/TransactionsSection";
 import DashAnalysis from "@/components/DashAnalysis";
 import AssistentSection from "@/components/AssistentSection";
+import SerasaSection from "@/components/SerasaSection";
+
+import { useProfile } from "@/hooks/useProfile";
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("painel");
   const [expenses, setExpenses] = useState<any[]>([]);
   const [collapsed, setCollapsed] = useState(false);
+  const { profile } = useProfile();
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,7 +30,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Bem-vindo de volta 👋</p>
+            <p className="text-sm text-muted-foreground">Bem-vindo de volta, {profile?.name || 'Visitante'} 👋</p>
             <h2 className="text-xl md:text-2xl font-heading font-semibold text-foreground">
               Dashboard DebtView
             </h2>
@@ -36,13 +40,19 @@ export default function Dashboard() {
         {/* Financial Cards */}
         <FinancialCards />
 
-        <AssistentSection/>
+        {/* Serasa Mock Debts */}
+        <SerasaSection />
+
+        <AssistentSection 
+          financialData={null} 
+          isChatbotFloating={false} 
+          onFloatChatbot={() => {}} 
+        />
 
         <DashAnalysis/>
 
         {/* TransactionsSection Section */}
-        <TransactionsSection
-         />
+        <TransactionsSection />
       </main>
     </div>
   );
