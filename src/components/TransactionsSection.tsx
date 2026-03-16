@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import supabase from "utils/supabase";
 
 /* -------------------- Expense Analysis -------------------- */
 
@@ -45,6 +46,22 @@ export default function TransactionsSection({
     health: "",
     others: "",
   });
+
+      useEffect(() => {
+      if(user) transaction(user.id)
+      }, []);
+
+      function transaction(user_id: string)Promise<void>{
+        const {data, error} = awaiat supabase.from('users')
+        .select('*').eq("user_id", user_id)
+        if(error){
+          alert(error.message)
+          return
+        }
+
+        setAnswers(data)
+
+      }
 
   function handleChange(field: string, value: string) {
     setAnswers((prev) => ({
