@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import supabase from "../../utils/supabase"
 
 export interface Transaction {
-  id?: string
-  value: number
-  type: string
-  category: string
-  user_id?: string
+  id?: string;
+  value: number;
+  type: string;
+  category: string;
+  user_id?: string;
+  created_at?: string;
 }
 
 export function useTransactions() {

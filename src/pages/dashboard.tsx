@@ -40,6 +40,9 @@ export default function Dashboard() {
         {/* Financial Cards */}
         <FinancialCards />
 
+        {/* Nivo Charts Section */}
+        <ChartsSection />
+
         {/* Serasa Mock Debts */}
         <SerasaSection />
 
