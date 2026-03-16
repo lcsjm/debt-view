@@ -226,7 +226,7 @@ const StoryCard = ({
 };
 
 /* ─── Main Section ─── */
-const AssistantSection = ({
+const AssistentSection = ({
   financialData,
   isChatbotFloating,
   onFloatChatbot,
@@ -324,5 +324,5 @@ const AssistantSection = ({
   );
 };
 
-export default AssistantSection;
+export default AssistentSection;
 ;

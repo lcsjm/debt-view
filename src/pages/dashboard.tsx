@@ -1,11 +1,11 @@
-"use client";
-
 import { useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FinancialCards } from "@/components/FinancialCards";
 import { ChartsSection } from "@/components/ChartsSection";
 import { ChallengerSection } from "@/components/ChallengerSection";
 import  TransactionsSection  from "@/components/TransactionsSection";
+import DashAnalysis from "@/components/DashAnalysis";
+import AssistentSection from "@/components/AssistentSection";
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("painel");
@@ -36,13 +36,9 @@ export default function Dashboard() {
         {/* Financial Cards */}
         <FinancialCards />
 
-        {/* Charts */}
-        <ChartsSection />
+        <AssistentSection/>
 
-         {/* Challenger Section */}
-        <ChallengerSection
-        expenses={expenses}
-        />
+        <DashAnalysis/>
 
         {/* TransactionsSection Section */}
         <TransactionsSection
