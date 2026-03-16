@@ -3,11 +3,11 @@ import { ChevronLeft, ChevronRight, MessageCircle, Maximize2, Component } from "
 import { useNavigate } from "react-router-dom";
 import Chatbot from "./ui/ChatBot";
 
-import storyRenegociacao from "@/assets/story-renegociacao.jpg";
-import storySerasaLimpaNome from "@/assets/story-serasa-limpa-nome.jpg";
-import storyDesenrola from "@/assets/story-desenrola.jpg";
-import storyAmortizacao from "@/assets/story-amortizacao.jpg";
-import storyFeirao from "@/assets/story-feirao.jpg";
+const storyRenegociacao = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&q=80";
+const storySerasaLimpaNome = "https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?w=400&q=80";
+const storyDesenrola = "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&q=80";
+const storyAmortizacao = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=80";
+const storyFeirao = "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400&q=80";
 
 interface FinancialData {
   divida: number;
