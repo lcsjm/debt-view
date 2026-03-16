@@ -9,12 +9,13 @@ export interface Transaction {
   user_id?: string
 }
 
-export function useTransactions(){
+export function useTransactions() {
+  // 🎓 Pegamos o queryClient para poder dizer a ele quando atualizar os dados da tela
+  const queryClient = useQueryClient();
 
-  const queryClient = useQueryClient()
-
+  // 1️⃣ LENDO TRANSAÇÕES (SELECT)
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ["transactions"],
+    queryKey: ["transactions"], // Nome no cache para a lista de transações
     queryFn: async () => {
 
       const { data: { user } } = await supabase.auth.getUser()
@@ -32,6 +33,7 @@ export function useTransactions(){
     }
   })
 
+  // 2️⃣ CRIANDO UMA NOVA TRANSAÇÃO (INSERT)
   const { mutateAsync: addTransaction } = useMutation({
     mutationFn: async (newTransaction: Transaction) => {
 
@@ -50,10 +52,13 @@ export function useTransactions(){
 
       return data
     },
-    onSuccess: ()=>{
-      queryClient.invalidateQueries({queryKey:["transactions"]})
+    // 🔔 onSuccess é o segredo do React Query. 
+    // Quando a transação salva no banco, ele roda isso:
+    onSuccess: () => {
+      // 🎓 Ele "invalida" (apaga) o cache velho e obriga o useQuery ali em cima a rodar de novo!
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
     }
-  })
+  });
 
   return { transactions, isLoading, addTransaction }
 

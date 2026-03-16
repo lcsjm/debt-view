@@ -13,12 +13,21 @@ export interface ProfileData {
 }
 
 export function useProfile() {
+// 🎓 O useQuery serve para BUSCAR/LER dados (SELECT).
+  // Ele lida sozinho com estados de 'carregando', 'sucesso' e 'erro',
+  // e salva o resultado em memória (cache) para o app ficar rápido.
   const { data: profile, isLoading, error } = useQuery({
+    // 🔑 queryKey: É como dar um nome pra sua busca. 
+    // Se você for pra outra tela e voltar, o React Query já sabe que esse dado existe na memória.
     queryKey: ["user_profile"],
+    
+    // 🔄 queryFn: É a função com o código que de fato vai no Supabase pedir os dados.
     queryFn: async () => {
+      // 1. Pega o logado no momento
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // 2. Faz o SELECT na tabela profiles
       const { data, error } = await supabase
         .from("profiles")
         .select("*")

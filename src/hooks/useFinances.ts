@@ -14,10 +14,15 @@ export interface FinanceData {
 
 // Fetch finances for the logged-in user
 export function useFinances() {
+  // 🎓 queryClient nos permite conversar com o "gerente de cache" do React Query.
+  // Vamos usar ele lá embaixo para forçar a tela a atualizar.
   const queryClient = useQueryClient();
 
+  // 1️⃣ LENDO DADOS (SELECT) via useQuery
+  // O React Query faz um SELECT e guarda o resultado na variável 'finances'.
+  // Ele também gerencia se está carregando (isLoading) ou se deu erro (error).
   const { data: finances, isLoading, error } = useQuery({
-    queryKey: ["finances"],
+    queryKey: ["finances"], // Nome único dessa requisição no cache
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
@@ -42,11 +47,14 @@ export function useFinances() {
     },
   });
 
+  // 2️⃣ SALVANDO/ALTERANDO DADOS (INSERT/UPDATE) via useMutation
+  // Enquanto o useQuery é automático para ler, o useMutation é disparado só quando pedimos (ex: num clique de botão).
   const { mutateAsync: saveFinances, isPending: isSaving } = useMutation({
     mutationFn: async (updatedData: FinanceData) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Faz o INSERT ou UPDATE no Supabase
       const { data, error } = await supabase
         .from("finances")
         .upsert({ 
@@ -59,8 +67,10 @@ export function useFinances() {
       if (error) throw error;
       return data;
     },
+    // 🔔 onSuccess é chamado se o Supabase salvar com sucesso.
     onSuccess: () => {
-      // Invalida a query para forçar uma recarga rápida em tela
+      // 🎓 MÁGICA: Aqui dizemos "Ei, os dados com nome 'finances' ficaram velhos".
+      // O React Query automaticamente refaz o SELECT lá de cima e atualiza a tela sem precisar dar F5!
       queryClient.invalidateQueries({ queryKey: ["finances"] });
     },
   });
