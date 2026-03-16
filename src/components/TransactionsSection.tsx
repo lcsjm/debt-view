@@ -1,13 +1,7 @@
-<<<<<<< HEAD
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import supabase from "utils/supabase";
-=======
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import supabase from "../../utils/supabase";
 import { Trash2, Pencil, Brush, X } from "lucide-react"
->>>>>>> 6558605d4b36b832f9cd00a355030498303a8450
 
 export default function TransactionSection() {
 
@@ -59,30 +53,6 @@ export default function TransactionSection() {
 
     setTransactions(data || [])
 
-<<<<<<< HEAD
-      useEffect(() => {
-      if(user) transaction(user.id)
-      }, []);
-
-      function transaction(user_id: string)Promise<void>{
-        const {data, error} = awaiat supabase.from('users')
-        .select('*').eq("user_id", user_id)
-        if(error){
-          alert(error.message)
-          return
-        }
-
-        setAnswers(data)
-
-      }
-
-  function handleChange(field: string, value: string) {
-    setAnswers((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-=======
->>>>>>> 6558605d4b36b832f9cd00a355030498303a8450
   }
 
   async function createTransaction(){
