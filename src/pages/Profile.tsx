@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import supabase from "utils/supabase";
 import { useAuth } from "../context/AuthContext";
+import { Toast, useToast } from "@/components/Toast";
 
 export type Profile = {
     name?: string,
@@ -13,6 +14,7 @@ export type Profile = {
 
 export default function Profile (){
     const {user, signOutUser} = useAuth();
+    const {message, showToast} = useToast()
 // Variável que recebe um tipo própio é um objeto
     const [prof, setProf] = useState<Profile>({});
 
@@ -30,23 +32,23 @@ export default function Profile (){
         //order('created at', {ascending: false})
         setProf(data)
     }
-    //// alo ketlynnnn
-
-
+    
     async function handleProfile(){
         const data = {...prof, user_id: user?.id}
         const {error} = await supabase.from('profiles').insert(data);
 
         if (error){
-            alert(error.message);
+            showToast(error.message);
             return
         }
 
-        alert ('Cadastrado com sucesso')
+        showToast ('Cadastrado com sucesso')
     }
 
     return (
-        <>
+        <> 
+    <Toast message={message}/>
+
             <input 
                 type="text"
                 placeholder="Digite seu nome."
