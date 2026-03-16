@@ -134,7 +134,7 @@ const steps = [
         description: "Estamos quase lá! Cadastre-se gratuitamente para ver sua análise financeira detalhada e acompanhar sua evolução ao longo do tempo.",
         image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
         multiple: false,
-        isSignup: true
+        isSignup: true,
     }
 ];
 
