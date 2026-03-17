@@ -29,6 +29,30 @@ export function FinancialCards() {
   const [editing, setEditing] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
 
+  // Helper para formatar o input em BRL em tempo real (ex: de "1500" para "1.500,00")
+  const formatCurrencyInput = (value: string) => {
+    // Remove tudo que não for dígito
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return "";
+    
+    // Converte para decimal (dividindo por 100)
+    const number = parseInt(digits, 10) / 100;
+    
+    // Retorna formatado
+    return new Intl.NumberFormat("pt-BR", {
+      style: "decimal", // Usando decimal invés de currency para não prender o "R$" no input e ficar mais limpo
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(number);
+  };
+
+  // Helper para reverter a string formatada ("1.500,00") de volta para número (1500.00) pro Supabase
+  const parseCurrencyInput = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return 0;
+    return parseInt(digits, 10) / 100;
+  };
+
   // Merge dos dados vindos do hook
   const currentCards = defaultCards.map(card => ({
     ...card,
@@ -45,7 +69,10 @@ export function FinancialCards() {
 
   const startEditing = () => {
     const values: Record<string, string> = {};
-    currentCards.forEach((c) => (values[c.id] = c.value.toString()));
+    currentCards.forEach((c) => {
+      // Pré-popula os inputs com a máscara
+      values[c.id] = formatCurrencyInput((c.value * 100).toFixed(0));
+    });
     setEditValues(values);
     setEditing(true);
   };
@@ -56,7 +83,8 @@ export function FinancialCards() {
       const payload: any = {};
 
       Object.keys(editValues).forEach(key => {
-        payload[key] = parseFloat(editValues[key]) || 0;
+        // Na hora de salvar, converte de volta pra número float pro Supabase
+        payload[key] = parseCurrencyInput(editValues[key]);
       });
 
       const fullPayload = { ...finances, ...payload };
@@ -191,22 +219,35 @@ export function FinancialCards() {
 
               {editing ? (
 
-                <motion.input
-                  key="input"
+                <motion.div
+                  key="input-container"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  type="number"
-                  value={editValues[card.id] || ""}
-                  onChange={(e) =>
-                    setEditValues((v) => ({
-                      ...v,
-                      [card.id]: e.target.value,
-                    }))
-                  }
-                  className="w-full text-xl font-heading font-bold bg-muted rounded-md px-3 py-1.5 text-foreground outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="0.00"
-                />
+                  className="flex items-center gap-2 bg-muted rounded-md px-3 py-1.5 focus-within:ring-2 focus-within:ring-ring"
+                >
+                  <span className="text-muted-foreground font-medium select-none">R$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editValues[card.id] || ""}
+                    onChange={(e) =>
+                      setEditValues((v) => ({
+                        ...v,
+                        [card.id]: formatCurrencyInput(e.target.value),
+                      }))
+                    }
+                    onKeyDown={(e) => {
+                      // Pressionar Enter salva todos os valores, igual ao botão "Salvar"
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveEditing();
+                      }
+                    }}
+                    className="w-full text-xl font-heading font-bold bg-transparent text-foreground outline-none"
+                    placeholder="0,00"
+                  />
+                </motion.div>
 
               ) : (
 
