@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  User,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +20,9 @@ import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Painel Financeiro", id: "painel" }
+  { icon: LayoutDashboard, label: "Painel Financeiro", id: "painel", path: "/dashboard" },
+  { icon: CreditCard,      label: "Dívidas",           id: "debts",  path: "/debts" },
+  { icon: User,            label: "Meu Perfil",        id: "profile", path: "/profile" },
 ];
 
 interface AppSidebarProps {
@@ -45,8 +49,8 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-sidebar-border">
-        <div className="w-9 h-9 rounded-lg gradient-accent flex items-center justify-center flex-shrink-0">
-          <TrendingUp className="w-5 h-5 text-primary-foreground" />
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0">
+          <img src="/favicon.svg" alt="DebtView Logo" className="w-9 h-9 rounded-lg" />
         </div>
         <AnimatePresence>
           {!collapsed && (
@@ -69,7 +73,10 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
           return (
             <button
               key={item.id}
-              onClick={() => onSectionChange(item.id)}
+              onClick={() => {
+                onSectionChange(item.id);
+                nav(item.path);
+              }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"

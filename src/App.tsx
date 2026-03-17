@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import About from "./pages/About";
 import Dashboard from "./pages/dashboard";
 import Debts from "./pages/Debts";
+import ProfilePage from "./pages/Profile";
 import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthRoute from "./components/AuthRoute";
@@ -54,6 +55,12 @@ const AppContent = () => {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         } />
         

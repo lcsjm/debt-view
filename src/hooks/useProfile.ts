@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import supabase from "../../utils/supabase";
 
 export interface ProfileData {
@@ -40,5 +40,27 @@ export function useProfile() {
     },
   });
 
-  return { profile, isLoading, error };
+  // 2️⃣ SALVANDO O PERFIL (UPSERT) via useMutation
+  const queryClient = useQueryClient();
+  const { mutateAsync: saveProfile, isPending: isSaving } = useMutation({
+    mutationFn: async (updatedProfile: Partial<ProfileData>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .upsert({ ...updatedProfile, user_id: user.id }, { onConflict: "user_id" })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      // Invalida o cache do perfil para a tela atualizar com os novos dados
+      queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+    },
+  });
+
+  return { profile, isLoading, error, saveProfile, isSaving };
 }
