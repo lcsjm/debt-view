@@ -7,6 +7,7 @@ import TransactionsSection from "@/components/TransactionsSection";
 import DashAnalysis from "@/components/DashAnalysis";
 import AssistentSection from "@/components/AssistentSection";
 import SerasaSection from "@/components/SerasaSection";
+import EducationSection from "@/components/EducationSection";
 
 import { useProfile } from "@/hooks/useProfile";
 
@@ -36,12 +37,7 @@ export default function Dashboard() {
             </h2>
           </div>
         </div>
-
-        {/* Financial Cards */}
-        <FinancialCards />
-
-        {/* Nivo Charts Section */}
-        <ChartsSection />
+        <DashAnalysis />
 
         {/* Serasa Mock Debts */}
         <SerasaSection />
@@ -52,10 +48,12 @@ export default function Dashboard() {
           onFloatChatbot={() => { }}
         />
 
-        <DashAnalysis />
+
 
         {/* TransactionsSection Section */}
         <TransactionsSection />
+
+        <EducationSection />
       </main>
     </div>
   );
