@@ -19,14 +19,15 @@ export function useSerasa() {
       if (!user) throw new Error("Usuário não logado");
 
       // 1. Pega o CPF do usuario pelo profile public
-      const { data: profile, error: profileErr } = await supabase
+      // .maybeSingle() retorna null (sem erro) se o perfil ainda não foi criado,
+      // enquanto .single() lançaria um 406 nessa situação
+      const { data: profile } = await supabase
         .from("profiles")
         .select("cpf")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileErr) throw profileErr;
-      if (!profile?.cpf) return []; // sem CPF = sem dividas
+      if (!profile?.cpf) return []; // sem CPF ou perfil = sem dividas
 
       // 2. Busca dividas pelo CPF no mock
       const { data: mockDebts, error: debtsErr } = await supabase
