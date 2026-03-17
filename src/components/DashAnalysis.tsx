@@ -162,7 +162,6 @@ export default function CalculatorSection() {
   };
 
   const handleDownloadExcel = () => {
-    // Organiza os dados para o Excel
     const rows = [["Categoria", "Valor (R$)"]];
     const categorias = {
       divida: "Dívida Ativa",
@@ -185,7 +184,6 @@ export default function CalculatorSection() {
     rows.push(["", ""]);
     rows.push(["SALDO ESTIMADO", total.toFixed(2)]);
 
-    // Cria a planilha e faz o download
     const worksheet = XLSX.utils.aoa_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Análise Serasa");
@@ -194,25 +192,27 @@ export default function CalculatorSection() {
 
   if (showResults) {
     return (
-      <div className="container mx-auto px-4 py-24 flex flex-col items-center">
-        <div className="w-full max-w-5xl flex justify-end mb-4">
-          <button
-            onClick={handleDownloadExcel}
-            className="flex items-center gap-2 bg-gradient-to-r from-[#1D4F91] to-[#77127B] hover:from-[#77127B] hover:to-[#E80070] text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all hover:scale-105"
-          >
-            <Download size={20} />
-            Baixar Relatório (.xlsx)
-          </button>
+      <section className="min-h-screen py-24 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex items-center">
+        <div className="container mx-auto px-4 flex flex-col items-center">
+          <div className="w-full max-w-6xl flex justify-end mb-4">
+            <button
+              onClick={handleDownloadExcel}
+              className="flex items-center gap-2 bg-gradient-to-r from-[#1D4F91] to-[#77127B] hover:from-[#77127B] hover:to-[#E80070] text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all hover:scale-105"
+            >
+              <Download size={20} />
+              Baixar Relatório (.xlsx)
+            </button>
+          </div>
+          <div className="w-full">
+            <ResultsSection data={data} />
+          </div>
         </div>
-        <div className="w-full">
-          <ResultsSection data={data} />
-        </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <section id="calculator" className="py-24 bg-gray-50 min-h-screen flex items-center">
+    <section id="calculator" className="py-24 bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center transition-colors duration-300">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] text-center mb-10">
@@ -220,10 +220,10 @@ export default function CalculatorSection() {
           </h2>
         </ScrollReveal>
 
-        <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row relative">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row relative transition-colors duration-300">
           
           {/* Barra de Progresso no topo do card */}
-          <div className="absolute top-0 left-0 h-1.5 bg-gray-200 w-full z-10">
+          <div className="absolute top-0 left-0 h-1.5 bg-gray-200 dark:bg-gray-700 w-full z-10 transition-colors duration-300">
             <motion.div
               className="h-full bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070]"
               initial={{ width: 0 }}
@@ -264,14 +264,14 @@ export default function CalculatorSection() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col h-full"
               >
-                <div className="mb-2 text-sm font-bold text-[#426DA9] uppercase tracking-wider">
+                <div className="mb-2 text-sm font-bold text-[#426DA9] dark:text-[#6a95d6] uppercase tracking-wider">
                   Passo {currentStep + 1} de {steps.length}
                 </div>
                 
-                <h3 className="text-3xl font-bold text-gray-800 mb-3">
+                <h3 className="text-3xl font-bold text-gray-800 dark:text-white mb-3 transition-colors duration-300">
                   {step.title}
                 </h3>
-                <p className="text-gray-500 mb-8 text-lg">
+                <p className="text-gray-500 dark:text-gray-300 mb-8 text-lg transition-colors duration-300">
                   {step.question}
                 </p>
 
@@ -283,7 +283,7 @@ export default function CalculatorSection() {
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         key={i}
-                        className="flex items-center gap-2 bg-[#F3F4F6] text-[#1D4F91] border border-[#426DA9]/30 px-4 py-1.5 rounded-full font-semibold shadow-sm"
+                        className="flex items-center gap-2 bg-[#F3F4F6] dark:bg-gray-700 text-[#1D4F91] dark:text-[#8baee0] border border-[#426DA9]/30 dark:border-gray-600 px-4 py-1.5 rounded-full font-semibold shadow-sm transition-colors duration-300"
                       >
                         R$ {item.toFixed(2).replace(".", ",")}
                         <button 
@@ -300,18 +300,18 @@ export default function CalculatorSection() {
                 {/* Input e Adicionar */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-auto">
                   <div className="relative flex-1">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">R$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium transition-colors duration-300">R$</span>
                     <input
                       value={inputValue}
                       onChange={(e) => setInputValue(formatCurrency(e.target.value))}
                       onKeyDown={handleKeyDown}
-                      className="w-full h-14 pl-12 pr-4 border-2 border-gray-200 rounded-xl outline-none focus:border-[#E80070] focus:ring-4 focus:ring-[#E80070]/20 transition-all text-lg font-medium text-gray-700"
+                      className="w-full h-14 pl-12 pr-4 border-2 border-gray-200 dark:border-gray-600 bg-transparent dark:bg-gray-700 rounded-xl outline-none focus:border-[#E80070] dark:focus:border-[#E80070] focus:ring-4 focus:ring-[#E80070]/20 transition-all text-lg font-medium text-gray-700 dark:text-white dark:placeholder-gray-400"
                       placeholder="0,00"
                     />
                   </div>
                   <button
                     onClick={handleAddItem}
-                    className="h-14 px-6 border-2 border-[#1D4F91] text-[#1D4F91] hover:bg-[#1D4F91] hover:text-white rounded-xl flex items-center justify-center gap-2 font-semibold transition-all"
+                    className="h-14 px-6 border-2 border-[#1D4F91] dark:border-[#426DA9] text-[#1D4F91] dark:text-[#426DA9] hover:bg-[#1D4F91] dark:hover:bg-[#426DA9] hover:text-white dark:hover:text-white rounded-xl flex items-center justify-center gap-2 font-semibold transition-all duration-300"
                   >
                     <Plus size={20} />
                     <span>Adicionar</span>
@@ -319,11 +319,11 @@ export default function CalculatorSection() {
                 </div>
 
                 {/* Controles de Navegação */}
-                <div className="flex justify-between items-center mt-12 pt-6 border-t border-gray-100">
+                <div className="flex justify-between items-center mt-12 pt-6 border-t border-gray-100 dark:border-gray-700 transition-colors duration-300">
                   {currentStep > 0 ? (
                     <button
                       onClick={handleBack}
-                      className="flex items-center gap-2 text-gray-500 hover:text-[#1D4F91] font-medium transition-colors"
+                      className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-[#1D4F91] dark:hover:text-[#8baee0] font-medium transition-colors"
                     >
                       <ArrowLeft size={18} />
                       Voltar
@@ -335,7 +335,7 @@ export default function CalculatorSection() {
                   <div className="flex gap-4">
                     <button
                       onClick={handleSkip}
-                      className="flex items-center gap-2 text-gray-400 hover:text-[#77127B] font-medium transition-colors"
+                      className="flex items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-[#77127B] dark:hover:text-[#c45dbd] font-medium transition-colors"
                     >
                       Pular
                       <SkipForward size={18} />
