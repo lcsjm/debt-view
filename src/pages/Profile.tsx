@@ -32,6 +32,13 @@ const validateCPF = (cpf: string) => {
   return calc(10) === parseInt(digits[9]) && calc(11) === parseInt(digits[10]);
 };
 
+// 📮 Formata o CEP enquanto o usuário digita: "12345678" → "12345-678"
+const formatCEP = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 5) return digits;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+};
+
 
 const profileSchema = z.object({
   name: z.string().min(3, "Nome deve ter ao menos 3 letras"),
@@ -40,7 +47,14 @@ const profileSchema = z.object({
     .min(14, "CPF incompleto — ex: 123.456.789-00")
     .refine(validateCPF, "CPF inválido — verifique os dígitos"),
   birth: z.string().optional().or(z.literal("")),
-  cep: z.string().optional().or(z.literal("")),
+  cep: z
+    .string()
+    .optional()
+    .refine(
+      v => !v || v.replace(/\D/g, "").length === 0 || v.replace(/\D/g, "").length === 8,
+      "CEP inválido — ex: 01310-100"
+    )
+    .or(z.literal("")),
   gender: z.string().optional().or(z.literal("")),
   race: z.string().optional().or(z.literal("")),
 });
@@ -192,7 +206,7 @@ export default function ProfilePage() {
                   {/* Nome */}
                   <div className="sm:col-span-2">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Nome Completo *</label>
-                    <input {...register("name")} placeholder="Ex: Victor Ferreira" className={fieldClass} />
+                    <input {...register("name")} placeholder="Ex: João da Silva" className={fieldClass} />
                     {errors.name && <p className="text-destructive text-xs mt-1.5 flex items-center gap-1"><AlertCircle size={12} /> {errors.name.message}</p>}
                   </div>
 
@@ -225,7 +239,21 @@ export default function ProfilePage() {
                   {/* CEP */}
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">CEP</label>
-                    <input {...register("cep")} placeholder="00000-000" className={fieldClass} />
+                    <Controller
+                      name="cep"
+                      control={control}
+                      render={({ field: { onChange, value } }) => (
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="00000-000"
+                          className={fieldClass}
+                          value={value ?? ""}
+                          onChange={e => onChange(formatCEP(e.target.value))}
+                        />
+                      )}
+                    />
+                    {errors.cep && <p className="text-destructive text-xs mt-1.5 flex items-center gap-1"><AlertCircle size={12} /> {errors.cep.message}</p>}
                   </div>
 
                   {/* Gênero */}
