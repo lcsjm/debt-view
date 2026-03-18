@@ -24,7 +24,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Painel Financeiro", id: "painel", path: "/dashboard" },
   { icon: CreditCard,      label: "Dívidas",           id: "debts",  path: "/debts" },
   { icon: User,            label: "Meu Perfil",        id: "profile", path: "/profile" },
-   { icon: BookImage,            label: "Educação Financeira",     path: "../pages/EducationAdd" },
+   { icon: BookImage,      label: "Educação Financeira",  id:"education",   path: "/education" },
 ];
 
 interface AppSidebarProps {
