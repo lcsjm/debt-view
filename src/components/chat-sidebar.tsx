@@ -1,4 +1,4 @@
-
+import { GoogleGenAI } from "@google/genai";
 import { Send, Bot, Sparkles, ArrowRight } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -71,60 +71,6 @@ function generateAnalysis(data: FinancialData): string[] {
   return tips;
 }
 
-function getBotReply(userMessage: string): string {
-  const lower = userMessage.toLowerCase();
-
-  if (
-    lower.includes("renegoci") ||
-    lower.includes("negocia") ||
-    lower.includes("dívida") ||
-    lower.includes("divida")
-  ) {
-    return "A renegociação humanizada prioriza seu sustento primeiro. Usamos o Método Maslow Financeiro para garantir que suas necessidades básicas (moradia, alimentação) estejam cobertas antes de direcionar qualquer valor para dívidas. Assim, você negocia sem comprometer sua sobrevivência.";
-  }
-
-  if (
-    lower.includes("maslow") ||
-    lower.includes("método") ||
-    lower.includes("metodo") ||
-    lower.includes("vital")
-  ) {
-    return "O Método VITAL (baseado em Maslow) tem 3 etapas:\n\n1. **Garantir o Básico** -- Aluguel e mercado ficam protegidos.\n2. **Criar Segurança** -- Uma reserva de emergência para imprevistos.\n3. **Acordo Justo** -- Somente o que sobra vai para dívidas.\n\nIsso garante que você nunca comprometa o essencial ao negociar.";
-  }
-
-  if (
-    lower.includes("simul") ||
-    lower.includes("orçamento") ||
-    lower.includes("orcamento") ||
-    lower.includes("50-30-20")
-  ) {
-    return "No simulador, você ajusta sua renda mensal e gastos essenciais com os controles deslizantes. O gráfico mostra a divisão recomendada:\n\n- **50%** para necessidades\n- **30%** para estilo de vida\n- **20%** disponível para dívidas\n\nSe seus gastos passarem de 80% da renda, o sistema avisa para focar em renda extra primeiro.";
-  }
-
-  if (
-    lower.includes("score") ||
-    lower.includes("painel") ||
-    lower.includes("dashboard") ||
-    lower.includes("saúde") ||
-    lower.includes("saude")
-  ) {
-    return "O Painel Financeiro mostra seu score de saúde financeira (de 0 a 1000) e ofertas personalizadas de renegociação com descontos que podem chegar a 60%. Quanto mais organizado seu orçamento, melhores as condições oferecidas.";
-  }
-
-  if (
-    lower.includes("oi") ||
-    lower.includes("olá") ||
-    lower.includes("ola") ||
-    lower.includes("bom dia") ||
-    lower.includes("boa tarde") ||
-    lower.includes("boa noite")
-  ) {
-    return "Olá! Fico feliz em te atender. Posso explicar sobre a renegociação humanizada, o Método Maslow Financeiro, ou te ajudar com o simulador de orçamento. O que prefere saber?";
-  }
-
-  return "Entendi! Para te ajudar melhor, posso falar sobre: a renegociação humanizada de dívidas, o Método Maslow Financeiro que prioriza seu sustento, ou como usar nosso simulador de orçamento. Sobre qual desses temas quer saber mais?";
-}
-
 export function ChatSidebar() {
   const { isOpen, setIsOpen, financialData } = useChat();
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
@@ -175,7 +121,7 @@ export function ChatSidebar() {
   }, [financialData]);
 
   const handleSend = useCallback(
-    (text?: string) => {
+    async (text?: string) => {
       const messageText = text || input.trim();
       if (!messageText || isTyping) return;
 
@@ -189,17 +135,47 @@ export function ChatSidebar() {
       setInput("");
       setIsTyping(true);
 
-      setTimeout(() => {
+      try {
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        
+        // Convert existing messages to Gemini format, keeping only the last 10 for context
+        const history = messages
+          .filter(m => m.id !== "welcome" && !m.id.startsWith("analysis"))
+          .slice(-10)
+          .map(m => ({
+            role: m.role === "assistant" ? "model" as const : "user" as const,
+            parts: [{ text: m.content }]
+          }));
+
+        const response = await ai.models.generateContent({
+           model: 'gemini-2.5-flash',
+           contents: [
+             ...history,
+             { role: 'user', parts: [{ text: messageText }] }
+           ],
+           config: {
+             systemInstruction: "Você é o assistente do Serasa Humanizado. Seu objetivo é ajudar o usuário a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Priorize a sobrevivência do usuário (moradia, alimentação) antes do pagamento de dívidas (Método VITAL/Maslow Financeiro). Seja amigável, acolhedor e claro."
+           }
+        });
+
         const reply: ChatMessage = {
           id: `bot-${Date.now()}`,
           role: "assistant",
-          content: getBotReply(messageText),
+          content: response.text || "Desculpe, não consegui gerar uma resposta.",
         };
         setMessages((prev) => [...prev, reply]);
+      } catch (error) {
+        console.error("Gemini API Error:", error);
+        setMessages((prev) => [...prev, {
+            id: `bot-${Date.now()}`,
+            role: "assistant",
+            content: "Desculpe, ocorreu um erro ao se conectar com a API do Gemini. Por favor, verifique sua chave API.",
+        }]);
+      } finally {
         setIsTyping(false);
-      }, 600 + Math.random() * 800);
+      }
     },
-    [input, isTyping],
+    [input, isTyping, messages],
   );
 
   return (
