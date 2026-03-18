@@ -173,6 +173,16 @@ const Auth = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 relative overflow-hidden">
       <div className="absolute inset-0 auth-gradient-bg opacity-50" />
       
+      {/* NOVO: Botão Voltar para a Landing Page */}
+      <button 
+        onClick={() => navigate("/")} 
+        className="absolute top-6 left-6 md:top-8 md:left-8 z-20 flex items-center gap-2 text-white/70 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10"
+        aria-label="Voltar para a página inicial"
+      >
+        <ArrowLeft size={18} />
+        <span className="hidden sm:inline">Voltar ao Início</span>
+      </button>
+      
       <div className="relative z-10 w-full max-w-md mx-4 transition-all duration-500">
         <div className="backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl p-8 shadow-2xl">
           
@@ -258,7 +268,7 @@ const Auth = () => {
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
-                       
+                        
                         {STEPS[step].key === "password" && (
                             <div className="mt-4 flex flex-col gap-1 text-sm">
                                 <span className={formData.password.length >= 8 ? "text-green-400" : "text-white/60 transition-colors"}>• Mínimo de 8 caracteres</span>

@@ -44,7 +44,7 @@ export default function Dashboard() {
 
         <AssistentSection
           financialData={null}
-          isChatbotFloating={false}
+          isChatbotFloating={false} // não sei o que é isso
           onFloatChatbot={() => { }}
         />
 
