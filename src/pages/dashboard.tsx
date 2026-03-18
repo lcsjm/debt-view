@@ -7,7 +7,6 @@ import TransactionsSection from "@/components/TransactionsSection";
 import DashAnalysis from "@/components/DashAnalysis";
 import AssistentSection from "@/components/AssistentSection";
 import SerasaSection from "@/components/SerasaSection";
-import EducationSection from "@/components/EducationSection";
 
 import { useProfile } from "@/hooks/useProfile";
 
@@ -52,8 +51,6 @@ export default function Dashboard() {
 
         {/* TransactionsSection Section */}
         <TransactionsSection />
-
-        <EducationSection />
       </main>
     </div>
   );
