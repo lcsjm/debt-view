@@ -11,7 +11,6 @@ import {
   LogOut,
   User,
   CreditCard,
-  BookImage,
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +24,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Painel Financeiro", id: "painel", path: "/dashboard" },
   { icon: CreditCard,      label: "Dívidas",           id: "debts",  path: "/debts" },
   { icon: User,            label: "Meu Perfil",        id: "profile", path: "/profile" },
-   { icon: BookImage,      label: "Educação Financeira",  id:"education",   path: "/education" },
+   { icon: BookOpen,      label: "Educação Financeira",  id:"education",   path: "/education" },
   { icon: Rocket,          label: "Assistente Serasa", id: "chatbot", path: "#" },
 ];
 
