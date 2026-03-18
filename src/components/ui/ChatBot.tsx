@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { SendHorizontal, Bot, User } from "lucide-react";
 
 interface FinancialData {
   divida: number;
@@ -68,6 +68,58 @@ const responses: Record<string, string> = {
   "como economizar": "Dicas: 1) Faça uma lista de compras antes de ir ao mercado. 2) Cancele assinaturas não utilizadas. 3) Compare preços. 4) Cozinhe em casa. 5) Use transporte público quando possível.",
   "investimento": "Para iniciantes, considere: Tesouro Direto (baixo risco), CDB (renda fixa), e gradualmente diversifique para renda variável conforme ganha experiência.",
   "divida": "Para sair das dívidas: 1) Liste todas as dívidas. 2) Priorize as de maior juros. 3) Negocie condições. 4) Evite novas dívidas. 5) Considere a portabilidade de crédito.",
+};
+
+/* ─── Botão Magnético de Envio ─── */
+const MagneticSendButton = ({ onClick }: { onClick: () => void }) => {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    
+    // Multiplicador define a força do ímã (0.3 deixa o movimento do botão mais suave)
+    const dx = (e.clientX - cx) * 0.3; 
+    const dy = (e.clientY - cy) * 0.3;
+    
+    // Distância máxima que o botão pode se deslocar
+    const maxD = 10; 
+    
+    setOffset({
+      x: Math.max(-maxD, Math.min(maxD, dx)),
+      y: Math.max(-maxD, Math.min(maxD, dy)),
+    });
+  }, []);
+
+  const handleMouseLeave = () => setOffset({ x: 0, y: 0 });
+
+  return (
+    <button
+      ref={btnRef}
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="w-10 h-10 bg-primary flex items-center justify-center rounded-md hover:brightness-110 flex-shrink-0 cursor-pointer"
+      style={{
+        // A transformação agora acontece no botão inteiro
+        transform: `translate(${offset.x}px, ${offset.y}px)`,
+        transition: "transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)",
+      }}
+    >
+      <SendHorizontal 
+        style={{ 
+          stroke: "white", 
+          color: "white", 
+          minWidth: "15px", // Tamanho do ícone reduzido
+          minHeight: "15px", 
+          display: "block" 
+        }} 
+      />
+    </button>
+  );
 };
 
 const Chatbot = ({ financialData, compact }: { financialData: FinancialData | null; compact?: boolean }) => {
@@ -159,9 +211,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
           placeholder="Digite sua pergunta..."
           className="flex-1 h-10 px-4 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        <button onClick={handleSend} className="btn-serasa w-10 h-10 bg-primary flex items-center justify-center rounded-md hover:brightness-110 transition-all">
-          <Send className="w-5 h-5 text-white" />
-        </button>
+        <MagneticSendButton onClick={handleSend} />
       </div>
     </div>
   );
