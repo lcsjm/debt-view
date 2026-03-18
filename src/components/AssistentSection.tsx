@@ -1,5 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, MessageCircle, Maximize2, Component } from "lucide-react";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  MessageCircle, 
+  Maximize2, 
+  Minimize2, 
+  X, 
+  GripHorizontal 
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Chatbot from "./ui/ChatBot";
 
@@ -155,7 +163,7 @@ const StoryCard = ({
   return (
     <div
       ref={cardRef}
-      className="relative rounded-2xl overflow-hidden cursor-pointer group"
+      className="relative rounded-2xl overflow-hidden cursor-pointer group w-full"
       style={{
         aspectRatio: "9/16",
         maxHeight: 520,
@@ -164,7 +172,6 @@ const StoryCard = ({
         transition: `all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)`,
       }}
     >
-      {/* Progress bar */}
       <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
         {slides.map((_, i) => (
           <div key={i} className="flex-1 h-1 rounded-full bg-white/30 overflow-hidden">
@@ -176,7 +183,6 @@ const StoryCard = ({
         ))}
       </div>
 
-      {/* Slide content with transition */}
       <div className="absolute inset-0 overflow-hidden">
         <div
           className="flex h-full"
@@ -216,7 +222,6 @@ const StoryCard = ({
         </div>
       </div>
 
-      {/* Navigation arrows */}
       <div className="absolute bottom-4 left-4 right-4 z-20 flex justify-between">
         <MagneticArrow direction="left" onClick={() => setStep((s) => s - 1)} disabled={step === 0} />
         <MagneticArrow direction="right" onClick={() => setStep((s) => s + 1)} disabled={step === slides.length - 1} />
@@ -225,16 +230,111 @@ const StoryCard = ({
   );
 };
 
+/* ─── Chatbot Widget (Draggable) ─── */
+const ChatbotWidget = ({
+  financialData,
+  onDock,
+}: {
+  financialData: FinancialData | null;
+  onDock: () => void;
+}) => {
+  const [minimized, setMinimized] = useState(false);
+  const [pos, setPos] = useState({ x: window.innerWidth - 420, y: window.innerHeight - 620 });
+  const dragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    dragging.current = true;
+    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    e.preventDefault();
+  }, [pos]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth - 380, e.clientX - dragOffset.current.x)),
+        y: Math.max(0, Math.min(window.innerHeight - 100, e.clientY - dragOffset.current.y)),
+      });
+    };
+    const handleMouseUp = () => { dragging.current = false; };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  if (minimized) {
+    return (
+      <button
+        onClick={() => setMinimized(false)}
+        className="fixed z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
+        style={{
+          bottom: 24,
+          right: 24,
+          background: "linear-gradient(135deg, #1D4F91, #C1188B)",
+        }}
+      >
+        <MessageCircle className="w-6 h-6" />
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="fixed z-50 rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col bg-slate-900"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        width: 370,
+        height: 550,
+        animation: "scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+      }}
+    >
+      <div
+        onMouseDown={handleMouseDown}
+        className="flex items-center justify-between px-3 py-2 cursor-grab active:cursor-grabbing"
+        style={{ background: "linear-gradient(135deg, #1D4F91, #77127B)" }}
+      >
+        <div className="flex items-center gap-2 text-white text-xs">
+          <GripHorizontal className="w-4 h-4 opacity-60" />
+          <span className="font-medium">Assistente Financeiro</span>
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={onDock}
+            className="w-6 h-6 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            title="Reencaixar"
+          >
+            <Minimize2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setMinimized(true)}
+            className="w-6 h-6 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            title="Minimizar"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col bg-transparent">
+        <Chatbot financialData={financialData} compact />
+      </div>
+    </div>
+  );
+};
+
 /* ─── Main Section ─── */
 const AssistentSection = ({
   financialData,
-  isChatbotFloating,
-  onFloatChatbot,
 }: {
   financialData: FinancialData | null;
-  isChatbotFloating: boolean;
-  onFloatChatbot: (floating: boolean) => void;
 }) => {
+  // Estado que controla se o chatbot está fixo na seção ou flutuando trazido para dentro!
+  const [isChatbotFloating, setIsChatbotFloating] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [sectionVisible, setSectionVisible] = useState(false);
 
@@ -255,74 +355,90 @@ const AssistentSection = ({
   }, []);
 
   return (
-    <section
-      id="chatbot"
-      ref={sectionRef}
-      className="w-full py-16 assistant-section-bg relative overflow-hidden"
-      style={{
-        opacity: sectionVisible ? 1 : 0,
-        transform: sectionVisible ? "scale(1)" : "scale(0.95)",
-        transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
-      }}
-    >
-      {/* Frosted glass overlay */}
-      <div className="absolute inset-0 backdrop-blur-[2px] bg-black/20" />
-      
-      <div className="max-w-[1366px] mx-auto px-[3%] relative z-10">
-        <div className="text-center mb-10">
-          <h2
-            className="font-bold text-white mb-2"
-            style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
-          >
-            Assistente Financeiro
-          </h2>
-          <p className="text-white/60">Renegocie dívidas, tire dúvidas e aprenda sobre amortização</p>
-        </div>
-
-        <div
-          className={`grid gap-6 items-center justify-items-center ${
-            isChatbotFloating
-              ? "grid-cols-1 md:grid-cols-2"
-              : "grid-cols-1 md:grid-cols-3"
-          }`}
-        >
-          {/* Column 1 — Renegociação */}
-          <div className="w-full max-w-[400px]">
-            <StoryCard slides={col1Slides} revealDelay={0} />
+    <>
+      <section
+        id="chatbot"
+        ref={sectionRef}
+        className="w-full py-16 assistant-section-bg relative overflow-hidden"
+        style={{
+          opacity: sectionVisible ? 1 : 0,
+          transform: sectionVisible ? "scale(1)" : "scale(0.95)",
+          transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+      >
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-black/20" />
+        
+        <div className="max-w-[1366px] mx-auto px-[3%] relative z-10 w-full">
+          <div className="text-center mb-10">
+            <h2
+              className="font-bold text-white mb-2 transition-all duration-300"
+              style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
+            >
+              Assistente Financeiro
+            </h2>
+            <p className="text-white/60 transition-all duration-300">
+              Renegocie dívidas, tire dúvidas e aprenda sobre amortização
+            </p>
           </div>
 
-          {/* Column 2 — Chatbot (if not floating) */}
-          {!isChatbotFloating && (
-            <div className="w-full max-w-[400px]">
-              <div
-                className="relative rounded-2xl overflow-hidden flex flex-col"
-                style={{ aspectRatio: "9/16", maxHeight: 520 }}
+          <div className="flex flex-col md:flex-row gap-6 items-center md:items-stretch w-full overflow-hidden">
+            
+            {/* 1ª Div — Renegociação */}
+            <div 
+              className={`w-full transition-all duration-500 ease-in-out flex justify-center ${
+                isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'
+              }`}
+            >
+              <StoryCard slides={col1Slides} revealDelay={0} />
+            </div>
+
+            {/* 2ª Div — Chatbot Fixo */}
+            {!isChatbotFloating && (
+              <div 
+                className="w-full md:w-[50%] flex justify-center transition-all duration-500 ease-in-out"
               >
-                <div className="absolute top-3 right-3 z-20">
-                  <button
-                    onClick={() => onFloatChatbot(true)}
-                    className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors active:scale-95"
-                    title="Destacar chatbot"
-                  >
-                    <Maximize2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex-1 flex flex-col">
-                  <Chatbot financialData={financialData} compact />
+                <div
+                  className="relative rounded-2xl overflow-hidden flex flex-col w-full bg-white/5 backdrop-blur-md"
+                  style={{ minHeight: 520 }} 
+                >
+                  <div className="absolute top-3 right-3 z-20">
+                    <button
+                      onClick={() => setIsChatbotFloating(true)}
+                      className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors active:scale-95"
+                      title="Destacar chatbot"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 flex flex-col w-full h-full">
+                    <Chatbot financialData={financialData} compact />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Column 3 — Amortização */}
-          <div className="w-full max-w-[400px]">
-            <StoryCard slides={col3Slides} revealDelay={200} />
+            {/* 3ª Div — Amortização */}
+            <div 
+              className={`w-full transition-all duration-500 ease-in-out flex justify-center ${
+                isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'
+              }`}
+            >
+              <StoryCard slides={col3Slides} revealDelay={200} />
+            </div>
+
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Renderiza o Widget flutuante caso o estado isChatbotFloating seja true */}
+      {isChatbotFloating && (
+        <ChatbotWidget 
+          financialData={financialData} 
+          onDock={() => setIsChatbotFloating(false)} 
+        />
+      )}
+    </>
   );
 };
 
 export default AssistentSection;
-;

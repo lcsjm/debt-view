@@ -37,6 +37,7 @@ export default function Dashboard() {
           </div>
         </div>
         <DashAnalysis />
+        <TransactionsSection />
 
         {/* Serasa Mock Debts */}
         <SerasaSection />
@@ -50,7 +51,7 @@ export default function Dashboard() {
 
 
         {/* TransactionsSection Section */}
-        <TransactionsSection />
+        
       </main>
     </div>
   );
