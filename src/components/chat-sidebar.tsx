@@ -1,5 +1,8 @@
-
+import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Send, Bot, Sparkles, ArrowRight } from "lucide-react";
+import supabase from "../../utils/supabase";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Sheet,
@@ -71,60 +74,6 @@ function generateAnalysis(data: FinancialData): string[] {
   return tips;
 }
 
-function getBotReply(userMessage: string): string {
-  const lower = userMessage.toLowerCase();
-
-  if (
-    lower.includes("renegoci") ||
-    lower.includes("negocia") ||
-    lower.includes("dívida") ||
-    lower.includes("divida")
-  ) {
-    return "A renegociação humanizada prioriza seu sustento primeiro. Usamos o Método Maslow Financeiro para garantir que suas necessidades básicas (moradia, alimentação) estejam cobertas antes de direcionar qualquer valor para dívidas. Assim, você negocia sem comprometer sua sobrevivência.";
-  }
-
-  if (
-    lower.includes("maslow") ||
-    lower.includes("método") ||
-    lower.includes("metodo") ||
-    lower.includes("vital")
-  ) {
-    return "O Método VITAL (baseado em Maslow) tem 3 etapas:\n\n1. **Garantir o Básico** -- Aluguel e mercado ficam protegidos.\n2. **Criar Segurança** -- Uma reserva de emergência para imprevistos.\n3. **Acordo Justo** -- Somente o que sobra vai para dívidas.\n\nIsso garante que você nunca comprometa o essencial ao negociar.";
-  }
-
-  if (
-    lower.includes("simul") ||
-    lower.includes("orçamento") ||
-    lower.includes("orcamento") ||
-    lower.includes("50-30-20")
-  ) {
-    return "No simulador, você ajusta sua renda mensal e gastos essenciais com os controles deslizantes. O gráfico mostra a divisão recomendada:\n\n- **50%** para necessidades\n- **30%** para estilo de vida\n- **20%** disponível para dívidas\n\nSe seus gastos passarem de 80% da renda, o sistema avisa para focar em renda extra primeiro.";
-  }
-
-  if (
-    lower.includes("score") ||
-    lower.includes("painel") ||
-    lower.includes("dashboard") ||
-    lower.includes("saúde") ||
-    lower.includes("saude")
-  ) {
-    return "O Painel Financeiro mostra seu score de saúde financeira (de 0 a 1000) e ofertas personalizadas de renegociação com descontos que podem chegar a 60%. Quanto mais organizado seu orçamento, melhores as condições oferecidas.";
-  }
-
-  if (
-    lower.includes("oi") ||
-    lower.includes("olá") ||
-    lower.includes("ola") ||
-    lower.includes("bom dia") ||
-    lower.includes("boa tarde") ||
-    lower.includes("boa noite")
-  ) {
-    return "Olá! Fico feliz em te atender. Posso explicar sobre a renegociação humanizada, o Método Maslow Financeiro, ou te ajudar com o simulador de orçamento. O que prefere saber?";
-  }
-
-  return "Entendi! Para te ajudar melhor, posso falar sobre: a renegociação humanizada de dívidas, o Método Maslow Financeiro que prioriza seu sustento, ou como usar nosso simulador de orçamento. Sobre qual desses temas quer saber mais?";
-}
-
 export function ChatSidebar() {
   const { isOpen, setIsOpen, financialData } = useChat();
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
@@ -175,7 +124,7 @@ export function ChatSidebar() {
   }, [financialData]);
 
   const handleSend = useCallback(
-    (text?: string) => {
+    async (text?: string) => {
       const messageText = text || input.trim();
       if (!messageText || isTyping) return;
 
@@ -189,17 +138,80 @@ export function ChatSidebar() {
       setInput("");
       setIsTyping(true);
 
-      setTimeout(() => {
+      try {
+        // Fetch User Context
+        const { data: { user } } = await supabase.auth.getUser();
+        let userContext = "";
+
+        if (user) {
+          const [profileReq, financesReq, debtsReq, serasaReq, transReq] = await Promise.all([
+            supabase.from('profiles').select('*').eq('user_id', user.id).single(),
+            supabase.from('finances').select('*').eq('user_id', user.id).single(),
+            supabase.from('debts').select('*').eq('user_id', user.id),
+            // Serasa demands CPF...
+            supabase.from('profiles').select('cpf').eq('user_id', user.id).single()
+              .then(res => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
+            supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
+          ]);
+
+          const p = profileReq.data;
+          const f = financesReq.data;
+          const d = debtsReq.data || [];
+          const s = serasaReq.data || [];
+          const t = transReq.data || [];
+
+          userContext = `\n\n--- DADOS DO USUÁRIO PARA CONTEXTO OBRIGATÓRIO (NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SIMPLESMENTE FALE NATURALMENTE) ---
+Nome: ${p?.name || 'Desconhecido'}
+Gastos Fixos Mensais: ${fmt(f?.fixed_expense || 0)}
+Gastos Variáveis Mensais: ${fmt(f?.variable_expense || 0)}
+Renda Fixa Mensal: ${fmt(f?.fixed_income || 0)}
+Renda Variável Mensal: ${fmt(f?.variable_income || 0)}
+Dívidas Atuais (Serasa Mock): ${s.length > 0 ? s.map((x: any) => `${x.creditor_name} - ${fmt(x.current_amount)} (Vence em: ${x.due_date})`).join(', ') : 'Nenhuma'}
+Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} - ${fmt(x.amount)}`).join(', ') : 'Nenhuma'}
+Últimas Transações: ${t.length > 0 ? t.map((x: any) => `${x.category} (${x.type}): ${fmt(x.value)}`).join(', ') : 'Nenhuma'}
+`;
+        }
+
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        
+        // Convert existing messages to Gemini format, keeping only the last 10 for context
+        const history = messages
+          .filter(m => m.id !== "welcome" && !m.id.startsWith("analysis"))
+          .slice(-10)
+          .map(m => ({
+            role: m.role === "assistant" ? "model" as const : "user" as const,
+            parts: [{ text: m.content }]
+          }));
+
+        const response = await ai.models.generateContent({
+           model: 'gemini-2.5-flash',
+           contents: [
+             ...history,
+             { role: 'user', parts: [{ text: messageText }] }
+           ],
+           config: {
+             systemInstruction: "Você é o assistente do Serasa Humanizado. Seu objetivo é ajudar o usuário a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Priorize a sobrevivência do usuário (moradia, alimentação) antes do pagamento de dívidas (Método VITAL/Maslow Financeiro). Seja amigável, acolhedor e claro. Responda em Markdown. " + userContext
+           }
+        });
+
         const reply: ChatMessage = {
           id: `bot-${Date.now()}`,
           role: "assistant",
-          content: getBotReply(messageText),
+          content: response.text || "Desculpe, não consegui gerar uma resposta.",
         };
         setMessages((prev) => [...prev, reply]);
+      } catch (error) {
+        console.error("Gemini API Error:", error);
+        setMessages((prev) => [...prev, {
+            id: `bot-${Date.now()}`,
+            role: "assistant",
+            content: "Desculpe, ocorreu um erro ao se conectar com a API do Gemini. Por favor, verifique sua chave API.",
+        }]);
+      } finally {
         setIsTyping(false);
-      }, 600 + Math.random() * 800);
+      }
     },
-    [input, isTyping],
+    [input, isTyping, messages],
   );
 
   return (
@@ -238,17 +250,14 @@ export function ChatSidebar() {
                     </div>
                   )}
                   <div
-                    className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground"
+                    className={`rounded-2xl px-4 py-3 text-sm leading-relaxed prose prose-sm max-w-none ${msg.role === "user"
+                        ? "bg-primary text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-ul:text-primary-foreground"
+                        : "bg-muted text-foreground prose-p:text-foreground prose-strong:text-foreground prose-ul:text-foreground"
                       }`}
                   >
-                    {msg.content.split("\n").map((line, i) => (
-                      <span key={`${msg.id}-${i}`}>
-                        {i > 0 && <br />}
-                        {line}
-                      </span>
-                    ))}
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
               </div>
@@ -322,7 +331,7 @@ export function ChatSidebar() {
             </button>
           </form>
           <p className="mt-2 text-center text-[11px] text-muted-foreground/60">
-            {"Assistente com respostas pré-programadas para demonstração."}
+            {"As respostas do Assistente são geradas por Inteligência Artificial e podem conter imprecisões."}
           </p>
         </div>
       </SheetContent>

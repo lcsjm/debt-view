@@ -159,8 +159,8 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
           placeholder="Digite sua pergunta..."
           className="flex-1 h-10 px-4 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        <button onClick={handleSend} className="btn-serasa w-10 h-10 bg-primary text-primary-foreground flex items-center justify-center rounded-md">
-          <Send className="w-4 h-4" />
+        <button onClick={handleSend} className="btn-serasa w-10 h-10 bg-primary flex items-center justify-center rounded-md hover:brightness-110 transition-all">
+          <Send className="w-5 h-5 text-white" />
         </button>
       </div>
     </div>

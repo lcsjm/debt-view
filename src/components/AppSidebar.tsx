@@ -19,12 +19,14 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../../utils/supabase";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
+import { useChat } from "./chat-context";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Painel Financeiro", id: "painel", path: "/dashboard" },
   { icon: CreditCard,      label: "Dívidas",           id: "debts",  path: "/debts" },
   { icon: User,            label: "Meu Perfil",        id: "profile", path: "/profile" },
    { icon: BookImage,      label: "Educação Financeira",  id:"education",   path: "/education" },
+  { icon: Rocket,          label: "Assistente Serasa", id: "chatbot", path: "#" },
 ];
 
 interface AppSidebarProps {
@@ -37,6 +39,7 @@ interface AppSidebarProps {
 export function AppSidebar({ activeSection, onSectionChange, collapsed, setCollapsed }: AppSidebarProps) {
   const { theme, setTheme } = useTheme();
   const nav = useNavigate();
+  const { toggle } = useChat();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -76,8 +79,12 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
             <button
               key={item.id}
               onClick={() => {
-                onSectionChange(item.id);
-                nav(item.path);
+                if (item.id === "chatbot") {
+                  toggle();
+                } else {
+                  if (item.id) onSectionChange(item.id);
+                  if (item.path) nav(item.path);
+                }
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                 active

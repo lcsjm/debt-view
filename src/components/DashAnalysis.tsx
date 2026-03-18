@@ -157,7 +157,12 @@ export default function CalculatorSection() {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleAddItem();
+      const num = parseFloat(inputValue.replace(/\./g, "").replace(",", ".")) || 0;
+      if (num > 0) {
+        handleAddItem();
+      } else {
+        handleNext();
+      }
     }
   };
 
