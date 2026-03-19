@@ -6,7 +6,8 @@ import {
   Maximize2, 
   Minimize2, 
   X, 
-  GripHorizontal 
+  GripHorizontal,
+  Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Chatbot from "./ui/ChatBot";
@@ -270,14 +271,14 @@ const ChatbotWidget = ({
     return (
       <button
         onClick={() => setMinimized(false)}
-        className="fixed z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-white active:scale-95 transition-transform"
+        className="fixed z-50 w-16 h-16 rounded-full shadow-2xl shadow-blue-500/30 flex items-center justify-center text-white active:scale-95 transition-all duration-300 hover:scale-105 border border-white/20"
         style={{
           bottom: 24,
           right: 24,
-          background: "linear-gradient(135deg, #1D4F91, #C1188B)",
+          background: "linear-gradient(135deg, #2563eb, #7c3aed, #db2777)",
         }}
       >
-        <MessageCircle className="w-6 h-6" />
+        <Sparkles className="w-7 h-7" />
       </button>
     );
   }
@@ -295,12 +296,12 @@ const ChatbotWidget = ({
     >
       <div
         onMouseDown={handleMouseDown}
-        className="flex items-center justify-between px-3 py-2 cursor-grab active:cursor-grabbing"
-        style={{ background: "linear-gradient(135deg, #1D4F91, #77127B)" }}
+        className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing border-b border-indigo-500/20"
+        style={{ background: "linear-gradient(90deg, #1e1b4b, #312e81, #4c1d95)" }}
       >
-        <div className="flex items-center gap-2 text-white text-xs">
-          <GripHorizontal className="w-4 h-4 opacity-60" />
-          <span className="font-medium">Assistente Financeiro</span>
+        <div className="flex items-center gap-2 text-white">
+          <Sparkles className="w-4 h-4 text-blue-300" />
+          <span className="font-semibold text-sm tracking-wide">Assistente I.A.</span>
         </div>
         <div className="flex gap-1">
           <button
@@ -369,15 +370,19 @@ const AssistentSection = ({
         <div className="absolute inset-0 backdrop-blur-[2px] bg-black/20" />
         
         <div className="max-w-[1366px] mx-auto px-[3%] relative z-10 w-full">
-          <div className="text-center mb-10">
+          <div className="text-center mb-10 flex flex-col items-center">
+            <div className="inline-flex items-center gap-2 mb-3 bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 rounded-full text-blue-200 text-sm font-medium backdrop-blur-sm">
+              <Sparkles className="w-4 h-4" />
+              Powered by Google Gemini
+            </div>
             <h2
-              className="font-bold text-white mb-2 transition-all duration-300"
+              className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-white to-purple-100 mb-3 transition-all duration-300 drop-shadow-sm"
               style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
             >
-              Assistente Financeiro
+              Assistente de Inteligência Artificial
             </h2>
-            <p className="text-white/60 transition-all duration-300">
-              Renegocie dívidas, tire dúvidas e aprenda sobre amortização
+            <p className="text-white/70 max-w-2xl mx-auto text-lg transition-all duration-300">
+              Tire dúvidas financeiras, planeje o seu futuro e aprenda as melhores estratégias de renegociação com I.A.
             </p>
           </div>
 
@@ -398,14 +403,14 @@ const AssistentSection = ({
                 className="w-full md:w-[50%] flex justify-center transition-all duration-500 ease-in-out"
               >
                 <div
-                  className="relative rounded-2xl overflow-hidden flex flex-col w-full bg-white/5 backdrop-blur-md"
+                  className="relative rounded-[20px] overflow-hidden flex flex-col w-full bg-[#0a0f1d]/80 backdrop-blur-xl border border-blue-500/20 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)]"
                   style={{ minHeight: 520 }} 
                 >
-                  <div className="absolute top-3 right-3 z-20">
+                  <div className="absolute top-4 right-4 z-20">
                     <button
                       onClick={() => setIsChatbotFloating(true)}
-                      className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors active:scale-95"
-                      title="Destacar chatbot"
+                      className="w-9 h-9 rounded-full bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 hover:scale-105 border border-slate-600/50 shadow-lg transition-all active:scale-95"
+                      title="Destacar assistente"
                     >
                       <Maximize2 className="w-4 h-4" />
                     </button>
