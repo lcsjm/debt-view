@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Droplets, PiggyBank, Building2, TrendingUp, Rocket, TrendingDown, Percent, Receipt, Handshake, Calculator, Home, X } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
@@ -103,17 +103,37 @@ const ScrollingRow = ({
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [lastX, setLastX] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  const duplicated = [...cards, ...cards];
+  const duplicated = [...cards, ...cards, ...cards];
+
+  useEffect(() => {
+    if (sliderRef.current) {
+      const singleSetWidth = sliderRef.current.scrollWidth / 3;
+      sliderRef.current.scrollLeft = singleSetWidth;
+    }
+  }, []);
+
+  const handleScroll = () => {
+    if (!sliderRef.current) return;
+    const slider = sliderRef.current;
+    const singleSetWidth = slider.scrollWidth / 3;
+
+    if (slider.scrollLeft <= 0) {
+      slider.scrollLeft += singleSetWidth;
+    } else if (slider.scrollLeft >= singleSetWidth * 2) {
+      slider.scrollLeft -= singleSetWidth;
+    }
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     setHasDragged(false);
     if (sliderRef.current) {
-      setStartX(e.pageX - sliderRef.current.offsetLeft);
-      setScrollLeft(sliderRef.current.scrollLeft);
+      const x = e.pageX - sliderRef.current.offsetLeft;
+      setStartX(x);
+      setLastX(x);
     }
   };
 
@@ -130,13 +150,16 @@ const ScrollingRow = ({
     if (!isDragging || !sliderRef.current) return;
     e.preventDefault();
     const x = e.pageX - sliderRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
     
-    if (Math.abs(walk) > 5) {
+    if (Math.abs(x - startX) > 5) {
       setHasDragged(true);
     }
     
-    sliderRef.current.scrollLeft = scrollLeft - walk;
+    // Multiplicador removido para diminuir a velocidade de arraste (proporção 1:1)
+    // Dica: Se quiser ainda mais devagar, altere para: const walk = (x - lastX) * 0.5;
+    const walk = (x - lastX); 
+    sliderRef.current.scrollLeft -= walk;
+    setLastX(x);
   };
 
   return (
@@ -148,6 +171,7 @@ const ScrollingRow = ({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
+      onScroll={handleScroll}
     >
       <div
         className={`flex gap-6 ${direction === "left" ? "scroll-left" : "scroll-right"} ${paused ? "scroll-paused" : ""}`}
