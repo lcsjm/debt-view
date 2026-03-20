@@ -64,6 +64,40 @@ export default function CalculatorSection() {
     localStorage.setItem("calc_showResults", showResults.toString());
   }, [data, currentStep, showResults]);
 
+  // Efeito para carregar dados salvos no banco caso o usuário já tenha feito
+  useEffect(() => {
+    async function fetchExistingData() {
+      if (!user) return;
+      if (localStorage.getItem("calc_forceEdit") === "true") return;
+
+      const { data: existing } = await supabase
+        .from("financial")
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: false })
+        .limit(1)
+        .single();
+        
+      if (existing) {
+        // Preenche com os dados existentes
+        setData({
+          divida: [], 
+          rendaFixa: [existing.fixedIncome || 0],
+          rendaVariavel: [existing.variableIncome || 0],
+          gastosFixos: [existing.fixedExpenses || 0],
+          gastosVariaveis: [existing.variableExpenses || 0],
+          investimentos: [existing.investments || 0]
+        });
+        setShowResults(true);
+      }
+    }
+    
+    // Só tenta buscar no banco se o localStorage não estiver dizendo explicitamente que ele quer re-editar
+    if (!localStorage.getItem("calc_showResults")) {
+      fetchExistingData();
+    }
+  }, [user]);
+
   const step = steps[currentStep];
   const progressPercentage = ((currentStep + 1) / steps.length) * 100;
 
@@ -81,9 +115,27 @@ export default function CalculatorSection() {
       investments: finalData.investimentos.reduce((acc, val) => acc + val, 0),
     };
 
-    const { error } = await supabase.from("financial").insert([payload]);
-    if (error) console.error("Erro Supabase:", error.message);
-    else console.log("Salvo no banco!");
+    // Verifica se já existe um registro para atualizar em vez de criar duplicatas
+    const { data: existing } = await supabase
+      .from("financial")
+      .select('id')
+      .eq('user_id', user.id)
+      .order('id', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (existing) {
+      const { error } = await supabase.from("financial").update(payload).eq('id', existing.id);
+      if (error) console.error("Erro Supabase Update:", error.message);
+      else console.log("Atualizado no banco!");
+    } else {
+      const { error } = await supabase.from("financial").insert([payload]);
+      if (error) console.error("Erro Supabase Insert:", error.message);
+      else console.log("Salvo no banco!");
+    }
+    
+    // Limpa a flag de edição forçada após salvar com sucesso
+    localStorage.removeItem("calc_forceEdit");
   }
 
   const handleAddItem = () => {
@@ -133,6 +185,7 @@ export default function CalculatorSection() {
     localStorage.removeItem("calc_data");
     localStorage.removeItem("calc_step");
     localStorage.removeItem("calc_showResults");
+    localStorage.setItem("calc_forceEdit", "true");
     window.location.reload(); // Recarrega para limpar tudo
   };
 
