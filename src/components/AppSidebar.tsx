@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import supabase from "../../utils/supabase";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
@@ -38,6 +38,7 @@ interface AppSidebarProps {
 export function AppSidebar({ activeSection, onSectionChange, collapsed, setCollapsed }: AppSidebarProps) {
   const { theme, setTheme } = useTheme();
   const nav = useNavigate();
+  const location = useLocation();
   const { toggle } = useChat();
 
   const handleLogout = async () => {
@@ -52,7 +53,10 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
       className="fixed left-0 top-0 h-screen bg-primary z-50 flex flex-col shadow-xl"
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b border-sidebar-border">
+      <div 
+        onClick={() => nav("/dashboard")}
+        className="flex items-center gap-3 px-5 py-6 border-b border-sidebar-border cursor-pointer hover:bg-sidebar-accent/50 transition-colors"
+      >
         <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0">
           <img src="/favicon.svg" alt="DebtView Logo" className="w-9 h-9 rounded-lg" />
         </div>
@@ -73,7 +77,9 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
-          const active = activeSection === item.id;
+          // Determina a seção ativa pela URL para máxima reatividade
+          const active = item.path === "#" ? activeSection === item.id : location.pathname.startsWith(item.path);
+          
           return (
             <button
               key={item.id}
