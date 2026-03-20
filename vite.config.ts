@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
     react(), 
     mode === "development" && componentTagger(),
     VitePWA({
+      workbox:{maximumFileSizeToCacheInBytes: 3000000},
       registerType: 'autoUpdate',
       manifest: {
         name: 'Debt View',
