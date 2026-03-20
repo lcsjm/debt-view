@@ -32,7 +32,7 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .order('id', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
         
       if (data) {
         setFinancialData({
