@@ -331,8 +331,10 @@ const ChatbotWidget = ({
 /* ─── Main Section ─── */
 const AssistentSection = ({
   financialData,
+  isDashboard = false,
 }: {
-  financialData: FinancialData | null;
+  financialData: FinancialData | null | undefined;
+  isDashboard?: boolean;
 }) => {
   // Estado que controla se o chatbot está fixo na seção ou flutuando trazido para dentro!
   const [isChatbotFloating, setIsChatbotFloating] = useState(false);
@@ -360,11 +362,12 @@ const AssistentSection = ({
       <section
         id="chatbot"
         ref={sectionRef}
-        className="w-full py-16 assistant-section-bg relative overflow-hidden"
+        className={`w-full ${isDashboard ? 'py-8' : 'py-16'} assistant-section-bg relative overflow-hidden`}
         style={{
           opacity: sectionVisible ? 1 : 0,
           transform: sectionVisible ? "scale(1)" : "scale(0.95)",
           transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          background: isDashboard ? "linear-gradient(to right, #070b13, #0a101f)" : undefined
         }}
       >
         <div className="absolute inset-0 backdrop-blur-[2px] bg-black/20" />

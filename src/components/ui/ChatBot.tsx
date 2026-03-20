@@ -136,7 +136,7 @@ const MagneticSendButton = ({ onClick }: { onClick: () => void }) => {
   );
 };
 
-const Chatbot = ({ financialData, compact }: { financialData: FinancialData | null; compact?: boolean }) => {
+const Chatbot = ({ financialData, compact }: { financialData: FinancialData | null | undefined; compact?: boolean }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -144,6 +144,8 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (financialData === undefined) return; // Wait until data is loaded from DB (or explicitly null)
+    
     if (financialData && !initialized) {
       const analysis = generateAnalysis(financialData);
       const botMsgs: Message[] = [
