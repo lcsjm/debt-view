@@ -26,6 +26,14 @@ interface FinancialData {
 
 interface Props {
   data: FinancialData;
+  onSave?: (valores: {
+    rendaFixa: number;
+    rendaVariavel: number;
+    gastosFixos: number;
+    gastosVariaveis: number;
+    dividas: number;
+    investimentos: number;
+  }) => void;
 }
 
 // Paleta Oficial Serasa Experian
@@ -37,7 +45,7 @@ const COLORS = {
   magenta: "#E80070",
 };
 
-export default function ResultsSection({ data }: Props) {
+export default function ResultsSection({ data, onSave }: Props) {
   const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
 
   // Estados interativos para edição
@@ -161,7 +169,13 @@ export default function ResultsSection({ data }: Props) {
             Resumo Financeiro
           </h3>
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              if (isEditing && onSave) {
+                // If we are finishing editing, call onSave with the new aggregated values
+                onSave(valores);
+              }
+              setIsEditing(!isEditing);
+            }}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors font-bold text-sm ${
               isEditing 
                 ? "bg-[#1D4F91] text-white hover:bg-[#1D4F91]/90" 

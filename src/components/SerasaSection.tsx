@@ -1,9 +1,29 @@
 import { useSerasa } from "../hooks/useSerasa";
-import { AlertCircle, ShieldAlert, FileText, ChevronRight } from "lucide-react";
+import { useProfile } from "../hooks/useProfile";
+import { useState } from "react";
+import { AlertCircle, ShieldAlert, FileText, ChevronRight, Search, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function SerasaSection() {
   const { debts, isLoading, error } = useSerasa();
+  const { profile, saveProfile, isSaving } = useProfile();
+  
+  const [cpfInput, setCpfInput] = useState("");
+
+  // Helper para formatar CPF enquanto digita
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
+
+  const handleConsultar = async () => {
+    if (cpfInput.length < 14) return;
+    await saveProfile({ cpf: cpfInput });
+  };
 
   if (isLoading) {
     return (
@@ -56,10 +76,38 @@ export default function SerasaSection() {
       </div>
 
       <div className="relative z-10">
-        {!hasDebts ? (
+        {!profile?.cpf ? (
+          <div className="bg-brand-magenta/5 border border-brand-magenta/20 rounded-xl p-5 sm:p-8 text-center flex flex-col items-center">
+            <div className="w-12 h-12 bg-brand-magenta/10 rounded-full flex items-center justify-center mb-4">
+              <Search className="w-6 h-6 text-brand-magenta" />
+            </div>
+            <h3 className="text-foreground font-bold mb-2">Consulte seu CPF Gratuitamente</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mb-6">
+              Vincule seu CPF para consultarmos automaticamente qualquer pendência negativada na base do Serasa.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+              <input 
+                type="text"
+                placeholder="000.000.000-00"
+                value={cpfInput}
+                onChange={(e) => setCpfInput(formatCPF(e.target.value))}
+                maxLength={14}
+                className="flex-1 h-12 px-4 border border-input bg-background rounded-xl outline-none focus:border-brand-magenta focus:ring-1 focus:ring-brand-magenta transition-all"
+              />
+              <button 
+                onClick={handleConsultar}
+                disabled={cpfInput.length < 14 || isSaving}
+                className="h-12 px-6 bg-brand-magenta text-white font-medium rounded-xl hover:bg-brand-magenta/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Consultar"}
+              </button>
+            </div>
+          </div>
+        ) : !hasDebts ? (
           <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 text-center">
             <h3 className="text-emerald-500 font-bold mb-1">Nome Limpo! 🎉</h3>
-            <p className="text-sm text-emerald-600/80">Não encontramos nenhuma dívida negativada no seu CPF atual.</p>
+            <p className="text-sm text-emerald-600/80">Não encontramos nenhuma dívida negativada no CPF {profile.cpf}.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">

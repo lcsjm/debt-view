@@ -138,6 +138,28 @@ export default function CalculatorSection() {
     localStorage.removeItem("calc_forceEdit");
   }
 
+  const handleSaveEdits = async (valores: {
+    rendaFixa: number;
+    rendaVariavel: number;
+    gastosFixos: number;
+    gastosVariaveis: number;
+    dividas: number;
+    investimentos: number;
+  }) => {
+    // Transforma os totais alterados de volta para o formato de array esperado pelo estado interno
+    const newData: FinancialData = {
+      rendaFixa: [valores.rendaFixa],
+      rendaVariavel: [valores.rendaVariavel],
+      gastosFixos: [valores.gastosFixos],
+      gastosVariaveis: [valores.gastosVariaveis],
+      divida: [valores.dividas], // Mapeado de volta para "divida" no plural interno
+      investimentos: [valores.investimentos]
+    };
+
+    setData(newData); // Atualiza estado que também cai no localStorage via useEffect
+    await saveToSupabase(newData); // Salva no banco de dados e limpa a trava
+  };
+
   const handleAddItem = () => {
     const num = parseFloat(inputValue.replace(/\./g, "").replace(",", ".")) || 0;
     if (num > 0) {
@@ -195,7 +217,7 @@ export default function CalculatorSection() {
         <div className="container mx-auto px-4 flex flex-col items-center">
           <div className="w-full max-w-6xl flex justify-between mb-4">
             <button onClick={resetCalculator} className="text-sm text-gray-500 hover:underline">Reiniciar Calculadora</button>
-            <ResultsSection data={data} />
+            <ResultsSection data={data} onSave={handleSaveEdits} />
           </div>
         </div>
       </section>
