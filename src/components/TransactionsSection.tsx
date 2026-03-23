@@ -221,9 +221,11 @@ export default function TransactionSection() {
             {...register("type")}
             className="w-full border border-border bg-background rounded-lg px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring transition-all text-sm font-semibold h-[42px]"
           >
-            <option value="">Selecione...</option>
-            <option value="Renda">Renda</option>
-            <option value="Despesa">Despesa</option>
+            <option value="">Renda fixa...</option>
+            <option value="">Renda variâvel...</option>
+            <option value="">Gasto fixo...</option>
+            <option value="">Gasto variâvel...</option>
+            <option value="Despesa">Investimento</option>
           </select>
           {errors.type && (
             <motion.span initial={{opacity:0, y:-5}} animate={{opacity:1, y:0}} className="text-destructive text-xs mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={12}/> {errors.type.message}</motion.span>
