@@ -45,7 +45,7 @@ const TeamSection = () => {
               {
                 name: "Guilherme",
                 role: "Desenvolvedor",
-                linkedinUrl: "https://linkedin.com/in/seu-link-aqui",
+                linkedinUrl: "https://www.linkedin.com/in/guilherme-cabral-2082653b9/",
                 avatarUrl: "https://ui-avatars.com/api/?name=Guilherme&background=0D8ABC&color=fff&size=128",
                 coverUrl: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=500&auto=format&fit=crop"
               },

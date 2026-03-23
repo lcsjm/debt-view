@@ -100,7 +100,7 @@ const Sidebar = () => {
         <div className="mb-10 px-2 min-h-[40px] flex items-center">
           <a href="#hero" className="flex items-center gap-3" onClick={() => scrollTo("#hero")}>
             <div className="min-w-[40px] flex justify-center items-center">
-               <span className="font-heading font-bold text-primary-foreground text-2xl">D</span>
+                <span className="font-heading font-bold text-primary-foreground text-2xl">D</span>
             </div>
             <AnimatePresence>
               {isHovered && (
@@ -117,8 +117,8 @@ const Sidebar = () => {
           </a>
         </div>
 
-        {/* Navigation Section */}
-        <nav className="flex flex-col gap-2 flex-grow">
+        {/* Navigation Section - CENTRALIZADO VERTICALMENTE */}
+        <nav className="flex flex-col gap-2 flex-grow justify-center">
           {navItems.map((item) => (
             <MagneticIcon key={item.label} isExpanded={isHovered} onClick={() => scrollTo(item.href)}>
               <div className="flex items-center gap-3 text-sm font-medium px-2 py-1 whitespace-nowrap">
@@ -137,61 +137,55 @@ const Sidebar = () => {
         </nav>
 
         {/* Bottom Actions Section */}
-        <div className="flex flex-col gap-4 pt-6 border-t border-primary-foreground/10">
+        <div className="flex flex-col gap-2 pt-6 border-t border-primary-foreground/10">
           
-          {/* Theme & Chat Row */}
-          <div className={`flex items-center ${isHovered ? 'justify-between' : 'justify-center'} px-2 min-h-[40px]`}>
-              <button
-                type="button"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className={`relative flex h-8 items-center rounded-full p-1 transition-all duration-300 ${isHovered ? 'w-14' : 'w-8'}`}
-                style={{ backgroundColor: theme === "dark" ? "hsl(var(--raspberry))" : "rgba(255,255,255,0.2)" }}
-              >
-                <motion.div
-                  layout
-                  transition={{ type: "spring", stiffness: 700, damping: 30 }}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm"
-                  style={{ marginLeft: (isHovered && theme === "dark") ? "auto" : "0" }}
-                >
-                  {theme === "dark" ? <Moon className="h-3 w-3 text-raspberry" /> : <Sun className="h-3 w-3 text-primary" />}
-                </motion.div>
-              </button>
-
-              <AnimatePresence>
-                {isHovered && (
-                  <motion.button 
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    onClick={toggleChat}
-                    className="p-2 bg-primary-foreground/10 rounded-full text-primary-foreground hover:bg-primary-foreground/20 transition-all"
-                  >
-                    <MessageCircle size={20} />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-          </div>
-
-          {/* Logout Button */}
-          <motion.button
-            onClick={handleLogout}
-            className="w-full py-3 px-4 rounded-xl font-medium text-white bg-white/10 border border-white/20 hover:bg-white/20 hover:text-[#E80070] transition-all active:scale-95 flex items-center justify-center gap-2 group overflow-hidden"
-            whileHover={{ scale: 1.02 }}
+          {/* Theme Switcher com Magnetic Effect */}
+          <MagneticIcon 
+            isExpanded={isHovered} 
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="!p-1"
           >
-            <LogOut size={18} className={`flex-shrink-0 transition-transform ${isHovered ? 'group-hover:-translate-x-1' : ''}`} />
-            <AnimatePresence>
-              {isHovered && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="whitespace-nowrap"
+            <div className={`flex items-center ${isHovered ? 'justify-between w-full' : 'justify-center'} px-2`}>
+                <div
+                  className={`relative flex h-7 items-center rounded-full p-1 transition-all duration-300 ${isHovered ? 'w-12' : 'w-7'}`}
+                  style={{ backgroundColor: theme === "dark" ? "hsl(var(--raspberry))" : "rgba(255,255,255,0.2)" }}
                 >
-                  Sair da conta
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+                  <motion.div
+                    layout
+                    transition={{ type: "spring", stiffness: 700, damping: 30 }}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm"
+                    style={{ marginLeft: (isHovered && theme === "dark") ? "auto" : "0" }}
+                  >
+                    {theme === "dark" ? <Moon className="h-3 w-3 text-raspberry" /> : <Sun className="h-3 w-3 text-primary" />}
+                  </motion.div>
+                </div>
+                {isHovered && <span className="text-sm ml-3 flex-grow text-left">Tema</span>}
+            </div>
+          </MagneticIcon>
+
+          {/* Chat Toggle com Magnetic Effect (Apenas se expandido) */}
+          <AnimatePresence>
+            {isHovered && (
+              <MagneticIcon isExpanded={isHovered} onClick={toggleChat}>
+                 <div className="flex items-center gap-3 text-sm font-medium px-2 py-1">
+                    <MessageCircle size={20} />
+                    <span>Chat Suporte</span>
+                 </div>
+              </MagneticIcon>
+            )}
+          </AnimatePresence>
+
+          {/* Logout Button com Magnetic Effect */}
+          <MagneticIcon 
+            isExpanded={isHovered} 
+            onClick={handleLogout}
+            className="bg-white/10 border border-white/20 hover:bg-white/20 hover:text-[#E80070] !mt-2"
+          >
+            <div className="flex items-center gap-3 text-sm font-medium px-2 py-1">
+              <LogOut size={18} />
+              {isHovered && <span className="whitespace-nowrap">Sair da conta</span>}
+            </div>
+          </MagneticIcon>
         </div>
       </div>
     </motion.aside>
