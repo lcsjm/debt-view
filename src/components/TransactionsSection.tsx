@@ -221,10 +221,10 @@ export default function TransactionSection() {
             {...register("type")}
             className="w-full border border-border bg-background rounded-lg px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring transition-all text-sm font-semibold h-[42px]"
           >
-            <option value="">Renda fixa...</option>
-            <option value="">Renda variâvel...</option>
-            <option value="">Gasto fixo...</option>
-            <option value="">Gasto variâvel...</option>
+            <option value="Renda">Renda fixa...</option>
+            <option value="Renda">Renda variâvel...</option>
+            <option value="Despesa">Gasto fixo...</option>
+            <option value="Despesa">Gasto variâvel...</option>
             <option value="Despesa">Investimento</option>
           </select>
           {errors.type && (
