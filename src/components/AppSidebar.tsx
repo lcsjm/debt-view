@@ -1,58 +1,20 @@
 import {
   LayoutDashboard,
-  Target,
-  Calculator,
-  Shield,
-  Rocket,
-  BookOpen,
-  TrendingUp,
-  LogOut,
-  User,
   CreditCard,
+  User,
+  BookOpen,
+  Rocket,
+  LogOut,
   Sun,
   Moon,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
-import { useRef, useCallback } from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import supabase from "../../utils/supabase";
 import { useTheme } from "next-themes";
 import { useChat } from "./chat-context";
-
-// --- Componente de Efeito Magnético ---
-const MagneticWrapper = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 150, damping: 15 });
-  const springY = useSpring(y, { stiffness: 150, damping: 15 });
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current) return;
-    const { left, top, width, height } = ref.current.getBoundingClientRect();
-    const centerX = left + width / 2;
-    const centerY = top + height / 2;
-    x.set((e.clientX - centerX) * 0.4);
-    y.set((e.clientY - centerY) * 0.4);
-  }, [x, y]);
-
-  const handleMouseLeave = useCallback(() => {
-    x.set(0);
-    y.set(0);
-  }, [x, y]);
-
-  return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ x: springX, y: springY }}
-      className={`w-full ${className}`}
-    >
-      {children}
-    </motion.div>
-  );
-};
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Painel Financeiro", id: "painel", path: "/dashboard" },
@@ -82,111 +44,163 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
 
   return (
     <motion.aside
-      onMouseEnter={() => setCollapsed(false)}
-      onMouseLeave={() => setCollapsed(true)}
       animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
-      className="fixed left-0 top-0 h-screen bg-primary z-50 flex flex-col shadow-xl"
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border z-50 flex flex-col shadow-2xl overflow-hidden"
     >
-      {/* Logo */}
-      <div 
-        onClick={() => nav("/dashboard")}
-        className="flex items-center justify-center gap-3 px-5 py-8 border-b border-sidebar-border cursor-pointer hover:bg-sidebar-accent/50 transition-colors"
-      >
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0">
-          <img src="/favicon.svg" alt="DebtView Logo" className="w-9 h-9 rounded-lg" />
+      {/* Header com Logo e Botão de Toggle */}
+      <div className="flex items-center justify-between px-3 py-6 border-b border-sidebar-border/50 h-[88px] shrink-0">
+        <div 
+          onClick={() => nav("/dashboard")}
+          className={`flex items-center gap-3 cursor-pointer group flex-1 overflow-hidden transition-all ${collapsed ? 'justify-center ml-1' : 'ml-2'}`}
+        >
+          {/* Logo original */}
+          <div className="w-9 h-9 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
+            <img src="/favicon.svg" alt="DebtView Logo" className="w-9 h-9 rounded-lg" />
+          </div>
+          
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, width: 0, x: -10 }}
+                animate={{ opacity: 1, width: "auto", x: 0 }}
+                exit={{ opacity: 0, width: 0, x: -10 }}
+                className="text-xl font-heading font-black text-sidebar-foreground whitespace-nowrap tracking-tight"
+              >
+                DebtView
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Botão para colapsar nav */}
         <AnimatePresence>
           {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              className="text-xl font-heading font-bold text-primary-foreground whitespace-nowrap overflow-hidden"
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCollapsed(true)}
+              className="p-1.5 mr-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+              title="Recolher menu"
             >
-              DebtView
-            </motion.span>
+              <PanelLeftClose className="w-[18px] h-[18px]" />
+            </motion.button>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Nav - APENAS CENTRALIZADO VERTICALMENTE */}
-      <nav className="flex-1 px-3 py-4 flex flex-col justify-center gap-6 overflow-y-auto">
+      {/* Navegação principal */}
+      <nav className="flex-1 px-3 py-6 flex flex-col gap-1.5 overflow-y-auto custom-scroll">
         {menuItems.map((item) => {
           const active = item.path === "#" ? activeSection === item.id : location.pathname.startsWith(item.path);
           
           return (
-            <MagneticWrapper key={item.id}>
-              <button
-                onClick={() => {
-                  if (item.id === "chatbot") {
-                    toggle();
-                  } else {
-                    if (item.id) onSectionChange(item.id);
-                    if (item.path) nav(item.path);
-                  }
-                }}
-                className={`w-full flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 group relative ${
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-primary-foreground/70 hover:bg-sidebar-accent/50 hover:text-primary-foreground"
-                } ${collapsed ? "justify-center" : "justify-start"}`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-sm font-medium whitespace-nowrap overflow-hidden"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                {active && !collapsed && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="absolute right-3 w-1.5 h-1.5 rounded-full bg-brand-pink"
-                  />
+            <button
+              key={item.id}
+              onClick={() => {
+                if (item.id === "chatbot") {
+                  toggle();
+                } else {
+                  if (item.id) onSectionChange(item.id);
+                  if (item.path) nav(item.path);
+                }
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors duration-200 group relative ${
+                active
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground font-medium"
+              } ${collapsed ? "justify-center" : "justify-start"}`}
+              title={collapsed ? item.label : undefined}
+            >
+              <item.icon className={`w-[22px] h-[22px] flex-shrink-0 transition-colors ${active ? "text-white" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`} />
+              
+              <AnimatePresence>
+                {!collapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="text-[15px] whitespace-nowrap overflow-hidden"
+                  >
+                    {item.label}
+                  </motion.span>
                 )}
-              </button>
-            </MagneticWrapper>
+              </AnimatePresence>
+
+              {/* Indicador Ativo */}
+              {active && !collapsed && (
+                <motion.div
+                  layoutId="activeNavIndicator"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-sm bg-[#E80070]"
+                />
+              )}
+            </button>
           );
         })}
+
+        {/* Botão de expansão no modo colapsado */}
+        <AnimatePresence>
+          {collapsed && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => setCollapsed(false)}
+              className="w-full mt-2 flex items-center justify-center gap-3 px-3 py-3 rounded-xl transition-colors duration-200 text-sidebar-foreground/40 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              title="Expandir menu"
+            >
+              <PanelLeft className="w-[20px] h-[20px] flex-shrink-0" />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </nav>
 
-      {/* Actions - CENTRALIZADOS HORIZONTALMENTE */}
-      <div className="flex flex-col gap-4 mx-3 mb-6 items-center">
-        
-        {/* Theme Toggle */}
-        <MagneticWrapper>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="w-full p-2.5 rounded-lg text-primary-foreground/60 hover:text-primary-foreground hover:bg-sidebar-accent/50 transition-colors flex items-center justify-center gap-4 overflow-hidden"
-            title={theme === "dark" ? "Modo Claro" : "Modo Escuro"}
-          >
-            {theme === "dark" ? <Sun className="w-5 h-5 flex-shrink-0" /> : <Moon className="w-5 h-5 flex-shrink-0" />}
+      {/* Ações Inferiores */}
+      <div className="p-3 border-t border-sidebar-border/50 flex flex-col gap-1.5 shrink-0 bg-sidebar/50">
+        {/* Toggle de Tema */}
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors duration-200 text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground font-medium ${collapsed ? "justify-center" : "justify-start"}`}
+          title={theme === "dark" ? "Mudar para Claro" : "Mudar para Escuro"}
+        >
+          {theme === "dark" ? <Sun className="w-5 h-5 flex-shrink-0" /> : <Moon className="w-5 h-5 flex-shrink-0 text-sidebar-foreground/60" />}
+          
+          <AnimatePresence>
             {!collapsed && (
-              <span className="text-sm font-medium whitespace-nowrap">
+              <motion.span
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                className="text-[14px] whitespace-nowrap overflow-hidden"
+              >
                 {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
-              </span>
+              </motion.span>
             )}
-          </button>
-        </MagneticWrapper>
+          </AnimatePresence>
+        </button>
 
         {/* Logout */}
-        <MagneticWrapper>
-          <button
-            onClick={handleLogout}
-            className="w-full p-2.5 rounded-lg text-primary-foreground/60 hover:text-red-400 hover:bg-red-400/10 transition-colors flex items-center justify-center gap-4 overflow-hidden"
-            title="Sair"
-          >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="text-sm font-medium whitespace-nowrap">Sair da Conta</span>}
-          </button>
-        </MagneticWrapper>
+        <button
+          onClick={handleLogout}
+          className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors duration-200 text-sidebar-foreground/70 hover:bg-red-500/10 hover:text-red-500 font-medium ${collapsed ? "justify-center" : "justify-start"}`}
+          title="Sair da Conta"
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0 text-sidebar-foreground/60 transition-colors group-hover:text-red-500" />
+          
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                className="text-[14px] whitespace-nowrap overflow-hidden"
+              >
+                Sair da Conta
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </div>
     </motion.aside>
   );
