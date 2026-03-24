@@ -65,7 +65,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Bem-vindo de volta, {profile?.name || 'Visitante'} 👋</p>
+            <p className="text-sm text-muted-foreground">Bem-vindo de volta, {profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Visitante'} 👋</p>
             <h2 className="text-xl md:text-2xl font-heading font-semibold text-foreground">
               Dashboard DebtView
             </h2>
