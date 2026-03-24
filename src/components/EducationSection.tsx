@@ -198,7 +198,7 @@ const ScrollingRow = ({
                 {card.icon}
               </div>
               <h4 className="font-heading font-bold text-foreground text-lg mb-2">{card.title}</h4>
-              <p className="text-muted-foreground text-sm leading-relaxed">{card.desc}</p>
+              <p className="text-[#D4AF37] text-sm leading-relaxed">{card.desc}</p>
             </motion.div>
           );
         })}
