@@ -67,8 +67,8 @@ const TeamSection = () => {
                 name: "Alexia",
                 role: "Desenvolvedora",
                 linkedinUrl: "https://www.linkedin.com/in/alexia-izabela-dos-santos-ba2b0028b/",
-                avatarUrl: "https://ui-avatars.com/api/?name=Alexia&background=1D4F91&color=fff&size=128",
-                coverUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=500&auto=format&fit=crop"
+                avatarUrl: "Screenshot 2026-03-24 at 14-11-55 (18) Alexia Izabela Dos Santos LinkedIn.png",
+                coverUrl: "1774372090329.jpg"
               },
               {
                 name: "Ketlyn",

@@ -155,8 +155,6 @@ const ScrollingRow = ({
       setHasDragged(true);
     }
     
-    // Multiplicador removido para diminuir a velocidade de arraste (proporção 1:1)
-    // Dica: Se quiser ainda mais devagar, altere para: const walk = (x - lastX) * 0.5;
     const walk = (x - lastX); 
     sliderRef.current.scrollLeft -= walk;
     setLastX(x);
@@ -175,7 +173,10 @@ const ScrollingRow = ({
     >
       <div
         className={`flex gap-6 ${direction === "left" ? "scroll-left" : "scroll-right"} ${paused ? "scroll-paused" : ""}`}
-        style={{ width: `${duplicated.length * 340}px` }}
+        style={{ 
+          width: `${duplicated.length * 340}px`,
+          animationDuration: "80s" /* AQUI: Adicionado para deixar o scroll levemente mais lento */
+        }}
       >
         {duplicated.map((card, i) => {
           const isViewed = viewedCards.has(card.title);
@@ -190,15 +191,21 @@ const ScrollingRow = ({
                   onCardClick(card);
                 }
               }}
-              className={`glass-card p-6 min-w-[300px] max-w-[300px] flex-shrink-0 group transition-all duration-300 ${
-                isViewed ? "border border-emerald-500/80" : "border border-border/10"
+              /* FUNDO DO CARD: Glassmorphism mantido */
+              className={`bg-white/40 dark:bg-slate-900/50 backdrop-blur-2xl shadow-lg p-6 min-w-[300px] max-w-[300px] flex-shrink-0 flex flex-col group transition-all duration-300 rounded-2xl ring-1 ring-inset ring-white/40 dark:ring-white/10 ${
+                isViewed ? "border border-emerald-500/80" : "border border-white/30"
               }`}
             >
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-raspberry/10 group-hover:text-raspberry transition-colors duration-300">
                 {card.icon}
               </div>
-              <h4 className="font-heading font-bold text-foreground text-lg mb-2">{card.title}</h4>
-              <p className="text-[#D4AF37] text-sm leading-relaxed">{card.desc}</p>
+              
+              <h4 className="font-heading font-bold text-slate-900 dark:text-white text-lg mb-4">{card.title}</h4>
+              
+              {/* LEGENDA DO CARD: Fundo removido, fonte aumentada (text-base) e negrito retirado (font-normal) */}
+              <div className="mt-auto">
+                <p className="text-slate-800 dark:text-slate-200 text-base leading-relaxed font-normal">{card.desc}</p>
+              </div>
             </motion.div>
           );
         })}
@@ -224,21 +231,56 @@ const EducationSection = () => {
 
   return (
     <>
-      <section id="education" className="relative w-full min-h-screen py-24 flex flex-col justify-center bg-background overflow-hidden border-t border-border/10">
-        <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+      <style>{`
+        @keyframes blob-float-1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(8%, 12%) scale(1.05); }
+          66% { transform: translate(-5%, 8%) scale(0.95); }
+        }
+        @keyframes blob-float-2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-10%, 15%) scale(1.1); }
+          66% { transform: translate(8%, -10%) scale(0.9); }
+        }
+        @keyframes blob-float-3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(15%, -10%) scale(0.95); }
+          66% { transform: translate(-10%, -15%) scale(1.05); }
+        }
 
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute w-[45vw] h-[45vw] max-w-[500px] max-h-[500px] rounded-full bg-[#1D4F91]/30 dark:bg-[#1D4F91]/25 blur-[100px] -top-20 -left-10 animate-[float_22s_ease-in-out_infinite]" />
-          <div className="absolute w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-[#77127B]/25 dark:bg-[#77127B]/20 blur-[120px] top-[10%] right-[-15%] animate-[float_26s_ease-in-out_infinite_reverse]" />
-          <div className="absolute w-[35vw] h-[35vw] max-w-[450px] max-h-[450px] rounded-full bg-[#E80070]/25 dark:bg-[#E80070]/20 blur-[90px] bottom-[-10%] left-[5%] animate-[float_20s_ease-in-out_infinite]" />
-          <div className="absolute w-[30vw] h-[30vw] max-w-[400px] max-h-[400px] rounded-full bg-[#426DA9]/30 dark:bg-[#426DA9]/25 blur-[90px] bottom-[15%] right-[15%] animate-[float_24s_ease-in-out_infinite_reverse]" />
-          <div className="absolute w-[25vw] h-[25vw] max-w-[350px] max-h-[350px] rounded-full bg-[#C1188B]/30 dark:bg-[#C1188B]/25 blur-[80px] top-[40%] left-[45%] animate-[float_18s_ease-in-out_infinite]" />
+        .dynamic-blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(120px);
+          animation-duration: 25s;
+          animation-iteration-count: infinite;
+          animation-timing-function: ease-in-out;
+        }
+
+        /* Cores originais mantidas na estrutura */
+        .blob-dark-blue { background-color: #1D4F91; width: 50vw; height: 50vw; top: -20%; left: -10%; animation-name: blob-float-1; }
+        .blob-purple { background-color: #77127B; width: 45vw; height: 45vw; top: 10%; left: 30%; animation-name: blob-float-2; animation-delay: -5s; }
+        .blob-magenta { background-color: #E80070; width: 40vw; height: 40vw; bottom: -10%; right: 10%; animation-name: blob-float-3; animation-delay: -2s; }
+        .blob-light-blue { background-color: #426DA9; width: 45vw; height: 45vw; bottom: 20%; left: 10%; animation-name: blob-float-1; animation-direction: reverse; animation-delay: -7s; }
+        .blob-raspberry { background-color: #C1188B; width: 35vw; height: 35vw; top: 20%; right: -5%; animation-name: blob-float-2; animation-direction: reverse; animation-delay: -10s; }
+      `}</style>
+
+      {/* Fundo base definido de forma rigorosa para ser claro ou bem escuro */}
+      <section id="education" className="relative w-full min-h-screen py-24 flex flex-col justify-center bg-slate-50 dark:bg-slate-950 overflow-hidden border-t border-slate-200 dark:border-white/10">
+        
+        {/* OPACIDADE DINÂMICA mantida */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-20 dark:opacity-60 transition-opacity duration-500">
+          <div className="dynamic-blob blob-dark-blue"></div>
+          <div className="dynamic-blob blob-purple"></div>
+          <div className="dynamic-blob blob-magenta"></div>
+          <div className="dynamic-blob blob-light-blue"></div>
+          <div className="dynamic-blob blob-raspberry"></div>
         </div>
 
         <div className="relative z-10 w-full">
           <div className="container mx-auto px-4">
             <ScrollReveal>
-              <h2 className="fluid-title-lg font-heading font-bold text-center text-foreground mb-16">
+              <h2 className="fluid-title-lg font-heading font-bold text-center text-slate-900 dark:text-white mb-16">
                 Educação Financeira
               </h2>
             </ScrollReveal>
@@ -246,7 +288,7 @@ const EducationSection = () => {
 
           <ScrollReveal delay={0.1}>
             <div className="mb-16 w-full">
-              <h3 className="fluid-title-md font-heading font-bold text-center text-foreground mb-8">
+              <h3 className="fluid-title-md font-heading font-bold text-center text-slate-800 dark:text-slate-200 mb-8">
                 Investimentos
               </h3>
               <div className="w-full relative">
@@ -262,7 +304,7 @@ const EducationSection = () => {
 
           <ScrollReveal delay={0.2}>
             <div className="w-full">
-              <h3 className="fluid-title-md font-heading font-bold text-center text-foreground mb-8">
+              <h3 className="fluid-title-md font-heading font-bold text-center text-slate-800 dark:text-slate-200 mb-8">
                 Conceitos
               </h3>
               <div className="w-full relative">
@@ -284,7 +326,7 @@ const EducationSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
             onClick={handleCloseModal}
           >
             <motion.div
@@ -292,12 +334,13 @@ const EducationSection = () => {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-background border border-border/20 shadow-2xl rounded-3xl p-8 max-w-lg w-full relative flex flex-col"
+              /* MODAL FUNDO: Glassmorphism com ring */
+              className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl p-8 max-w-lg w-full relative flex flex-col ring-1 ring-inset ring-slate-100 dark:ring-white/5"
               onClick={(e) => e.stopPropagation()} 
             >
               <button
                 onClick={handleCloseModal}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 aria-label="Fechar"
               >
                 <X size={24} />
@@ -306,13 +349,16 @@ const EducationSection = () => {
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6">
                 {selectedCard.icon}
               </div>
-              <h3 className="text-2xl font-heading font-bold text-foreground mb-2">
+              <h3 className="text-2xl font-heading font-bold text-slate-900 dark:text-white mb-2">
                 {selectedCard.title}
               </h3>
-              <p className="text-foreground/80 font-medium text-sm mb-6 pb-6 border-b border-border/10">
-                {selectedCard.desc}
-              </p>
-              <p className="text-muted-foreground leading-relaxed flex-grow">
+              {/* Box cinza removido também no modal, fonte aumentada (text-base) e negrito retirado (font-normal) */}
+              <div className="mb-6">
+                <p className="text-slate-800 dark:text-slate-200 font-normal text-base leading-relaxed">
+                  {selectedCard.desc}
+                </p>
+              </div>
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed flex-grow">
                 {selectedCard.fullDesc}
               </p>
             </motion.div>
