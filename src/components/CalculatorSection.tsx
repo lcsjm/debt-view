@@ -213,27 +213,34 @@ export default function CalculatorSection() {
 
   if (showResults) {
     return (
-      <section className="min-h-screen py-24 bg-gray-50 dark:bg-gray-900 flex items-center">
-        <div className="container mx-auto px-4 flex flex-col items-center">
-          <div className="w-full max-w-6xl flex justify-between mb-4">
-            <button onClick={resetCalculator} className="text-sm text-gray-500 hover:underline">Reiniciar Calculadora</button>
-            <ResultsSection data={data} onSave={handleSaveEdits} />
-          </div>
+      <div className="w-full relative animate-in fade-in duration-500">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
+            Raio-X Financeiro
+          </h2>
+          <button 
+            onClick={resetCalculator} 
+            className="flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all font-bold text-sm hover:shadow-md hover:-translate-y-0.5"
+          >
+            🔄 Reiniciar Calculadora
+          </button>
         </div>
-      </section>
+        <ResultsSection data={data} onSave={handleSaveEdits} />
+      </div>
     );
   }
 
   return (
-    <section id="calculator" className="py-24 bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center">
-      <div className="container mx-auto px-4">
-        <ScrollReveal>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] text-center mb-10 tracking-tight">
+    <div id="calculator" className="w-full animate-in slide-in-from-bottom-4 duration-500">
+      <ScrollReveal>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
             Raio-X Financeiro
           </h2>
-        </ScrollReveal>
+        </div>
+      </ScrollReveal>
 
-        <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row relative border border-gray-100 dark:border-gray-700">
+      <div className="w-full bg-white dark:bg-gray-800 shadow-xl rounded-3xl overflow-hidden flex flex-col md:flex-row relative border border-gray-100 dark:border-gray-700">
           <div className="absolute top-0 left-0 h-1.5 bg-gray-100 dark:bg-gray-700 w-full z-10">
             <motion.div className="h-full bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070]" initial={{ width: 0 }} animate={{ width: `${progressPercentage}%` }} transition={{ duration: 0.5, ease: "easeInOut" }} />
           </div>
@@ -295,7 +302,6 @@ export default function CalculatorSection() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
-    </section>
+    </div>
   );
 }
