@@ -157,7 +157,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
       setInitialized(true);
     } else if (!financialData && !initialized) {
       setMessages([
-        { role: "bot", text: "Olá! Sou o seu Assistente I.A. Gemini. Você pode cadastrar seus dados ao longo do site para uma análise personalizada de suas finanças!\n\nPosso te ajudar com dúvidas como:\n- *Qual o primeiro passo para quitar minhas contas?*\n- *Como funcionam os métodos de amortização?*" },
+        { role: "bot", text: "Olá! Sou o seu Assistente I.A. DebtView. Você pode cadastrar seus dados ao longo do site para uma análise personalizada de suas finanças!\n\nPosso te ajudar com dúvidas como:\n- *Qual o primeiro passo para quitar minhas contas?*\n- *Como funcionam os métodos de amortização?*" },
       ]);
       setInitialized(true);
     }
@@ -211,7 +211,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
       setMessages((prev) => [...prev, reply]);
     } catch (error) {
       console.error("Gemini API Error:", error);
-      const erroMsg: Message = { role: "bot", text: "Houve um problema de conexão com a I.A. Por favor, verifique se a chave do Gemini no arquivo `.env.local` está configurada corretamente." };
+      const erroMsg: Message = { role: "bot", text: "Houve um problema de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde." };
       setMessages((prev) => [...prev, erroMsg]);
     } finally {
       setIsTyping(false);
@@ -234,7 +234,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
           </div>
           <div>
             <h3 className="font-bold text-white tracking-tight leading-tight">Assistente I.A.</h3>
-            <p className="text-[11px] text-blue-200/80 font-medium tracking-wide">Powered by Gemini</p>
+            <p className="text-[11px] text-blue-200/80 font-medium tracking-wide">Assistente Inteligente</p>
           </div>
         </div>
       </div>

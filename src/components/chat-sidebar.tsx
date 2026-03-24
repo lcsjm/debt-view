@@ -205,7 +205,7 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
         setMessages((prev) => [...prev, {
             id: `bot-${Date.now()}`,
             role: "assistant",
-            content: "Desculpe, ocorreu um erro ao se conectar com a API do Gemini. Por favor, verifique sua chave API.",
+            content: "Desculpe, ocorreu um erro de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde.",
         }]);
       } finally {
         setIsTyping(false);

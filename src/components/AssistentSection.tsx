@@ -296,12 +296,12 @@ const ChatbotWidget = ({
     >
       <div
         onMouseDown={handleMouseDown}
-        className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing border-b border-indigo-500/20"
-        style={{ background: "linear-gradient(90deg, #1e1b4b, #312e81, #4c1d95)" }}
+        className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing border-b border-sidebar-border"
+        style={{ background: "linear-gradient(90deg, #1D4F91, #426DA9)" }}
       >
         <div className="flex items-center gap-2 text-white">
-          <Sparkles className="w-4 h-4 text-blue-300" />
-          <span className="font-semibold text-sm tracking-wide">Assistente I.A.</span>
+          <Sparkles className="w-4 h-4 text-blue-200" />
+          <span className="font-semibold text-sm tracking-wide">DebtView AI</span>
         </div>
         <div className="flex gap-1">
           <button
@@ -374,18 +374,18 @@ const AssistentSection = ({
         
         <div className="max-w-[1366px] mx-auto px-[3%] relative z-10 w-full">
           <div className="text-center mb-10 flex flex-col items-center">
-            <div className="inline-flex items-center gap-2 mb-3 bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 rounded-full text-blue-200 text-sm font-medium backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 mb-3 bg-[#1D4F91]/10 border border-[#426DA9]/30 px-4 py-1.5 rounded-full text-[#426DA9] dark:text-[#8CB4F5] text-sm font-semibold backdrop-blur-sm">
               <Sparkles className="w-4 h-4" />
-              Powered by Google Gemini
+              Assistente Inteligente
             </div>
             <h2
-              className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-white to-purple-100 mb-3 transition-all duration-300 drop-shadow-sm"
+              className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#C1188B] dark:from-[#8CB4F5] dark:via-[#E88CEE] dark:to-[#FF85BB] mb-3 transition-all duration-300 drop-shadow-sm"
               style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
             >
-              Assistente de Inteligência Artificial
+              DebtView IA
             </h2>
-            <p className="text-white/70 max-w-2xl mx-auto text-lg transition-all duration-300">
-              Tire dúvidas financeiras, planeje o seu futuro e aprenda as melhores estratégias de renegociação com I.A.
+            <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-lg transition-all duration-300">
+              Sua ajudante financeira pre-treinada para entender seus hábitos, tirar dúvidas sobre o Serasa e encontrar renegociações em tempo real.
             </p>
           </div>
 
