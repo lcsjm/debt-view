@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Send, Bot, Sparkles, ArrowRight } from "lucide-react";
+import { Send, Bot, Sparkles, ArrowRight, Trash2 } from "lucide-react";
 import supabase from "../../utils/supabase";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -80,8 +80,31 @@ export function ChatSidebar() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const saveHistory = async (newHistory: ChatMessage[]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('chat').upsert({ user_id: user.id, history: newHistory }, { onConflict: 'user_id' });
+    }
+  };
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from('chat').select('history').eq('user_id', user.id).maybeSingle().then(({ data }) => {
+          if (data && data.history && Array.isArray(data.history) && data.history.length > 0) {
+            setMessages(data.history);
+          }
+          setHistoryLoaded(true);
+        });
+      } else {
+        setHistoryLoaded(true);
+      }
+    });
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,22 +122,38 @@ export function ChatSidebar() {
 
   // Smart Analysis Effect
   useEffect(() => {
-    if (financialData && !hasAnalyzed && isOpen) {
-      const tips = generateAnalysis(financialData);
+    if (!historyLoaded || !isOpen || hasAnalyzed) return;
 
-      const analysisMessages: ChatMessage[] = tips.map((tip, i) => ({
-        id: `analysis-${Date.now()}-${i}`,
-        role: "assistant",
-        content: tip,
-      }));
-
-      // Add a small delay for natural feeling
-      setTimeout(() => {
-        setMessages(prev => [...prev, ...analysisMessages]);
+    setMessages((prev) => {
+      if (prev.length > 1) {
         setHasAnalyzed(true);
-      }, 500);
-    }
-  }, [financialData, isOpen, hasAnalyzed]);
+        return prev;
+      }
+      
+      if (financialData) {
+        const tips = generateAnalysis(financialData);
+
+        const analysisMessages: ChatMessage[] = tips.map((tip, i) => ({
+          id: `analysis-${Date.now()}-${i}`,
+          role: "assistant",
+          content: tip,
+        }));
+
+        setTimeout(() => {
+          setMessages(current => {
+             // Prevines duplicata
+             if (current.length > 1) return current;
+             const newMsgs = [...current, ...analysisMessages];
+             saveHistory(newMsgs);
+             return newMsgs;
+          });
+          setHasAnalyzed(true);
+        }, 500);
+      }
+      
+      return prev;
+    });
+  }, [financialData, isOpen, hasAnalyzed, historyLoaded]);
 
   // Reset analysis if data is cleared (optional, depends on if financialData becomes null)
   useEffect(() => {
@@ -134,7 +173,9 @@ export function ChatSidebar() {
         content: messageText,
       };
 
-      setMessages((prev) => [...prev, userMsg]);
+      const newMessages = [...messages, userMsg];
+      setMessages(newMessages);
+      saveHistory(newMessages);
       setInput("");
       setIsTyping(true);
 
@@ -199,7 +240,9 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
           role: "assistant",
           content: response.text || "Desculpe, não consegui gerar uma resposta.",
         };
-        setMessages((prev) => [...prev, reply]);
+        const finalMsgs = [...newMessages, reply];
+        setMessages(finalMsgs);
+        saveHistory(finalMsgs);
       } catch (error) {
         console.error("Gemini API Error:", error);
         setMessages((prev) => [...prev, {
@@ -214,6 +257,14 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
     [input, isTyping, messages],
   );
 
+  const handleClearHistory = () => {
+    if (window.confirm("Certeza que deseja limpar completamente o histórico deste chat?")) {
+      setMessages([INITIAL_MESSAGE]);
+      setHasAnalyzed(false); // Reinicia a analise de contexto da prox vez que abrir
+      saveHistory([INITIAL_MESSAGE]);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent
@@ -227,8 +278,8 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <SheetTitle className="text-base">Assistente Serasa</SheetTitle>
-              <SheetDescription className="text-xs">
+              <SheetTitle className="text-base text-left">Assistente Serasa</SheetTitle>
+              <SheetDescription className="text-xs text-left">
                 Tire suas dúvidas sobre renegociação
               </SheetDescription>
             </div>
@@ -238,9 +289,9 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="flex flex-col gap-4">
-            {messages.map((msg) => (
+            {messages.map((msg, idx) => (
               <div
-                key={msg.id}
+                key={msg.id || idx}
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div className="flex max-w-[90%] gap-2.5">
@@ -313,6 +364,14 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
             }}
             className="flex items-center gap-2"
           >
+            <button
+              type="button"
+              onClick={handleClearHistory}
+              title="Limpar e Reiniciar Chat"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-destructive hover:border-destructive/30"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
             <input
               ref={inputRef}
               type="text"

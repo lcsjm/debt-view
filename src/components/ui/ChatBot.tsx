@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { SendHorizontal, Bot, User, Sparkles } from "lucide-react";
+import { SendHorizontal, Sparkles, Trash2 } from "lucide-react";
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -14,8 +14,8 @@ interface FinancialData {
 }
 
 interface Message {
-  role: "bot" | "user";
-  text: string;
+  role: "assistant" | "user";
+  content: string;
 }
 
 const fmt = (v: number) =>
@@ -144,8 +144,30 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
   const [initialized, setInitialized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Diagnostic Ping connection test
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  const saveHistory = async (newHistory: Message[]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('chat').upsert({ user_id: user.id, history: newHistory }, { onConflict: 'user_id' });
+    }
+  };
+
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from('chat').select('history').eq('user_id', user.id).maybeSingle().then(({ data }) => {
+          if (data && data.history && Array.isArray(data.history) && data.history.length > 0) {
+            setMessages(data.history);
+          }
+          setHistoryLoaded(true);
+        });
+      } else {
+        setHistoryLoaded(true);
+      }
+    });
+
+    // Diagnostic Ping connection test
     supabase.auth.getUser().then(({ data, error }) => {
       console.log("-----------------------------------------");
       console.log("⚡ TESTE DE CONEXÃO SUPABASE (Diagnostics)");
@@ -168,24 +190,32 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
   }, []);
 
   useEffect(() => {
-    if (financialData === undefined) return; // Wait until data is loaded from DB (or explicitly null)
+    if (financialData === undefined || !historyLoaded) return;
     
+    if (messages.length > 0) {
+      setInitialized(true);
+      return;
+    }
+
     if (financialData && !initialized) {
       const analysis = generateAnalysis(financialData);
       const botMsgs: Message[] = [
-        { role: "bot", text: "Olá! Sou o seu Assistente de I.A. Analisei seus dados mais recentes e aqui estão algumas dicas:" },
-        ...analysis.map((t) => ({ role: "bot" as const, text: t })),
-        { role: "bot", text: "Você pode me perguntar qualquer dúvida financeira! Como posso te ajudar a atingir seus objetivos hoje?" },
+        { role: "assistant", content: "Olá! Sou o seu Assistente I.A. Analisei seus dados mais recentes e aqui estão algumas dicas:" },
+        ...analysis.map((t) => ({ role: "assistant" as const, content: t })),
+        { role: "assistant", content: "Você pode me perguntar qualquer dúvida financeira! Como posso te ajudar a atingir seus objetivos hoje?" },
       ];
       setMessages(botMsgs);
+      saveHistory(botMsgs);
       setInitialized(true);
     } else if (!financialData && !initialized) {
-      setMessages([
-        { role: "bot", text: "Olá! Sou o seu Assistente I.A. DebtView. Você pode cadastrar seus dados ao longo do site para uma análise personalizada de suas finanças!\n\nPosso te ajudar com dúvidas como:\n- *Qual o primeiro passo para quitar minhas contas?*\n- *Como funcionam os métodos de amortização?*" },
-      ]);
+      const msgs: Message[] = [
+        { role: "assistant", content: "Olá! Sou o seu Assistente I.A. DebtView. Você pode cadastrar seus dados ao longo do site para uma análise personalizada de suas finanças!\n\nPosso te ajudar com dúvidas como:\n- *Qual o primeiro passo para quitar minhas contas?*\n- *Como funcionam os métodos de amortização?*" },
+      ];
+      setMessages(msgs);
+      saveHistory(msgs);
       setInitialized(true);
     }
-  }, [financialData, initialized]);
+  }, [financialData, initialized, historyLoaded, messages.length]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -195,9 +225,11 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
-    const userMsg: Message = { role: "user", text: input };
+    const userMsg: Message = { role: "user", content: input };
     
-    setMessages((prev) => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    saveHistory(newMessages);
     setInput("");
     setIsTyping(true);
 
@@ -211,11 +243,11 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
       
       // Converte mensagens mantendo limite de 10 interações de contexto
       const history = messages
-        .filter(m => m.role === "user" || m.role === "bot")
+        .filter(m => m.role === "user" || m.role === "assistant")
         .slice(-10)
         .map(m => ({
-          role: m.role === "bot" ? "model" as const : "user" as const,
-          parts: [{ text: m.text }]
+          role: m.role === "assistant" ? "model" as const : "user" as const,
+          parts: [{ text: m.content }]
         }));
 
       // Fetch Real-time Context
@@ -262,14 +294,29 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
         }
       });
 
-      const reply: Message = { role: "bot", text: response.text || "Desculpe, não consegui processar a resposta." };
-      setMessages((prev) => [...prev, reply]);
+      const reply: Message = { role: "assistant", content: response.text || "Desculpe, não consegui processar a resposta." };
+      const finalMsgs = [...newMessages, reply];
+      setMessages(finalMsgs);
+      saveHistory(finalMsgs);
     } catch (error) {
       console.error("Gemini API Error:", error);
-      const erroMsg: Message = { role: "bot", text: "Houve um problema de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde." };
+      const erroMsg: Message = { role: "assistant", content: "Houve um problema de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde." };
       setMessages((prev) => [...prev, erroMsg]);
     } finally {
       setIsTyping(false);
+    }
+  };
+
+  const handleClearHistory = () => {
+    if (window.confirm("Certeza que deseja limpar completamente o histórico com a I.A.?")) {
+      setMessages([]);
+      setInitialized(false);
+      // Ao limpar o estado do react local, a UseEffect de inicializacao ja vai salvar automaticamente o novo botMsg no Supabase!
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase.from('chat').upsert({ user_id: user.id, history: [] }, { onConflict: 'user_id' });
+        }
+      });
     }
   };
 
@@ -297,7 +344,7 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-slate-900/95 scroll-smooth">
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            {msg.role === "bot" && (
+            {msg.role === "assistant" && (
               <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 border border-blue-500/20 mt-1">
                 <Sparkles className="w-4 h-4 text-blue-300" />
               </div>
@@ -309,12 +356,12 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
                   : "bg-slate-800 text-slate-200 rounded-tl-sm border border-slate-700 shadow-md prose prose-sm prose-p:text-slate-200 prose-strong:text-slate-100 prose-ul:text-slate-200"
               }`}
             >
-              {msg.role === "bot" ? (
+              {msg.role === "assistant" ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {msg.text}
+                  {msg.content}
                 </ReactMarkdown>
               ) : (
-                msg.text
+                msg.content
               )}
             </div>
           </div>
@@ -335,6 +382,13 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
       </div>
 
       <div className="p-3 bg-slate-950 border-t border-slate-800 flex gap-2 items-center">
+        <button 
+          onClick={handleClearHistory}
+          className="flex-shrink-0 flex items-center justify-center w-11 h-11 bg-slate-900 border border-slate-700 hover:bg-slate-800 hover:border-red-900/50 rounded-xl transition-all text-slate-400 hover:text-red-400 group"
+          title="Limpar Histórico"
+        >
+          <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+        </button>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
