@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent, useEffect } from "react";
+import { useState, KeyboardEvent, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ArrowRight, ArrowLeft, SkipForward, X, Download } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -6,6 +6,40 @@ import supabase from "../../utils/supabase";
 import { useAuth } from "../context/AuthContext"; 
 import ScrollReveal from "./ScrollReveal";
 import ResultsSection from "./ResultsSection";
+
+// --- COMPONENTE MAGNETIC BUTTON ---
+const MagneticButton = ({ children, className, onClick, disabled }: any) => {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouse = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return; 
+    const { clientX, clientY } = e;
+    const { height, width, left, top } = ref.current!.getBoundingClientRect();
+    const middleX = clientX - (left + width / 2);
+    const middleY = clientY - (top + height / 2);
+    setPosition({ x: middleX * 0.3, y: middleY * 0.3 }); 
+  };
+
+  const reset = () => {
+    setPosition({ x: 0, y: 0 });
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      onMouseMove={handleMouse}
+      onMouseLeave={reset}
+      animate={{ x: position.x, y: position.y }}
+      transition={{ type: "spring", stiffness: 300, damping: 20, mass: 0.5 }}
+      className={className}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </motion.button>
+  );
+};
 
 interface FinancialData {
   divida: number[];
@@ -34,9 +68,6 @@ const formatCurrency = (val: string) => {
 export default function CalculatorSection() {
   const { user } = useAuth(); 
 
-  // --- LÓGICA DE PERSISTÊNCIA (LOCALSTORAGE) ---
-  
-  // Estado inicial carregando do LocalStorage para não resetar ao navegar
   const [currentStep, setCurrentStep] = useState<number>(() => {
     const saved = localStorage.getItem("calc_step");
     return saved ? parseInt(saved) : 0;
@@ -57,14 +88,12 @@ export default function CalculatorSection() {
   const [items, setItems] = useState<number[]>([]);
   const [history, setHistory] = useState<any[]>([]);
 
-  // Efeito para salvar no LocalStorage sempre que houver mudança
   useEffect(() => {
     localStorage.setItem("calc_data", JSON.stringify(data));
     localStorage.setItem("calc_step", currentStep.toString());
     localStorage.setItem("calc_showResults", showResults.toString());
   }, [data, currentStep, showResults]);
 
-  // Efeito para carregar dados salvos no banco caso o usuário já tenha feito
   useEffect(() => {
     async function fetchExistingData() {
       if (!user) return;
@@ -79,7 +108,6 @@ export default function CalculatorSection() {
         .single();
         
       if (existing) {
-        // Preenche com os dados existentes
         setData({
           divida: [], 
           rendaFixa: [existing.fixedIncome || 0],
@@ -92,7 +120,6 @@ export default function CalculatorSection() {
       }
     }
     
-    // Só tenta buscar no banco se o localStorage não estiver dizendo explicitamente que ele quer re-editar
     if (!localStorage.getItem("calc_showResults")) {
       fetchExistingData();
     }
@@ -100,8 +127,6 @@ export default function CalculatorSection() {
 
   const step = steps[currentStep];
   const progressPercentage = ((currentStep + 1) / steps.length) * 100;
-
-  // --- FUNÇÕES DE AÇÃO ---
 
   async function saveToSupabase(finalData: FinancialData) {
     if (!user) return;
@@ -115,7 +140,6 @@ export default function CalculatorSection() {
       investments: finalData.investimentos.reduce((acc, val) => acc + val, 0),
     };
 
-    // Verifica se já existe um registro para atualizar em vez de criar duplicatas
     const { data: existing } = await supabase
       .from("financial")
       .select('id')
@@ -127,14 +151,11 @@ export default function CalculatorSection() {
     if (existing) {
       const { error } = await supabase.from("financial").update(payload).eq('id', existing.id);
       if (error) console.error("Erro Supabase Update:", error.message);
-      else console.log("Atualizado no banco!");
     } else {
       const { error } = await supabase.from("financial").insert([payload]);
       if (error) console.error("Erro Supabase Insert:", error.message);
-      else console.log("Salvo no banco!");
     }
     
-    // Limpa a flag de edição forçada após salvar com sucesso
     localStorage.removeItem("calc_forceEdit");
   }
 
@@ -146,18 +167,17 @@ export default function CalculatorSection() {
     dividas: number;
     investimentos: number;
   }) => {
-    // Transforma os totais alterados de volta para o formato de array esperado pelo estado interno
     const newData: FinancialData = {
       rendaFixa: [valores.rendaFixa],
       rendaVariavel: [valores.rendaVariavel],
       gastosFixos: [valores.gastosFixos],
       gastosVariaveis: [valores.gastosVariaveis],
-      divida: [valores.dividas], // Mapeado de volta para "divida" no plural interno
+      divida: [valores.dividas], 
       investimentos: [valores.investimentos]
     };
 
-    setData(newData); // Atualiza estado que também cai no localStorage via useEffect
-    await saveToSupabase(newData); // Salva no banco de dados e limpa a trava
+    setData(newData); 
+    await saveToSupabase(newData); 
   };
 
   const handleAddItem = () => {
@@ -208,7 +228,7 @@ export default function CalculatorSection() {
     localStorage.removeItem("calc_step");
     localStorage.removeItem("calc_showResults");
     localStorage.setItem("calc_forceEdit", "true");
-    window.location.reload(); // Recarrega para limpar tudo
+    window.location.reload(); 
   };
 
   if (showResults) {
@@ -218,12 +238,12 @@ export default function CalculatorSection() {
           <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
             Raio-X Financeiro
           </h2>
-          <button 
+          <MagneticButton 
             onClick={resetCalculator} 
-            className="flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all font-bold text-sm hover:shadow-md hover:-translate-y-0.5"
+            className="flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 text-[#1D4F91] dark:text-[#426DA9] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:border-[#426DA9] hover:text-[#E80070] transition-all font-bold text-sm hover:shadow-md"
           >
             🔄 Reiniciar Calculadora
-          </button>
+          </MagneticButton>
         </div>
         <ResultsSection data={data} onSave={handleSaveEdits} />
       </div>
@@ -240,14 +260,28 @@ export default function CalculatorSection() {
         </div>
       </ScrollReveal>
 
-      <div className="w-full bg-white dark:bg-gray-800 shadow-xl rounded-3xl overflow-hidden flex flex-col md:flex-row relative border border-gray-100 dark:border-gray-700">
+      <div className="w-full bg-white dark:bg-gray-800 shadow-2xl shadow-[#1D4F91]/10 rounded-3xl overflow-hidden flex flex-col md:flex-row relative border border-gray-100 dark:border-gray-700">
           <div className="absolute top-0 left-0 h-1.5 bg-gray-100 dark:bg-gray-700 w-full z-10">
-            <motion.div className="h-full bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070]" initial={{ width: 0 }} animate={{ width: `${progressPercentage}%` }} transition={{ duration: 0.5, ease: "easeInOut" }} />
+            <motion.div 
+              className="h-full bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070]" 
+              initial={{ width: 0 }} 
+              animate={{ width: `${progressPercentage}%` }} 
+              transition={{ duration: 0.5, ease: "easeInOut" }} 
+            />
           </div>
 
           <div className="w-full h-48 md:h-auto md:w-5/12 relative bg-gray-900 overflow-hidden">
             <AnimatePresence mode="wait">
-              <motion.img key={step.image} src={step.image} alt={step.title} initial={{ scale: 1.05, opacity: 0 }} animate={{ scale: 1, opacity: 0.7 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0 w-full h-full object-cover" />
+              <motion.img 
+                key={step.image} 
+                src={step.image} 
+                alt={step.title} 
+                initial={{ scale: 1.05, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 0.7 }} 
+                exit={{ scale: 0.95, opacity: 0 }} 
+                transition={{ duration: 0.4 }} 
+                className="absolute inset-0 w-full h-full object-cover" 
+              />
             </AnimatePresence>
             <div className="absolute inset-0 bg-gradient-to-t from-[#1D4F91]/90 via-[#1D4F91]/40 to-transparent flex items-end p-8">
               <p className="text-white text-lg font-medium drop-shadow-md">{step.description}</p>
@@ -257,47 +291,82 @@ export default function CalculatorSection() {
           <div className="w-full md:w-7/12 p-8 md:p-12 flex flex-col justify-center min-h-[500px]">
             <AnimatePresence mode="wait">
               <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="flex flex-col h-full w-full">
-                <div className="mb-3 text-sm font-extrabold text-[#426DA9] uppercase tracking-widest bg-[#426DA9]/10 dark:bg-[#426DA9]/20 inline-block px-3 py-1 rounded-full w-max">
+                
+                <motion.div layout className="mb-3 text-sm font-extrabold text-[#C1188B] uppercase tracking-widest bg-[#C1188B]/10 dark:bg-[#C1188B]/20 inline-block px-4 py-1.5 rounded-full w-max">
                   Passo {currentStep + 1} de {steps.length}
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-800 dark:text-white mb-3 tracking-tight">{step.title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-8 text-lg leading-relaxed">{step.question}</p>
+                </motion.div>
+                
+                <motion.h3 layout className="text-3xl font-extrabold text-[#1D4F91] dark:text-white mb-3 tracking-tight">
+                  {step.title}
+                </motion.h3>
+                <motion.p layout className="text-gray-500 dark:text-gray-300 mb-8 text-lg leading-relaxed">
+                  {step.question}
+                </motion.p>
 
-                <div className="flex flex-col flex-grow">
+                <div className="flex flex-col flex-grow justify-end">
                   {items.length > 0 && (
-                    <div className="flex flex-wrap gap-2.5 mb-6">
-                      {items.map((item, i) => (
-                        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-[#1D4F91] dark:text-[#426DA9] px-4 py-2 rounded-full font-bold shadow-sm">
-                          R$ {item.toFixed(2).replace(".", ",")}
-                          <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="text-[#C1188B] hover:text-[#E80070] transition-colors"><X className="w-4 h-4" /></button>
-                        </motion.div>
-                      ))}
-                    </div>
+                    <motion.div layout className="flex flex-wrap gap-2.5 mb-6 max-h-[160px] overflow-y-auto pr-2 pb-2 custom-scrollbar">
+                      <AnimatePresence>
+                        {items.map((item, i) => (
+                          <motion.div 
+                            layout
+                            initial={{ scale: 0.8, opacity: 0, y: 10 }} 
+                            animate={{ scale: 1, opacity: 1, y: 0 }} 
+                            exit={{ scale: 0.8, opacity: 0, width: 0 }}
+                            transition={{ duration: 0.2 }}
+                            key={i} 
+                            className="flex items-center gap-2 bg-[#426DA9]/10 dark:bg-[#426DA9]/20 border border-[#426DA9]/30 text-[#1D4F91] dark:text-[#426DA9] px-4 py-2.5 rounded-full font-bold shadow-sm"
+                          >
+                            R$ {item.toFixed(2).replace(".", ",")}
+                            <MagneticButton 
+                              onClick={() => setItems(items.filter((_, idx) => idx !== i))} 
+                              className="text-[#E80070] hover:text-[#C1188B] hover:scale-110 transition-all p-1 flex items-center justify-center"
+                            >
+                              <X className="w-4 h-4" />
+                            </MagneticButton>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </motion.div>
                   )}
 
-                  <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-6">
-                    <div className="relative flex-1">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">R$</span>
+                  <motion.div layout className="flex flex-col sm:flex-row gap-4 mt-auto mb-6">
+                    <div className="relative flex-1 group">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg group-focus-within:text-[#E80070] dark:group-focus-within:text-[#E80070] transition-colors">R$</span>
                       <input 
                         value={inputValue} 
                         onChange={(e) => setInputValue(formatCurrency(e.target.value))} 
                         onKeyDown={(e) => { if (e.key === 'Enter') handleAddItem(); }}
-                        className="w-full h-14 pl-12 pr-4 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-2xl outline-none focus:border-[#426DA9] focus:ring-4 focus:ring-[#426DA9]/10 transition-all font-bold text-lg" 
+                        className="w-full h-14 pl-12 pr-4 border-2 border-gray-200 bg-gray-50 text-gray-900 focus:bg-white focus:border-[#E80070] focus:ring-4 focus:ring-[#E80070]/10 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:bg-gray-700 dark:focus:border-[#E80070] dark:focus:text-white dark:focus:ring-[#E80070]/20 rounded-2xl outline-none transition-all font-bold text-lg" 
                         placeholder="0,00" 
                       />
                     </div>
-                    <button onClick={handleAddItem} className="h-14 px-8 border-2 border-[#1D4F91] dark:border-[#426DA9] text-[#1D4F91] dark:text-[#426DA9] hover:bg-[#1D4F91] dark:hover:bg-[#426DA9] hover:text-white rounded-2xl flex items-center justify-center gap-2 font-bold transition-all disabled:opacity-50" disabled={!inputValue || inputValue === "0,00"}>
+                    <MagneticButton 
+                      onClick={handleAddItem} 
+                      className="h-14 px-8 border-2 border-[#426DA9] text-[#426DA9] hover:bg-[#426DA9] hover:text-white rounded-2xl flex items-center justify-center gap-2 font-bold transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-[#426DA9] active:scale-95" 
+                      disabled={!inputValue || inputValue === "0,00"}
+                    >
                       <Plus size={20} /> Adicionar
-                    </button>
-                  </div>
+                    </MagneticButton>
+                  </motion.div>
                 </div>
 
-                <div className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-gray-700 mt-2">
-                  <button onClick={handleBack} disabled={currentStep === 0 && history.length === 0} className="flex items-center gap-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 disabled:opacity-30 disabled:hover:text-gray-500 font-bold transition-colors"><ArrowLeft size={18} /> Voltar</button>
-                  <button onClick={handleNext} className="bg-gradient-to-r from-[#1D4F91] to-[#426DA9] hover:from-[#426DA9] hover:to-[#1D4F91] text-white px-8 py-3.5 rounded-2xl flex items-center gap-3 font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <motion.div layout className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-gray-700 mt-2 gap-4">
+                  <MagneticButton 
+                    onClick={handleBack} 
+                    disabled={currentStep === 0 && history.length === 0} 
+                    className="bg-gradient-to-r from-[#C1188B] to-[#E80070] hover:from-[#77127B] hover:to-[#C1188B] text-white px-8 py-3.5 rounded-2xl flex items-center gap-3 font-bold shadow-lg shadow-[#E80070]/30 hover:shadow-[#E80070]/50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-[#C1188B] disabled:hover:to-[#E80070] disabled:shadow-none"
+                  >
+                    <ArrowLeft size={20} /> Voltar
+                  </MagneticButton>
+                  <MagneticButton 
+                    onClick={handleNext} 
+                    className="bg-gradient-to-r from-[#C1188B] to-[#E80070] hover:from-[#77127B] hover:to-[#C1188B] text-white px-8 py-3.5 rounded-2xl flex items-center gap-3 font-bold shadow-lg shadow-[#E80070]/30 hover:shadow-[#E80070]/50 transition-all active:scale-95"
+                  >
                     {currentStep === steps.length - 1 ? "Ver Resultados" : "Próximo"} <ArrowRight size={20} />
-                  </button>
-                </div>
+                  </MagneticButton>
+                </motion.div>
+
               </motion.div>
             </AnimatePresence>
           </div>
