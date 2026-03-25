@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import hero1 from "@/assets/hero-1.jpg";
-import hero2 from "@/assets/hero-2.jpg";
+import hero2 from "@/assets/hero-2.png";
 import hero3 from "@/assets/hero-3.jpg";
 
 const slides = [
@@ -25,17 +25,25 @@ const slides = [
 
 const HeroSection = () => {
   const [current, setCurrent] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   const next = useCallback(() => setCurrent((p) => (p + 1) % slides.length), []);
   const prev = useCallback(() => setCurrent((p) => (p - 1 + slides.length) % slides.length), []);
 
   useEffect(() => {
+    if (isHovered) return; // Pausa o timer se o mouse estiver sobre o carrossel
+    
     const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
-  }, [next]);
+  }, [next, isHovered]);
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
+    <section 
+      id="hero" 
+      className="relative min-h-screen flex items-center overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Base background to prevent white flashes during transition */}
       <div className="absolute inset-0 z-0 bg-background">
         <AnimatePresence>
@@ -109,15 +117,9 @@ const HeroSection = () => {
             >
               <button
                 className="btn-raspberry-serasa text-base px-8 py-3.5"
-                onClick={() => document.querySelector("#calculator")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={() => window.location.href = "/auth"}
               >
                 Começar agora
-              </button>
-              <button
-                className="btn-serasa bg-primary-foreground/15 text-primary-foreground border border-primary-foreground/30 hover:bg-primary-foreground/25 text-base px-8 py-3.5 backdrop-blur-sm"
-                onClick={() => document.querySelector("#education")?.scrollIntoView({ behavior: "smooth" })}
-              >
-                Saiba mais
               </button>
             </motion.div>
           </motion.div>

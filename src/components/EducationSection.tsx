@@ -175,7 +175,7 @@ const ScrollingRow = ({
         className={`flex gap-6 ${direction === "left" ? "scroll-left" : "scroll-right"} ${paused ? "scroll-paused" : ""}`}
         style={{ 
           width: `${duplicated.length * 340}px`,
-          animationDuration: "65s" /* AQUI: Adicionado para deixar o scroll levemente mais lento */
+          animationDuration: "50s" /* AQUI: Adicionado para deixar o scroll levemente mais lento */
         }}
       >
         {duplicated.map((card, i) => {
