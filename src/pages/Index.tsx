@@ -4,6 +4,7 @@ import HeroSection from "@/components/HeroSection";
 import CalculatorSection from "@/components/CalculatorSection";
 import AnalysisSection from "@/components/AnalysisSection";
 import EducationSection from "@/components/EducationSection";
+import Footer from "@/components/footer";
 
 const Index = () => {
   return (
@@ -13,15 +14,8 @@ const Index = () => {
       <CalculatorSection />
       <AnalysisSection />
       <EducationSection />
-
-      {/* Footer */}
-      <footer className="bg-primary py-10">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-primary-foreground/60 text-sm">
-            © 2026 DebtView. Todos os direitos reservados.
-          </p>
-        </div>
-      </footer>
+       <Footer/>
+    <footer/>
     </div>
   );
 };

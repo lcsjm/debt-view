@@ -20,6 +20,7 @@ import { toast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Footer from "@/components/footer";
 
 const debtSchema = z.object({
   creditor: z.string().min(2, "Nome do credor obrigatório (min. 2 letras)"),
