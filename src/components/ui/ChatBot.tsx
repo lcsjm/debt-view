@@ -14,6 +14,7 @@ interface FinancialData {
 }
 
 interface Message {
+  id?: string;
   role: "assistant" | "user";
   content: string;
 }
@@ -200,9 +201,9 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
     if (financialData && !initialized) {
       const analysis = generateAnalysis(financialData);
       const botMsgs: Message[] = [
-        { role: "assistant", content: "Olá! Sou o seu Assistente I.A. Analisei seus dados mais recentes e aqui estão algumas dicas:" },
-        ...analysis.map((t) => ({ role: "assistant" as const, content: t })),
-        { role: "assistant", content: "Você pode me perguntar qualquer dúvida financeira! Como posso te ajudar a atingir seus objetivos hoje?" },
+        { id: `ana-0`, role: "assistant", content: "Olá! Sou o seu Assistente I.A. Analisei seus dados mais recentes e aqui estão algumas dicas:" },
+        ...analysis.map((t, idx) => ({ id: `ana-${idx+1}`, role: "assistant" as const, content: t })),
+        { id: `ana-end`, role: "assistant", content: "Você pode me perguntar qualquer dúvida financeira! Como posso te ajudar a atingir seus objetivos hoje?" },
       ];
       setMessages(botMsgs);
       saveHistory(botMsgs);
@@ -225,7 +226,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
-    const userMsg: Message = { role: "user", content: input };
+    const userMsg: Message = { id: `user-${Date.now()}`, role: "user", content: input };
     
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
@@ -257,7 +258,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
       if (user) {
         const [profileReq, financesReq, debtsReq, serasaReq, transReq] = await Promise.all([
           supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
-          supabase.from('finances').select('*').eq('user_id', user.id).maybeSingle(),
+          supabase.from('financial').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('debts').select('*').eq('user_id', user.id),
           supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
             .then((res: any) => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
@@ -272,10 +273,10 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
 
         liveContextStr = `\n\n--- DADOS BANCÁRIOS E PERFIL (EXTRAÍDOS EM TEMPO REAL) ---
 Nome: ${p?.name || 'Desconhecido'}
-Gastos Fixos Mensais: ${fmt(f?.fixed_expense || 0)}
-Gastos Variáveis Mensais: ${fmt(f?.variable_expense || 0)}
-Renda Fixa Mensal: ${fmt(f?.fixed_income || 0)}
-Renda Variável Mensal: ${fmt(f?.variable_income || 0)}
+Gastos Fixos Mensais: ${fmt(f?.fixedExpenses || 0)}
+Gastos Variáveis Mensais: ${fmt(f?.variableExpenses || 0)}
+Renda Fixa Mensal: ${fmt(f?.fixedIncome || 0)}
+Renda Variável Mensal: ${fmt(f?.variableIncome || 0)}
 Dívidas Atuais (Serasa Mock): ${s.length > 0 ? s.map((x: any) => `${x.creditor_name} - ${fmt(x.current_amount)} (Vence em: ${x.due_date})`).join(', ') : 'Nenhuma'}
 Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} - ${fmt(x.amount)}`).join(', ') : 'Nenhuma'}
 Últimas Transações: ${t.length > 0 ? t.map((x: any) => `${x.category} (${x.type}): ${fmt(x.value)}`).join(', ') : 'Nenhuma'}
@@ -294,13 +295,13 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
         }
       });
 
-      const reply: Message = { role: "assistant", content: response.text || "Desculpe, não consegui processar a resposta." };
+      const reply: Message = { id: `bot-${Date.now()}`, role: "assistant", content: response.text || "Desculpe, não consegui processar a resposta." };
       const finalMsgs = [...newMessages, reply];
       setMessages(finalMsgs);
       saveHistory(finalMsgs);
     } catch (error) {
       console.error("Gemini API Error:", error);
-      const erroMsg: Message = { role: "assistant", content: "Houve um problema de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde." };
+      const erroMsg: Message = { id: `err-${Date.now()}`, role: "assistant", content: "Houve um problema de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde." };
       setMessages((prev) => [...prev, erroMsg]);
     } finally {
       setIsTyping(false);

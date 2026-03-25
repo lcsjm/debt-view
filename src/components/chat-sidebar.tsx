@@ -187,7 +187,7 @@ export function ChatSidebar() {
         if (user) {
           const [profileReq, financesReq, debtsReq, serasaReq, transReq] = await Promise.all([
             supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
-            supabase.from('finances').select('*').eq('user_id', user.id).maybeSingle(),
+            supabase.from('financial').select('*').eq('user_id', user.id).maybeSingle(),
             supabase.from('debts').select('*').eq('user_id', user.id),
             // Serasa demands CPF...
             supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
@@ -203,10 +203,10 @@ export function ChatSidebar() {
 
           userContext = `\n\n--- DADOS DO USUÁRIO PARA CONTEXTO OBRIGATÓRIO (NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SIMPLESMENTE FALE NATURALMENTE) ---
 Nome: ${p?.name || 'Desconhecido'}
-Gastos Fixos Mensais: ${fmt(f?.fixed_expense || 0)}
-Gastos Variáveis Mensais: ${fmt(f?.variable_expense || 0)}
-Renda Fixa Mensal: ${fmt(f?.fixed_income || 0)}
-Renda Variável Mensal: ${fmt(f?.variable_income || 0)}
+Gastos Fixos Mensais: ${fmt(f?.fixedExpenses || 0)}
+Gastos Variáveis Mensais: ${fmt(f?.variableExpenses || 0)}
+Renda Fixa Mensal: ${fmt(f?.fixedIncome || 0)}
+Renda Variável Mensal: ${fmt(f?.variableIncome || 0)}
 Dívidas Atuais (Serasa Mock): ${s.length > 0 ? s.map((x: any) => `${x.creditor_name} - ${fmt(x.current_amount)} (Vence em: ${x.due_date})`).join(', ') : 'Nenhuma'}
 Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} - ${fmt(x.amount)}`).join(', ') : 'Nenhuma'}
 Últimas Transações: ${t.length > 0 ? t.map((x: any) => `${x.category} (${x.type}): ${fmt(x.value)}`).join(', ') : 'Nenhuma'}
@@ -217,7 +217,7 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
         
         // Convert existing messages to Gemini format, keeping only the last 10 for context
         const history = messages
-          .filter(m => m.id !== "welcome" && !m.id.startsWith("analysis"))
+          .filter(m => m.id !== "welcome" && !(m.id && m.id.startsWith("analysis")))
           .slice(-10)
           .map(m => ({
             role: m.role === "assistant" ? "model" as const : "user" as const,
