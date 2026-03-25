@@ -145,12 +145,12 @@ export function ChatSidebar() {
 
         if (user) {
           const [profileReq, financesReq, debtsReq, serasaReq, transReq] = await Promise.all([
-            supabase.from('profiles').select('*').eq('user_id', user.id).single(),
-            supabase.from('finances').select('*').eq('user_id', user.id).single(),
+            supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
+            supabase.from('finances').select('*').eq('user_id', user.id).maybeSingle(),
             supabase.from('debts').select('*').eq('user_id', user.id),
             // Serasa demands CPF...
-            supabase.from('profiles').select('cpf').eq('user_id', user.id).single()
-              .then(res => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
+            supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
+              .then((res: any) => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
             supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
           ]);
 

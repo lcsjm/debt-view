@@ -3,6 +3,7 @@ import { SendHorizontal, Bot, User, Sparkles } from "lucide-react";
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import supabase from "../../../utils/supabase";
 
 interface FinancialData {
   divida: number;
@@ -143,6 +144,29 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
   const [initialized, setInitialized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Diagnostic Ping connection test
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data, error }) => {
+      console.log("-----------------------------------------");
+      console.log("⚡ TESTE DE CONEXÃO SUPABASE (Diagnostics)");
+      if (error) {
+        console.error("❌ ERRO AUTENTICAÇÃO:", error.message);
+      } else if (data.user) {
+        console.log("✅ AUTENTICAÇÃO ATIVA:", data.user.id);
+        
+        // Testando velocidade de Query DB
+        const start = performance.now();
+        supabase.from('profiles').select('id').limit(1).then(() => {
+          const lat = performance.now() - start;
+          console.log(`✅ CONEXÃO COM BANCO DE DADOS: 100% OK (Latência: ${lat.toFixed(1)}ms)`);
+          console.log("-----------------------------------------");
+        });
+      } else {
+        console.log("⚠️ SEM SESSÃO ATIVA. Tudo ok com a SDK, mas usuário aguardando login.");
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (financialData === undefined) return; // Wait until data is loaded from DB (or explicitly null)
     
@@ -194,7 +218,38 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
           parts: [{ text: m.text }]
         }));
 
-      const contextStr = buildPromptContext(financialData);
+      // Fetch Real-time Context
+      const { data: { user } } = await supabase.auth.getUser();
+      let liveContextStr = buildPromptContext(financialData);
+
+      if (user) {
+        const [profileReq, financesReq, debtsReq, serasaReq, transReq] = await Promise.all([
+          supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
+          supabase.from('finances').select('*').eq('user_id', user.id).maybeSingle(),
+          supabase.from('debts').select('*').eq('user_id', user.id),
+          supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
+            .then((res: any) => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
+          supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
+        ]);
+
+        const p = profileReq.data;
+        const f = financesReq.data;
+        const d = debtsReq.data || [];
+        const s = serasaReq.data || [];
+        const t = transReq.data || [];
+
+        liveContextStr = `\n\n--- DADOS BANCÁRIOS E PERFIL (EXTRAÍDOS EM TEMPO REAL) ---
+Nome: ${p?.name || 'Desconhecido'}
+Gastos Fixos Mensais: ${fmt(f?.fixed_expense || 0)}
+Gastos Variáveis Mensais: ${fmt(f?.variable_expense || 0)}
+Renda Fixa Mensal: ${fmt(f?.fixed_income || 0)}
+Renda Variável Mensal: ${fmt(f?.variable_income || 0)}
+Dívidas Atuais (Serasa Mock): ${s.length > 0 ? s.map((x: any) => `${x.creditor_name} - ${fmt(x.current_amount)} (Vence em: ${x.due_date})`).join(', ') : 'Nenhuma'}
+Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} - ${fmt(x.amount)}`).join(', ') : 'Nenhuma'}
+Últimas Transações: ${t.length > 0 ? t.map((x: any) => `${x.category} (${x.type}): ${fmt(x.value)}`).join(', ') : 'Nenhuma'}
+
+Use essas informações atualizadas agora mesmo para responder o usuário. Responda em Markdown. Seja empático, nunca leia as transações em lista a não ser que pedido, e se sinta à vontade para referenciar que 'acabei de dar uma olhada no seu perfil...'.`;
+      }
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -203,7 +258,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
           { role: 'user', parts: [{ text: input }] }
         ],
         config: {
-          systemInstruction: `Você é um assistente financeiro altamente especializado, amigável e focado no alívio de dívidas. Mantenha respostas não muito longas, diretas ao ponto, com tópicos importantes ressaltados em negrito. ${contextStr}`
+          systemInstruction: `Você é um assistente financeiro altamente especializado, amigável e focado no alívio de dívidas. Mantenha respostas não muito longas, diretas ao ponto, com tópicos importantes ressaltados em negrito. ${liveContextStr}`
         }
       });
 

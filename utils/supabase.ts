@@ -6,4 +6,4 @@ const supabaseKey = "sb_publishable_NDkrPxfZ4kwQLXGFBY6xWg_QS73QYcq"
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default supabase
-        
+
