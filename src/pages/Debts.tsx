@@ -128,13 +128,15 @@ export default function Debts() {
   const totalDividas =
     debts?.reduce((acc, d) => acc + (d.value || 0) + (d.amount || 0), 0) || 0;
 
-  // Inputs agora mantém texto branco no dark mode e cinza escuro no light mode
+  // Ajustado o contraste do placeholder no fieldClass para text-slate-500
   const fieldClass =
-    "w-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#426DA9]/50 focus:border-[#426DA9] transition-all text-sm backdrop-blur-sm";
+    "w-full border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#426DA9]/50 focus:border-[#426DA9] transition-all text-sm backdrop-blur-md";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 relative overflow-hidden text-slate-900 dark:text-slate-100">
-      {/* Estilos Globais para Scrollbar Customizada */}
+    // Fundo sólido removido do container pai
+    <div className="min-h-screen relative overflow-hidden text-slate-900 dark:text-slate-100">
+      
+      {/* Estilos Globais para Scrollbar Customizada + Animação do Gradiente */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -142,22 +144,23 @@ export default function Debts() {
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #426DA9; border-radius: 10px; opacity: 0.5; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #1D4F91; }
+        
+        @keyframes gradientMove {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .animate-gradient-bg {
+          background: linear-gradient(-45deg, #1D4F91, #426DA9, #77127B, #C1188B, #E80070);
+          background-size: 400% 400%;
+          animation: gradientMove 15s ease infinite;
+        }
       `,
         }}
       />
 
-      {/* Orbs de fundo dinâmicos */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div
-          className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#1D4F91]/10 blur-[120px] mix-blend-multiply dark:mix-blend-screen animate-pulse"
-          style={{ animationDuration: "8s" }}
-        />
-        <div
-          className="absolute bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-[#77127B]/10 blur-[100px] mix-blend-multiply dark:mix-blend-screen animate-pulse"
-          style={{ animationDuration: "12s" }}
-        />
-        <div className="absolute top-[30%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-[#E80070]/5 blur-[90px] mix-blend-multiply dark:mix-blend-screen" />
-      </div>
+      {/* Fundo dinâmico CSS fluido */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 animate-gradient-bg opacity-15 dark:opacity-30" />
 
       <AppSidebar
         activeSection={activeSection}
@@ -169,17 +172,16 @@ export default function Debts() {
       <main
         className={`relative z-10 transition-all duration-300 p-4 md:p-8 space-y-8 ${collapsed ? "ml-[72px]" : "ml-[72px] md:ml-[260px]"}`}
       >
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40 dark:bg-slate-900/40 p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-sm">
+        {/* Header - Glassmorphism ajustado para /60 */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/60 dark:bg-slate-900/60 p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl shadow-sm">
           <div>
             <p className="text-sm text-[#426DA9] dark:text-[#8CB4F5] font-semibold mb-1 uppercase tracking-wider">
               Gestão Financeira
             </p>
-            {/* Título alterado para branco no Dark Mode e Dark Blue no Light Mode */}
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#1D4F91] dark:text-white">
               Minhas Dívidas
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
               Acompanhe, registre e exporte suas dívidas ativas com fluidez.
             </p>
           </div>
@@ -187,25 +189,25 @@ export default function Debts() {
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.95 }}
             onClick={exportToExcel}
-            className="flex items-center justify-center gap-2 border border-[#426DA9]/30 bg-white dark:bg-slate-900 text-[#1D4F91] dark:text-slate-200 px-5 py-3 rounded-xl text-sm font-semibold hover:bg-[#426DA9] hover:text-white dark:hover:text-white transition-all shadow-sm group"
+            className="flex items-center justify-center gap-2 border border-[#426DA9]/30 bg-white/90 dark:bg-slate-900/90 text-[#1D4F91] dark:text-slate-200 px-5 py-3 rounded-xl text-sm font-semibold hover:bg-[#426DA9] hover:text-white dark:hover:text-white transition-all shadow-sm group"
           >
             <Download className="w-4 h-4 group-hover:animate-bounce" />
             Exportar Excel
           </motion.button>
         </div>
 
-        {/* Resumo Financeiro */}
+        {/* Resumo Financeiro - Glassmorphism ajustado para /80 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="relative overflow-hidden bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-[#E80070]/20 rounded-3xl p-6 shadow-lg shadow-[#E80070]/5 group hover:border-[#E80070]/40 transition-colors"
+            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#E80070]/20 rounded-3xl p-6 shadow-lg shadow-[#E80070]/5 group hover:border-[#E80070]/40 transition-colors"
           >
             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#E80070] dark:text-[#FF66A3]">
               <Wallet size={64} />
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-2">
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2">
               Total em Dívidas
             </p>
             <p className="text-3xl font-black bg-gradient-to-r from-[#E80070] to-[#C1188B] bg-clip-text text-transparent">
@@ -220,15 +222,14 @@ export default function Debts() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="relative overflow-hidden bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-[#77127B]/20 rounded-3xl p-6 shadow-lg shadow-[#77127B]/5 group hover:border-[#77127B]/40 transition-colors"
+            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#77127B]/20 rounded-3xl p-6 shadow-lg shadow-[#77127B]/5 group hover:border-[#77127B]/40 transition-colors"
           >
             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#77127B] dark:text-[#C1188B]">
               <Target size={64} />
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-2">
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2">
               Nº de Dívidas
             </p>
-            {/* Números em branco no dark mode */}
             <p className="text-3xl font-black text-[#77127B] dark:text-white">
               {debts?.length || 0}
             </p>
@@ -238,27 +239,26 @@ export default function Debts() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative overflow-hidden bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-[#426DA9]/20 rounded-3xl p-6 shadow-lg shadow-[#426DA9]/5 group hover:border-[#426DA9]/40 transition-colors"
+            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#426DA9]/20 rounded-3xl p-6 shadow-lg shadow-[#426DA9]/5 group hover:border-[#426DA9]/40 transition-colors"
           >
             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#426DA9] dark:text-[#8CB4F5]">
               <Activity size={64} />
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-2">
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2">
               Status Pendentes
             </p>
-            {/* Números em branco no dark mode */}
             <p className="text-3xl font-black text-[#426DA9] dark:text-white">
               {debts?.filter((d) => d.status === "Pendente").length || 0}
             </p>
           </motion.div>
         </div>
 
-        {/* Formulário */}
+        {/* Formulário - Glassmorphism ajustado para /80 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 md:p-8 shadow-sm"
+          className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 md:p-8 shadow-sm"
         >
           <h2 className="font-bold text-xl mb-8 flex items-center gap-3 text-[#1D4F91] dark:text-white">
             <div className="p-2 bg-[#E80070]/10 rounded-lg text-[#E80070]">
@@ -272,7 +272,7 @@ export default function Debts() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             <div className="sm:col-span-2 lg:col-span-1">
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                 Credor *
               </label>
               <input
@@ -289,11 +289,11 @@ export default function Debts() {
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                 Valor Original *
               </label>
-              <div className="flex items-center bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-sm">
-                <span className="pl-4 text-slate-400 text-sm font-medium select-none">
+              <div className="flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-md">
+                <span className="pl-4 text-slate-500 text-sm font-medium select-none">
                   R$
                 </span>
                 <Controller
@@ -304,7 +304,7 @@ export default function Debts() {
                       type="text"
                       inputMode="numeric"
                       placeholder="0,00"
-                      className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold"
+                      className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
                       value={value}
                       onChange={(e) =>
                         onChange(formatCurrencyInput(e.target.value))
@@ -322,11 +322,11 @@ export default function Debts() {
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                 Juros Acumulados
               </label>
-              <div className="flex items-center bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-sm">
-                <span className="pl-4 text-slate-400 text-sm font-medium select-none">
+              <div className="flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-md">
+                <span className="pl-4 text-slate-500 text-sm font-medium select-none">
                   R$
                 </span>
                 <Controller
@@ -337,7 +337,7 @@ export default function Debts() {
                       type="text"
                       inputMode="numeric"
                       placeholder="0,00"
-                      className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold"
+                      className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
                       value={value}
                       onChange={(e) =>
                         onChange(formatCurrencyInput(e.target.value))
@@ -349,25 +349,25 @@ export default function Debts() {
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                 Taxa de Juros (% a.m.)
               </label>
-              <div className="flex items-center bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-sm">
+              <div className="flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-md">
                 <input
                   {...register("rate")}
                   type="number"
                   step="0.01"
                   placeholder="0,00"
-                  className="w-full bg-transparent px-4 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold"
+                  className="w-full bg-transparent px-4 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
                 />
-                <span className="pr-4 text-slate-400 text-sm font-medium select-none">
+                <span className="pr-4 text-slate-500 text-sm font-medium select-none">
                   %
                 </span>
               </div>
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                 Vencimento
               </label>
               <DatePicker
@@ -383,7 +383,7 @@ export default function Debts() {
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                 Status *
               </label>
               <select {...register("status")} className={fieldClass}>
@@ -418,12 +418,12 @@ export default function Debts() {
           </form>
         </motion.div>
 
-        {/* Lista de Dívidas */}
+        {/* Lista de Dívidas - Glassmorphism ajustado para /80 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 md:p-8 shadow-sm"
+          className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 md:p-8 shadow-sm"
         >
           <h2 className="font-bold text-xl mb-6 flex items-center gap-3 text-[#1D4F91] dark:text-white">
             <div className="p-2 bg-[#1D4F91]/10 rounded-lg text-[#1D4F91] dark:text-[#8CB4F5]">
@@ -440,7 +440,7 @@ export default function Debts() {
               </p>
             </div>
           ) : !debts || debts.length === 0 ? (
-            <div className="text-center py-16 bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-[#426DA9]/30 text-slate-500">
+            <div className="text-center py-16 bg-white/50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-[#426DA9]/30 text-slate-600 dark:text-slate-400">
               <Wallet className="w-12 h-12 mx-auto mb-4 text-[#426DA9]/40" />
               <p className="font-bold text-[#1D4F91] dark:text-white text-lg mb-1">
                 Tudo limpo por aqui!
@@ -465,7 +465,7 @@ export default function Debts() {
                       stiffness: 300,
                       damping: 24,
                     }}
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-[#426DA9]/40 hover:shadow-lg hover:shadow-[#426DA9]/5 transition-all"
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white/95 dark:bg-slate-800/95 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-[#426DA9]/40 hover:shadow-lg hover:shadow-[#426DA9]/5 transition-all backdrop-blur-sm"
                   >
                     <div className="flex-1 min-w-0 mb-4 sm:mb-0">
                       <p className="font-bold text-lg truncate text-[#1D4F91] dark:text-white">
@@ -486,7 +486,7 @@ export default function Debts() {
                           {d.status}
                         </span>
                         {d.date && (
-                          <span className="text-xs font-medium text-slate-400">
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                             Vence:{" "}
                             {new Date(d.date).toLocaleDateString("pt-BR")}
                           </span>
@@ -501,7 +501,7 @@ export default function Debts() {
 
                     <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-6">
                       <div className="text-left sm:text-right">
-                        <p className="text-xs font-medium text-slate-400 mb-0.5">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">
                           Original:{" "}
                           {(d.value || 0).toLocaleString("pt-BR", {
                             style: "currency",
