@@ -46,7 +46,7 @@ const AppContent = () => {
         
         <Route path="/about" element={<About />} />
         
-        <Route path="/debts" element={
+        <Route path="/debts" element={  
           <ProtectedRoute>
             <Debts />
           </ProtectedRoute>
