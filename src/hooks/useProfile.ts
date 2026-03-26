@@ -59,6 +59,8 @@ export function useProfile() {
     onSuccess: () => {
       // Invalida o cache do perfil para a tela atualizar com os novos dados
       queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+      // Invalida também a consulta do Serasa, útil se o usuário acabou de adicionar/atualizar o CPF
+      queryClient.invalidateQueries({ queryKey: ["serasa_debts"] });
     },
   });
 

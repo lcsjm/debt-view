@@ -6,6 +6,7 @@ import supabase from "../../utils/supabase";
 import { useAuth } from "../context/AuthContext"; 
 import ScrollReveal from "./ScrollReveal";
 import ResultsSection from "./ResultsSection";
+import { useNavigate } from "react-router-dom";
 
 // --- COMPONENTE MAGNETIC BUTTON ---
 const MagneticButton = ({ children, className, onClick, disabled }: any) => {
@@ -65,8 +66,9 @@ const formatCurrency = (val: string) => {
   return parsed.replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-export default function CalculatorSection() {
+export default function CalculatorIndex() {
   const { user } = useAuth(); 
+  const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState<number>(() => {
     const saved = localStorage.getItem("calc_step");
@@ -137,7 +139,7 @@ export default function CalculatorSection() {
       variableIncome: finalData.rendaVariavel.reduce((acc, val) => acc + val, 0),
       fixedExpenses: finalData.gastosFixos.reduce((acc, val) => acc + val, 0),
       variableExpenses: finalData.gastosVariaveis.reduce((acc, val) => acc + val, 0),
-      investments: finalData.investimentos.reduce((acc, val) => acc + val, 0),
+      investimentos: finalData.investimentos.reduce((acc, val) => acc + val, 0),
     };
 
     const { data: existing } = await supabase
@@ -198,9 +200,13 @@ export default function CalculatorSection() {
     }
 
     if (currentStep === steps.length - 1) {
-      setData(newData);
-      setShowResults(true);
-      saveToSupabase(newData);
+      // Reseta os dados inseridos localmente antes de redirecionar
+      localStorage.removeItem("calc_data");
+      localStorage.removeItem("calc_step");
+      localStorage.removeItem("calc_showResults");
+      
+      // Envia diretamente para Auth
+      navigate("/auth");
       return;
     }
 

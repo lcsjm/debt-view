@@ -1,9 +1,12 @@
 import { useSerasa } from "../hooks/useSerasa";
-import { AlertCircle, ShieldAlert, FileText, ChevronRight } from "lucide-react";
+import { useProfile } from "../hooks/useProfile";
+import { useState } from "react";
+import { AlertCircle, ShieldAlert, FileText, ChevronRight, Search, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function SerasaSection() {
   const { debts, isLoading, error } = useSerasa();
+  const { profile } = useProfile();
 
   if (isLoading) {
     return (
@@ -56,10 +59,25 @@ export default function SerasaSection() {
       </div>
 
       <div className="relative z-10">
-        {!hasDebts ? (
+        {!profile?.cpf ? (
+          <div className="bg-brand-magenta/5 border border-brand-magenta/20 rounded-xl p-5 text-center flex flex-col items-center justify-center">
+            <h3 className="text-foreground font-bold mb-2 flex items-center gap-2">
+              <Search className="w-5 h-5 text-brand-magenta" /> Configure seu CPF
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-sm mb-4">
+              Para consultarmos suas pendências automaticamente no Serasa, cadastre o seu CPF no painel de perfil.
+            </p>
+            <Link 
+              to="/profile" 
+              className="h-10 px-6 bg-brand-magenta text-white font-medium rounded-xl hover:bg-brand-magenta/90 transition-all flex items-center justify-center gap-2"
+            >
+              Meu Perfil <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : !hasDebts ? (
           <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 text-center">
             <h3 className="text-emerald-500 font-bold mb-1">Nome Limpo! 🎉</h3>
-            <p className="text-sm text-emerald-600/80">Não encontramos nenhuma dívida negativada no seu CPF atual.</p>
+            <p className="text-sm text-emerald-600/80">Não encontramos nenhuma dívida negativada no CPF {profile.cpf}.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">

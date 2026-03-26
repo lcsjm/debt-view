@@ -18,6 +18,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ChatProvider } from "@/components/chat-context";
 import { ChatSidebar } from "@/components/chat-sidebar";
+import Education from "./pages/Education";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,12 @@ const AppContent = () => {
         <Route path="/profile" element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/education" element={
+          <ProtectedRoute>
+            <Education/>
           </ProtectedRoute>
         } />
         

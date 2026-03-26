@@ -1,73 +1,138 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import css from "../App.css"
-import Header from "@/components/Header";
-export default function About(){
-    return (
-        <>
-            <Header/>
+import { motion } from "framer-motion";
+import { ArrowLeft, Linkedin } from "lucide-react";
 
-  {/* Seção Sobre o Projeto */}
-  <section className="pt-24 pb-16 px-6 max-w-5xl mx-auto text-center">
-    <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-6">
-      O que seria o projeto do endividamento?
-    </h1>
-    <p className="text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto">
-      O projeto de endividamento tem como propósito ajudar as pessoas a entender seus gastos e, 
-      consequentemente, sair da dívida, com a ideia de apresentar uma tabela detalhada 
-      para facilitar a compreensão financeira.
-    </p>
-  </section>
-
-  {/* Seção do Time */}
-  <section className="py-12 px-6 bg-slate-50">
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold text-center text-slate-800 mb-10">
-        Quem faz parte do time?
-      </h1>
+const TeamSection = () => {
+  return (
+    <main className="min-h-screen bg-background">
       
-      {/* Grid Responsivo: 1 col no mobile, 2 no tablet, 4 no desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"> 
-        
-        {/* Card do Guilherme */}
-        <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-shadow duration-300 text-center">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
-            G
-          </div>
-          <h2 className="text-xl font-semibold text-slate-800">Guilherme</h2>
-          <p className="text-slate-500 mt-2">Desenvolvedor</p>
-        </div>
-
-        {/* Card do Vitor */}
-        <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-shadow duration-300 text-center">
-          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
-            V
-          </div>
-          <h2 className="text-xl font-semibold text-slate-800">Vitor</h2>
-          <p className="text-slate-500 mt-2">Analista</p>
-        </div>
-
-        {/* Card da Alexia */}
-        <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-shadow duration-300 text-center">
-          <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
-            A
-          </div>
-          <h2 className="text-xl font-semibold text-slate-800">Alexia</h2>
-          <p className="text-slate-500 mt-2">Designer</p>
-        </div>
-
-        {/* Card do Lucas */}
-        <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100 hover:shadow-xl transition-shadow duration-300 text-center">
-          <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
-            L
-          </div>
-          <h2 className="text-xl font-semibold text-slate-800">Lucas</h2>
-          <p className="text-slate-500 mt-2">Gestor</p>
-        </div>
-        
+      {/* Botão de Voltar */}
+      <div className="max-w-[1400px] mx-auto pt-12 px-4 sm:px-6 lg:px-8">
+        <a 
+          href="/" 
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-medium group"
+        >
+          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          Voltar para a página inicial
+        </a>
       </div>
-    </div>
-  </section>
-</>
-    )
+
+      {/* ─── Seção Sobre o Projeto ─── */}
+      <section className="pt-20 pb-16 px-6 max-w-5xl mx-auto text-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-[#E80070] via-[#C1188B] to-[#77127B]">
+          Um projeto Transforma-se: "DebtView"
+        </h1>
+        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mx-auto transition-colors duration-300">
+          Nosso projeto é em parceria com a empresa Serasa Experian e SENAC-SP. Nascido na cidade de São Carlos-SP, tem como principal objetivo ajudar nossos usuários a terem mais controle sobre suas próprias finanças, mostrando análises, gráficos, planilhas, além de um auxílio de Chatbot individualizado. Disponibilizamos links externos para que seja possível realizar renegociações de dívidas e amortizações.
+        </p>
+      </section>
+
+      {/* ─── Seção do Time ─── */}
+      <section className="pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto">
+          
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-heading font-bold text-foreground mb-4">
+              Desenvolvedores
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Conheça o nosso perfil no LinkedIn
+            </p>
+          </div>
+
+          {/* Grid de Cards dos Desenvolvedores - 5 colunas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            {[
+              {
+                name: "Guilherme",
+                role: "Desenvolvedor",
+                linkedinUrl: "https://www.linkedin.com/in/guilherme-cabral-2082653b9/",
+                avatarUrl: "https://ui-avatars.com/api/?name=Guilherme&background=0D8ABC&color=fff&size=128",
+                coverUrl: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=500&auto=format&fit=crop"
+              },
+              {
+                name: "Victor",
+                role: "Desenvolvedor",
+                linkedinUrl: "https://www.linkedin.com/in/v1cferr/",
+                avatarUrl: "Screenshot 2026-03-20 at 14-24-35 (1) Victor Ferreira LinkedIn.png",
+                coverUrl: "1710874898778.jpg"
+              },
+              {
+                name: "Lucas",
+                role: "Desenvolvedor",
+                linkedinUrl: "https://www.linkedin.com/in/lcsjm97/",
+                avatarUrl: "Screenshot 2026-03-20 at 14-19-32 (1) Lucas Jamus LinkedIn.png",
+                coverUrl: "public/Linkedin_Lucas_capa.jpg"
+              },
+              {
+                name: "Alexia",
+                role: "Desenvolvedora",
+                linkedinUrl: "https://www.linkedin.com/in/alexia-izabela-dos-santos-ba2b0028b/",
+                avatarUrl: "Screenshot 2026-03-24 at 14-11-55 (18) Alexia Izabela Dos Santos LinkedIn.png",
+                coverUrl: "1774372090329.jpg"
+              },
+              {
+                name: "Ketlyn",
+                role: "Desenvolvedora",
+                linkedinUrl: "https://www.linkedin.com/in/ketlyn-mucheroni-8b23932a9/",
+                avatarUrl: "Screenshot 2026-03-20 at 14-28-13 (1) Ketlyn Mucheroni LinkedIn.png",
+                coverUrl: "1748905084109.jpg"
+              }
+            ].map((dev, index) => (
+              <motion.a
+                href={dev.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.4 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="block bg-card rounded-2xl overflow-hidden border border-border/20 shadow-sm hover:shadow-xl hover:border-border/40 transition-all duration-300 group relative"
+              >
+                {/* Área de Capa (Cover) */}
+                <div 
+                  className="h-20 w-full bg-muted relative"
+                  style={{ backgroundImage: `url(${dev.coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                >
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
+                </div>
+
+                {/* Foto de Perfil sobreposta */}
+                <div className="px-4 relative">
+                  <div className="absolute -top-10 left-4">
+                    <div className="h-16 w-16 rounded-full border-4 border-card bg-muted overflow-hidden">
+                      <img 
+                        src={dev.avatarUrl} 
+                        alt={`Foto de ${dev.name}`} 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Ícone do LinkedIn */}
+                  <div className="absolute top-3 right-4 text-[#0A66C2] opacity-80 group-hover:opacity-100 transition-opacity">
+                    <Linkedin size={20} />
+                  </div>
+
+                  {/* Informações de Texto */}
+                  <div className="pt-10 pb-6 text-center sm:text-left">
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                      {dev.name}
+                    </h3>
+                    <p className="text-xs font-medium text-foreground/80 mt-1">
+                      {dev.role}
+                    </p>
+                  </div>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  );
 };
+
+export default TeamSection;

@@ -1,28 +1,61 @@
+import { useState, useRef } from "react";
 import {
   LayoutDashboard,
-  Target,
-  Calculator,
-  Shield,
-  Rocket,
-  BookOpen,
-  TrendingUp,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  User,
   CreditCard,
+  User,
+  BookOpen,
+  Rocket,
+  LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import supabase from "../../utils/supabase";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import { useChat } from "./chat-context";
+
+// --- COMPONENTE MAGNETIC BUTTON ---
+const MagneticButton = ({ children, className, onClick, disabled, title }: any) => {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouse = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    const { clientX, clientY } = e;
+    const { height, width, left, top } = ref.current!.getBoundingClientRect();
+    const middleX = clientX - (left + width / 2);
+    const middleY = clientY - (top + height / 2);
+    setPosition({ x: middleX * 0.3, y: middleY * 0.3 });
+  };
+
+  const reset = () => {
+    setPosition({ x: 0, y: 0 });
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      onMouseMove={handleMouse}
+      onMouseLeave={reset}
+      animate={{ x: position.x, y: position.y }}
+      transition={{ type: "spring", stiffness: 300, damping: 20, mass: 0.5 }}
+      className={className}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+    >
+      {children}
+    </motion.button>
+  );
+};
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Painel Financeiro", id: "painel", path: "/dashboard" },
-  { icon: CreditCard,      label: "Dívidas",           id: "debts",  path: "/debts" },
+  { icon: CreditCard,      label: "Dívidas",           id: "debts",   path: "/debts" },
   { icon: User,            label: "Meu Perfil",        id: "profile", path: "/profile" },
+  { icon: BookOpen,        label: "Educação Financeira", id: "education", path: "/education" },
+  { icon: Rocket,          label: "Assistente Serasa", id: "chatbot", path: "#" },
 ];
 
 interface AppSidebarProps {
@@ -35,6 +68,8 @@ interface AppSidebarProps {
 export function AppSidebar({ activeSection, onSectionChange, collapsed, setCollapsed }: AppSidebarProps) {
   const { theme, setTheme } = useTheme();
   const nav = useNavigate();
+  const location = useLocation();
+  const { toggle } = useChat();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -43,122 +78,133 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
 
   return (
     <motion.aside
+      onMouseEnter={() => setCollapsed(false)}
+      onMouseLeave={() => setCollapsed(true)}
       animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 h-screen bg-primary z-50 flex flex-col shadow-xl"
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="fixed left-0 top-0 h-screen bg-[#1D4F91] border-r border-[#1D4F91] z-50 flex flex-col shadow-2xl overflow-hidden"
     >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b border-sidebar-border">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0">
-          <img src="/favicon.svg" alt="DebtView Logo" className="w-9 h-9 rounded-lg" />
+      {/* Header com Logo */}
+      <div className="flex items-center justify-center px-3 py-6 border-b border-white/10 h-[88px] shrink-0">
+        <div 
+          onClick={() => nav("/dashboard")}
+          className="flex items-center justify-center gap-3 cursor-pointer group w-full overflow-hidden transition-all"
+        >
+          {/* Logo */}
+          <div className="w-9 h-9 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
+            <img src="/favicon.svg" alt="DebtView Logo" className="w-9 h-9 rounded-lg" />
+          </div>
+          
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, width: 0, x: -10 }}
+                animate={{ opacity: 1, width: "auto", x: 0 }}
+                exit={{ opacity: 0, width: 0, x: -10 }}
+                className="text-xl font-heading font-black text-white whitespace-nowrap tracking-tight"
+              >
+                DebtView
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              className="text-xl font-heading font-bold text-primary-foreground whitespace-nowrap overflow-hidden"
-            >
-              DebtView
-            </motion.span>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      {/* Navegação principal */}
+      <nav className="flex-1 px-3 py-6 flex flex-col justify-center gap-3 overflow-y-auto custom-scroll">
         {menuItems.map((item) => {
-          const active = activeSection === item.id;
+          const active = item.path === "#" ? activeSection === item.id : location.pathname.startsWith(item.path);
+          
           return (
-            <button
+            <MagneticButton
               key={item.id}
               onClick={() => {
-                onSectionChange(item.id);
-                nav(item.path);
+                if (item.id === "chatbot") {
+                  toggle();
+                } else {
+                  if (item.id) onSectionChange(item.id);
+                  if (item.path) nav(item.path);
+                }
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors duration-200 group relative ${
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-primary-foreground/70 hover:bg-sidebar-accent/50 hover:text-primary-foreground"
-              }`}
+                  ? "bg-white/20 text-white font-bold shadow-sm"
+                  : "text-white/70 hover:bg-white/10 hover:text-white font-medium"
+              } ${collapsed ? "justify-center" : "justify-start"}`}
+              title={collapsed ? item.label : undefined}
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className={`w-[22px] h-[22px] flex-shrink-0 transition-colors ${active ? "text-white" : "text-white/50 group-hover:text-white"}`} />
+              
               <AnimatePresence>
                 {!collapsed && (
                   <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="text-[15px] whitespace-nowrap overflow-hidden"
                   >
                     {item.label}
                   </motion.span>
                 )}
               </AnimatePresence>
+
+              {/* Indicador Ativo */}
               {active && !collapsed && (
                 <motion.div
-                  layoutId="activeIndicator"
-                  className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-pink"
+                  layoutId="activeNavIndicator"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-sm bg-[#E80070]"
                 />
               )}
-            </button>
+            </MagneticButton>
           );
         })}
       </nav>
 
-      {/* Actions */}
-      <div className="flex flex-col gap-2 mx-3 mb-4">
-        
-        {/* Theme Toggle */}
-        <button
+      {/* Ações Inferiores - Sempre centralizados horizontalmente */}
+      <div className="p-3 border-t border-white/10 flex flex-col justify-center gap-2 shrink-0 bg-black/10">
+        {/* Toggle de Tema */}
+        <MagneticButton
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="p-2 rounded-lg text-primary-foreground/60 hover:text-primary-foreground hover:bg-sidebar-accent/50 transition-colors flex items-center justify-center gap-3 overflow-hidden"
-          title={theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+          className="w-full flex items-center justify-center gap-3 px-3 py-3 rounded-xl transition-colors duration-200 text-white/70 hover:bg-white/10 hover:text-white font-medium"
+          title={theme === "dark" ? "Mudar para Claro" : "Mudar para Escuro"}
         >
-          {theme === "dark" ? <Sun className="w-5 h-5 flex-shrink-0" /> : <Moon className="w-5 h-5 flex-shrink-0" />}
+          {theme === "dark" ? <Sun className="w-5 h-5 flex-shrink-0" /> : <Moon className="w-5 h-5 flex-shrink-0 text-white/70" />}
+          
           <AnimatePresence>
             {!collapsed && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
-                className="text-sm font-medium whitespace-nowrap"
+                className="text-[14px] whitespace-nowrap overflow-hidden"
               >
                 {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
               </motion.span>
             )}
           </AnimatePresence>
-        </button>
+        </MagneticButton>
 
         {/* Logout */}
-        <button
+        <MagneticButton
           onClick={handleLogout}
-          className="p-2 rounded-lg text-primary-foreground/60 hover:text-red-400 hover:bg-red-400/10 transition-colors flex items-center justify-center gap-3 overflow-hidden"
-          title="Sair"
+          className="w-full flex items-center justify-center gap-3 px-3 py-3 rounded-xl transition-colors duration-200 text-white/70 hover:bg-red-500/20 hover:text-red-400 font-medium group"
+          title="Sair da Conta"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
+          <LogOut className="w-5 h-5 flex-shrink-0 text-white/70 transition-colors group-hover:text-red-400" />
+          
           <AnimatePresence>
             {!collapsed && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
-                className="text-sm font-medium whitespace-nowrap"
+                className="text-[14px] whitespace-nowrap overflow-hidden"
               >
                 Sair da Conta
               </motion.span>
             )}
           </AnimatePresence>
-        </button>
-
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-2 rounded-lg text-primary-foreground/60 hover:text-primary-foreground hover:bg-sidebar-accent/50 transition-colors flex items-center justify-center"
-        >
-          {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-        </button>
+        </MagneticButton>
       </div>
     </motion.aside>
   );

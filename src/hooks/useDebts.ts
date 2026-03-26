@@ -57,12 +57,43 @@ export function useDebts() {
     },
   });
 
+  const { mutateAsync: updateDebt, isPending: isUpdating } = useMutation({
+    mutationFn: async (updatedDebt: DebtData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      if (!updatedDebt.id) throw new Error("ID da dívida não fornecido");
+
+      const { id, user_id, date, ...updatePayload } = updatedDebt as any;
+      if (date) updatePayload.date = date; // Prevent date from being swallowed if it's there
+
+      const { data, error } = await supabase
+        .from("debts")
+        .update(updatePayload)
+        .eq("id", updatedDebt.id)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["finances"] });
+    },
+  });
+
   const { mutateAsync: deleteDebt, isPending: isDeleting } = useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       const { error } = await supabase
         .from("debts")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", user.id);
         
       if (error) throw error;
       return id;
@@ -73,5 +104,5 @@ export function useDebts() {
     },
   });
 
-  return { debts, isLoading, error, saveDebt, isSaving, deleteDebt, isDeleting };
+  return { debts, isLoading, error, saveDebt, isSaving, updateDebt, isUpdating, deleteDebt, isDeleting };
 }
