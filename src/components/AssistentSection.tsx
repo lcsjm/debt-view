@@ -12,11 +12,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import Chatbot from "./ui/ChatBot";
 
-const storyRenegociacao = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&q=80";
-const storySerasaLimpaNome = "https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?w=400&q=80";
-const storyDesenrola = "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&q=80";
-const storyAmortizacao = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=80";
-const storyFeirao = "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400&q=80";
+// Referências apontando para a pasta public com as extensões reais dos arquivos
+const storySerasaLimpaNome = "/LimpaNomeSerasa.png";
+const storyDesenrola = "/DesenrolaBrasil.png";
+const storyAmortizacao = "/AmortizacaoSerasa.webp";
+const storyFeirao = "/FeiraoSerasa.png";
 
 interface FinancialData {
   divida: number;
@@ -36,33 +36,27 @@ interface SlideData {
 
 const col1Slides: SlideData[] = [
   {
-    title: "Renegociação de Dívida",
-    description: "Aprenda conceitos e estratégias para renegociar suas dívidas de forma inteligente e recuperar sua saúde financeira.",
-    image: storyRenegociacao,
-    link: "/renegociacao",
-  },
-  {
-    title: "Serasa Limpa Nome",
-    description: "Negocie suas dívidas com descontos exclusivos através do programa Serasa Limpa Nome. Milhões de ofertas disponíveis.",
-    image: storySerasaLimpaNome,
-    link: "https://www.serasa.com.br/limpa-nome-online/",
-    isExternal: true,
-  },
-  {
     title: "Desenrola Brasil",
     description: "Programa do Governo Federal que facilita a renegociação de dívidas para milhões de brasileiros com condições especiais.",
     image: storyDesenrola,
     link: "https://desenrola.gov.br/novahome",
     isExternal: true,
   },
-];
-
-const col3Slides: SlideData[] = [
   {
     title: "Amortização",
     description: "Entenda como funciona a amortização e os principais tipos: SAC, Price e mais. Reduza o custo total das suas dívidas.",
     image: storyAmortizacao,
     link: "https://www.serasa.com.br/limpa-nome-online/blog/amortizacao-entenda-como-funciona-e-os-principais-tipos/",
+    isExternal: true,
+  },
+];
+
+const col3Slides: SlideData[] = [
+  {
+    title: "Serasa Limpa Nome",
+    description: "Negocie suas dívidas com descontos exclusivos através do programa Serasa Limpa Nome. Milhões de ofertas disponíveis.",
+    image: storySerasaLimpaNome,
+    link: "https://www.serasa.com.br/limpa-nome-online/",
     isExternal: true,
   },
   {
@@ -223,10 +217,12 @@ const StoryCard = ({
         </div>
       </div>
 
-      <div className="absolute bottom-4 left-4 right-4 z-20 flex justify-between">
-        <MagneticArrow direction="left" onClick={() => setStep((s) => s - 1)} disabled={step === 0} />
-        <MagneticArrow direction="right" onClick={() => setStep((s) => s + 1)} disabled={step === slides.length - 1} />
-      </div>
+      {slides.length > 1 && (
+        <div className="absolute bottom-4 left-4 right-4 z-20 flex justify-between">
+          <MagneticArrow direction="left" onClick={() => setStep((s) => s - 1)} disabled={step === 0} />
+          <MagneticArrow direction="right" onClick={() => setStep((s) => s + 1)} disabled={step === slides.length - 1} />
+        </div>
+      )}
     </div>
   );
 };
@@ -374,7 +370,7 @@ const AssistentSection = ({
           <div className="text-center mb-10 flex flex-col items-center">
             <div className="inline-flex items-center gap-2 mb-3 bg-[#1D4F91]/10 border border-[#426DA9]/30 px-4 py-1.5 rounded-full text-[#426DA9] dark:text-[#8CB4F5] text-sm font-semibold backdrop-blur-sm">
               <Sparkles className="w-4 h-4" />
-              Assistente Inteligente
+              Renegociação e Amortização
             </div>
             <h2
               className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#C1188B] dark:from-[#8CB4F5] dark:via-[#E88CEE] dark:to-[#FF85BB] mb-3 transition-all duration-300 drop-shadow-sm"
@@ -383,13 +379,13 @@ const AssistentSection = ({
               DebtView IA
             </h2>
             <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-lg transition-all duration-300">
-              Sua ajudante financeira pre-treinada para entender seus hábitos, tirar dúvidas sobre o Serasa e encontrar renegociações em tempo real.
+              Precisa de ajuda? Fale com nosso chatbot especializado.
             </p>
           </div>
 
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-stretch w-full overflow-hidden">
             
-            {/* 1ª Div — Renegociação */}
+            {/* 1ª Div — Limpa Nome & Desenrola */}
             <div 
               className={`w-full transition-all duration-500 ease-in-out flex justify-center ${
                 isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'
@@ -423,7 +419,7 @@ const AssistentSection = ({
               </div>
             )}
 
-            {/* 3ª Div — Amortização */}
+            {/* 3ª Div — Amortização & Feirão */}
             <div 
               className={`w-full transition-all duration-500 ease-in-out flex justify-center ${
                 isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'
