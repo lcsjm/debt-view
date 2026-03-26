@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FinancialCards } from "@/components/FinancialCards";
 import { ChartsSection } from "@/components/ChartsSection";
@@ -9,8 +9,8 @@ import AssistentSection from "@/components/AssistentSection";
 import SerasaSection from "@/components/SerasaSection";
 import supabase from "../../utils/supabase";
 import { useProfile } from "@/hooks/useProfile";
-import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import Footer from "@/components/footer";
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("painel");
@@ -24,8 +24,6 @@ export default function Dashboard() {
     async function loadFinancialData() {
       if (!user) return;
       
-      // Attempt to load from public.financial or public.finances prioritizing the most recent
-      // CalculatorSection saves to public.financial
       const { data, error } = await supabase
         .from('financial')
         .select('*')
@@ -36,7 +34,7 @@ export default function Dashboard() {
         
       if (data) {
         setFinancialData({
-          divida: 0, // Dívida ativa isn't currently in financial table schema explicitly, but we pass what we have
+          divida: 0,
           rendaFixa: [data.fixedIncome || 0],
           rendaVariavel: [data.variableIncome || 0],
           gastosFixos: [data.fixedExpenses || 0],
@@ -52,7 +50,7 @@ export default function Dashboard() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <AppSidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -60,35 +58,40 @@ export default function Dashboard() {
         setCollapsed={setCollapsed}
       />
 
-      {/* A margem principal agora reage ao estado 'collapsed' */}
-      <main className={`transition-all duration-300 p-4 md:p-8 space-y-8 ${collapsed ? 'ml-[72px]' : 'ml-[72px] md:ml-[260px]'}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Bem-vindo de volta, {profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Visitante'} 👋</p>
-            <h2 className="text-xl md:text-2xl font-heading font-semibold text-foreground">
-              Dashboard DebtView
-            </h2>
-          </div>
-        </div>
-        <CalculatorSection />
-        <TransactionsSection />
-
-        {/* Serasa Mock Debts */}
-        <SerasaSection />
-
-        <div className="rounded-[20px] overflow-hidden shadow-sm border border-border">
-          <AssistentSection
-            financialData={financialData}
-            isDashboard={true}
-          />
-        </div>
-
-
-
-        {/* TransactionsSection Section */}
+      {/* Wrapper principal que cresce para ocupar a tela e posicionar o footer */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${collapsed ? 'ml-[72px]' : 'ml-[72px] md:ml-[260px]'}`}>
         
-      </main>
+        {/* Área de conteúdo com o padding original */}
+        <main className="flex-1 p-4 md:p-8 space-y-8">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Bem-vindo de volta, {profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Visitante'} 👋
+              </p>
+              <h2 className="text-xl md:text-2xl font-heading font-semibold text-foreground">
+                Dashboard DebtView
+              </h2>
+            </div>
+          </div>
+
+          <CalculatorSection />
+          <TransactionsSection />
+
+          {/* Serasa Mock Debts */}
+          <SerasaSection />
+
+          <div className="rounded-[20px] overflow-hidden shadow-sm border border-border">
+            <AssistentSection
+              financialData={financialData}
+              isDashboard={true}
+            />
+          </div>
+        </main>
+
+        {/* Footer agora fora do <main> para ocupar 100% da largura da área visível */}
+        <Footer />
+      </div>
     </div>
   );
 }

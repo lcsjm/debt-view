@@ -285,7 +285,7 @@ const ChatbotWidget = ({
 
   return (
     <div
-      className="fixed z-50 rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col bg-slate-900"
+      className="fixed z-50 rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col bg-white dark:bg-slate-900"
       style={{
         left: pos.x,
         top: pos.y,
@@ -296,7 +296,7 @@ const ChatbotWidget = ({
     >
       <div
         onMouseDown={handleMouseDown}
-        className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing border-b border-sidebar-border"
+        className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing border-b border-slate-200 dark:border-slate-800"
         style={{ background: "linear-gradient(90deg, #1D4F91, #426DA9)" }}
       >
         <div className="flex items-center gap-2 text-white">
@@ -336,7 +336,6 @@ const AssistentSection = ({
   financialData: FinancialData | null | undefined;
   isDashboard?: boolean;
 }) => {
-  // Estado que controla se o chatbot está fixo na seção ou flutuando trazido para dentro!
   const [isChatbotFloating, setIsChatbotFloating] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [sectionVisible, setSectionVisible] = useState(false);
@@ -362,15 +361,14 @@ const AssistentSection = ({
       <section
         id="chatbot"
         ref={sectionRef}
-        className={`w-full ${isDashboard ? 'py-8' : 'py-16'} assistant-section-bg relative overflow-hidden`}
+        className={`w-full ${isDashboard ? 'py-8 bg-slate-50 dark:bg-transparent dark:bg-gradient-to-r dark:from-[#070b13] dark:to-[#0a101f]' : 'py-16'} assistant-section-bg relative overflow-hidden`}
         style={{
           opacity: sectionVisible ? 1 : 0,
           transform: sectionVisible ? "scale(1)" : "scale(0.95)",
           transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          background: isDashboard ? "linear-gradient(to right, #070b13, #0a101f)" : undefined
         }}
       >
-        <div className="absolute inset-0 backdrop-blur-[2px] bg-black/20" />
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-white/40 dark:bg-black/20" />
         
         <div className="max-w-[1366px] mx-auto px-[3%] relative z-10 w-full">
           <div className="text-center mb-10 flex flex-col items-center">
@@ -406,13 +404,13 @@ const AssistentSection = ({
                 className="w-full md:w-[50%] flex justify-center transition-all duration-500 ease-in-out"
               >
                 <div
-                  className="relative rounded-[20px] overflow-hidden flex flex-col w-full bg-[#0a0f1d]/80 backdrop-blur-xl border border-blue-500/20 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)]"
+                  className="relative rounded-[20px] overflow-hidden flex flex-col w-full bg-white/90 dark:bg-[#0a0f1d]/80 backdrop-blur-xl border border-slate-200 dark:border-blue-500/20 shadow-xl dark:shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)]"
                   style={{ minHeight: 520 }} 
                 >
                   <div className="absolute top-4 right-4 z-20">
                     <button
                       onClick={() => setIsChatbotFloating(true)}
-                      className="w-9 h-9 rounded-full bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 hover:scale-105 border border-slate-600/50 shadow-lg transition-all active:scale-95"
+                      className="w-9 h-9 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-105 border border-slate-200 dark:border-slate-600/50 shadow-lg transition-all active:scale-95"
                       title="Destacar assistente"
                     >
                       <Maximize2 className="w-4 h-4" />
