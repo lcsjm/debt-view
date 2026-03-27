@@ -6,6 +6,7 @@ export interface DebtData {
   creditor: string;
   value: number;
   payment: number;
+  type: string;
   rate: number;
   date: string | null;
   status: string;
