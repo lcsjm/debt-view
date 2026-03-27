@@ -5,24 +5,26 @@ export interface DebtData {
   id?: string;
   creditor: string;
   value: number;
-  amount: number;
+  payment: number;
   rate: number;
   date: string | null;
   status: string;
+  year: string;
+  installments:number;
   user_id?: string;
 }
 
-export function useDebts() {
+export function usesimulators() {
   const queryClient = useQueryClient();
 
-  const { data: debts, isLoading, error } = useQuery({
-    queryKey: ["debts"],
+  const { data: simulators, isLoading, error } = useQuery({
+    queryKey: ["simulators"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       const { data, error } = await supabase
-        .from("debts")
+        .from("simulators")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -39,7 +41,7 @@ export function useDebts() {
       if (!user) throw new Error("Usuário não autenticado");
 
       const { data, error } = await supabase
-        .from("debts")
+        .from("simulators")
         .insert({ 
             ...newDebt, 
             user_id: user.id 
@@ -51,8 +53,8 @@ export function useDebts() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["debts"] });
-      // Invalidate finances since new debts might affect total debts
+      queryClient.invalidateQueries({ queryKey: ["simulators"] });
+      // Invalidate finances since new simulators might affect total simulators
       queryClient.invalidateQueries({ queryKey: ["finances"] });
     },
   });
@@ -68,7 +70,7 @@ export function useDebts() {
       if (date) updatePayload.date = date; // Prevent date from being swallowed if it's there
 
       const { data, error } = await supabase
-        .from("debts")
+        .from("simulators")
         .update(updatePayload)
         .eq("id", updatedDebt.id)
         .eq("user_id", user.id)
@@ -79,7 +81,7 @@ export function useDebts() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["simulators"] });
       queryClient.invalidateQueries({ queryKey: ["finances"] });
     },
   });
@@ -90,7 +92,7 @@ export function useDebts() {
       if (!user) throw new Error("Usuário não autenticado");
 
       const { error } = await supabase
-        .from("debts")
+        .from("simulators")
         .delete()
         .eq("id", id)
         .eq("user_id", user.id);
@@ -99,10 +101,10 @@ export function useDebts() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["simulators"] });
       queryClient.invalidateQueries({ queryKey: ["finances"] });
     },
   });
 
-  return { debts, isLoading, error, saveDebt, isSaving, updateDebt, isUpdating, deleteDebt, isDeleting };
+  return { simulators, isLoading, error, saveDebt, isSaving, updateDebt, isUpdating, deleteDebt, isDeleting };
 }
