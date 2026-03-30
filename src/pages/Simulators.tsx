@@ -47,12 +47,13 @@ const simulatorschema = z.object({
       const d = v.replace(/\D/g, "");
       return parseInt(d, 10) > 0;
     }, "Deve ser maior que zero"),
-  payment: z.number().optional(), // Novo campo de entrada
+  payment: z.string().optional(), 
   date: z.string().nullable(),
-  rate: z.number().min(1, "Obrigatório"),
-  year: z.enum(["Mensal", "Anual"]),
+  rate: z.string().min(1, "Obrigatório"), 
+  year: z.enum(["Mensal", "Anual"]).optional(), 
+  ratePeriod: z.enum(["Mensal", "Anual"]).default("Mensal"), 
   type: z.enum(["Simples", "Composto"]),
-  installments: z.number().min(1, "Obrigatório"),
+  installments: z.string().min(1, "Obrigatório"), 
   status: z.string().min(2, "Informe o status"),
 });
 
@@ -138,7 +139,7 @@ const generateChartData = (
   return chartData;
 };
 
-export default function simulators() {
+export default function Simulators() {
   const [activeSection, setActiveSection] = useState("simulators");
   const [collapsed, setCollapsed] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -161,12 +162,12 @@ export default function simulators() {
     defaultValues: {
       creditor: "",
       value: "",
-      payment: undefined,
+      payment: "",
       date: new Date().toISOString(),
-      rate: 0,
-      year: "Mensal",
+      rate: "0",
+      ratePeriod: "Mensal",
       type: "Composto",
-      installments: 0,
+      installments: "0",
       status: "Ativa",
     },
   });
@@ -179,14 +180,14 @@ export default function simulators() {
       "installments",
       "type",
       "date",
-      "rate",
+      "ratePeriod",
     ]);
     if (!isValid) return;
 
     const data = getValues();
     const principal = parseCurrencyInput(data.value);
-    const downPayment = parseCurrencyInput(data.payment || "0");
-    const financedpayment = principal - downPayment;
+    const paymentValue = parseCurrencyInput(data.payment || "0");
+    const financedpayment = principal - paymentValue;
 
     const isCompound = data.type === "Composto";
     const months = parseInt(data.installments, 10);
@@ -212,7 +213,7 @@ export default function simulators() {
 
     const effectiveMonthlyRate = calculateEffectiveMonthlyRate(
       rawRateDec,
-      data.rate,
+      data.ratePeriod || "Mensal",
       isCompound,
     );
     const chartData = generateChartData(
@@ -229,8 +230,8 @@ export default function simulators() {
 
   const onSubmit = async (data: DebtForm) => {
     const principal = parseCurrencyInput(data.value);
-    const downPayment = parseCurrencyInput(data.payment || "0");
-    const financedpayment = principal - downPayment;
+    const paymentValue = parseCurrencyInput(data.payment || "0");
+    const financedpayment = principal - paymentValue;
 
     if (financedpayment <= 0) {
       toast({
@@ -252,7 +253,7 @@ export default function simulators() {
       const months = parseInt(data.installments, 10);
       const effectiveRate = calculateEffectiveMonthlyRate(
         rawRateDec,
-        data.rate,
+        data.ratePeriod || "Mensal",
         isCompound,
       );
 
@@ -275,20 +276,21 @@ export default function simulators() {
         ...(editingId ? { id: editingId } : {}),
         creditor: data.creditor,
         value: principal,
-        downPayment: downPayment, // Salvando a entrada no banco/estado
-        payment: finalpaymentValue, // Juros totais
+        payment: paymentValue, // Salvando a entrada no banco/estado
+        interest: finalpaymentValue, // Juros totais (renomeado de payment para interest para evitar conflito)
         rate: parseFloat(data.rate.replace(",", ".")),
         status: data.status,
         date: finalDate.toISOString(),
         interestType: data.type,
         installments: parseInt(data.installments, 10),
-        ratePeriod: data.rate,
+        ratePeriod: data.ratePeriod,
       } as DebtData & {
         date?: string | null;
         interestType?: string;
         installments?: number;
         ratePeriod?: string;
-        downPayment?: number;
+        payment?: number;
+        interest?: number;
       });
 
       toast({
@@ -310,8 +312,8 @@ export default function simulators() {
     setEditingId(debt.id || null);
 
     const formattedValue = formatCurrencyInput((debt.value * 100).toString());
-    const formattedDownPayment = debt.downPayment
-      ? formatCurrencyInput((debt.downPayment * 100).toString())
+    const formattedPayment = debt.payment
+      ? formatCurrencyInput((debt.payment * 100).toString())
       : "";
 
     const instStr = debt.installments ? debt.installments.toString() : "12";
@@ -322,7 +324,7 @@ export default function simulators() {
     reset({
       creditor: debt.creditor,
       value: formattedValue,
-      payment: formattedDownPayment,
+      payment: formattedPayment,
       date: entryStr,
       rate: debt.rate ? debt.rate.toString() : "0",
       ratePeriod: periodStr,
@@ -332,8 +334,8 @@ export default function simulators() {
     });
 
     const principal = debt.value;
-    const downPayment = debt.downPayment || 0;
-    const financedpayment = principal - downPayment;
+    const paymentValue = debt.payment || 0;
+    const financedpayment = principal - paymentValue;
 
     const rawRateDec = debt.rate ? debt.rate / 100 : 0;
     const isCompound = typeStr === "Composto";
@@ -362,11 +364,11 @@ export default function simulators() {
     reset({
       creditor: "",
       value: "",
-      downPayment: "",
+      payment: "",
       date: new Date().toISOString(),
       rate: "",
       ratePeriod: "Mensal",
-      interestType: "Composto",
+      type: "Composto",
       installments: "12",
       status: "Ativa",
     });
@@ -411,8 +413,8 @@ export default function simulators() {
   // O total é calculado sobre o (Valor Original - Entrada) + Juros Projetados
   const totalParcelamentos =
     simulators?.reduce((acc, d) => {
-      const financiado = (d.value || 0) - ((d as any).downPayment || 0);
-      return acc + financiado + (d.payment || 0);
+      const financiado = (d.value || 0) - ((d as any).payment || 0);
+      return acc + financiado + ((d as any).interest || 0);
     }, 0) || 0;
 
   const filteredsimulators =
@@ -570,7 +572,6 @@ export default function simulators() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* O Grid mudou para 12 colunas no desktop para permitir a alocação perfeita */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
@@ -633,7 +634,7 @@ export default function simulators() {
                     R$
                   </span>
                   <Controller
-                    name="downPayment"
+                    name="payment"
                     control={control}
                     render={({ field: { onChange, value } }) => (
                       <input
@@ -670,7 +671,6 @@ export default function simulators() {
                 )}
               </div>
 
-              {/* Linha de Baixo */}
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Início
@@ -733,10 +733,10 @@ export default function simulators() {
 
                   <div className="flex items-center border-l border-slate-200 dark:border-slate-700 ml-1">
                     <select
-                      {...register("rate")}
+                      {...register("ratePeriod")}
                       className="bg-transparent text-slate-500 dark:text-slate-400 text-sm font-bold outline-none cursor-pointer py-3 pr-3 pl-2 appearance-none"
                       onChange={(e) => {
-                        register("rate").onChange(e);
+                        register("ratePeriod").onChange(e);
                         setAnalysisData(null);
                       }}
                     >
@@ -1006,9 +1006,9 @@ export default function simulators() {
               <AnimatePresence>
                 {filteredsimulators.map((d, i) => {
                   const valorOriginal = d.value || 0;
-                  const valorEntrada = (d as any).downPayment || 0;
+                  const valorEntrada = (d as any).payment || 0;
                   const valorFinanciado = valorOriginal - valorEntrada;
-                  const totalComJuros = valorFinanciado + (d.payment || 0);
+                  const totalComJuros = valorFinanciado + ((d as any).interest || 0);
 
                   return (
                     <motion.div
