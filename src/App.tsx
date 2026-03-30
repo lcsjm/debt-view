@@ -8,7 +8,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import About from "./pages/About";
 import Dashboard from "./pages/dashboard";
-import Debts from "./pages/Debts";
+import Debts from "./pages/Simulators";
 import ProfilePage from "./pages/Profile";
 import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
