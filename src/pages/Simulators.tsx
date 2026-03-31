@@ -47,13 +47,12 @@ const simulatorschema = z.object({
       const d = v.replace(/\D/g, "");
       return parseInt(d, 10) > 0;
     }, "Deve ser maior que zero"),
-  payment: z.string().optional(), 
+  downPayment: z.any().optional(), // Novo campo de entrada
   date: z.string().nullable(),
-  rate: z.string().min(1, "Obrigatório"), 
-  year: z.enum(["Mensal", "Anual"]).optional(), 
-  ratePeriod: z.enum(["Mensal", "Anual"]).default("Mensal"), 
+  rate: z.any(),
+  year: z.enum(["Mensal", "Anual"]),
   type: z.enum(["Simples", "Composto"]),
-  installments: z.string().min(1, "Obrigatório"), 
+  installments: z.any(),
   status: z.string().min(2, "Informe o status"),
 });
 
@@ -139,14 +138,14 @@ const generateChartData = (
   return chartData;
 };
 
-export default function Simulators() {
+export default function simulators() {
   const [activeSection, setActiveSection] = useState("simulators");
   const [collapsed, setCollapsed] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("Todos");
   const [analysisData, setAnalysisData] = useState<any[] | null>(null);
 
-  const { simulators, isLoading, saveDebt, isSaving, deleteDebt } =
+  const { simulators, isLoading, saveDebt, updateDebt, isSaving, deleteDebt } =
     usesimulators();
 
   const {
@@ -162,10 +161,10 @@ export default function Simulators() {
     defaultValues: {
       creditor: "",
       value: "",
-      payment: "",
+      downPayment: undefined,
       date: new Date().toISOString(),
       rate: "0",
-      ratePeriod: "Mensal",
+      year: "Mensal",
       type: "Composto",
       installments: "0",
       status: "Ativa",
@@ -175,23 +174,23 @@ export default function Simulators() {
   const handleAnalyze = async () => {
     const isValid = await trigger([
       "value",
-      "payment",
+      "downPayment",
       "rate",
       "installments",
       "type",
       "date",
-      "ratePeriod",
+      "rate",
     ]);
     if (!isValid) return;
 
     const data = getValues();
     const principal = parseCurrencyInput(data.value);
-    const paymentValue = parseCurrencyInput(data.payment || "0");
-    const financedpayment = principal - paymentValue;
+    const downPayment = parseCurrencyInput(data.downPayment || "0");
+    const financedpayment = principal - downPayment;
 
     const isCompound = data.type === "Composto";
-    const months = parseInt(data.installments, 10);
-    const rawRateDec = parseFloat(data.rate.replace(",", ".")) / 100;
+    const months = parseInt(String(data.installments), 10);
+    const rawRateDec = parseFloat(String(data.rate).replace(",", ".")) / 100;
 
     if (financedpayment <= 0) {
       toast({
@@ -213,7 +212,7 @@ export default function Simulators() {
 
     const effectiveMonthlyRate = calculateEffectiveMonthlyRate(
       rawRateDec,
-      data.ratePeriod || "Mensal",
+      data.rate,
       isCompound,
     );
     const chartData = generateChartData(
@@ -230,8 +229,8 @@ export default function Simulators() {
 
   const onSubmit = async (data: DebtForm) => {
     const principal = parseCurrencyInput(data.value);
-    const paymentValue = parseCurrencyInput(data.payment || "0");
-    const financedpayment = principal - paymentValue;
+    const downPayment = parseCurrencyInput(data.downPayment || "0");
+    const financedpayment = principal - downPayment;
 
     if (financedpayment <= 0) {
       toast({
@@ -248,12 +247,12 @@ export default function Simulators() {
       finalpaymentValue =
         analysisData[analysisData.length - 1].valor - financedpayment;
     } else {
-      const rawRateDec = parseFloat(data.rate.replace(",", ".")) / 100;
+      const rawRateDec = parseFloat(String(data.rate).replace(",", ".")) / 100;
       const isCompound = data.type === "Composto";
-      const months = parseInt(data.installments, 10);
+      const months = parseInt(String(data.installments), 10);
       const effectiveRate = calculateEffectiveMonthlyRate(
         rawRateDec,
-        data.ratePeriod || "Mensal",
+        data.rate,
         isCompound,
       );
 
@@ -269,29 +268,29 @@ export default function Simulators() {
 
     const startDate = new Date(data.date || new Date());
     const finalDate = new Date(startDate);
-    finalDate.setMonth(finalDate.getMonth() + parseInt(data.installments, 10));
+    finalDate.setMonth(finalDate.getMonth() + parseInt(String(data.installments), 10));
 
     try {
-      await saveDebt({
-        ...(editingId ? { id: editingId } : {}),
+      const payload = {
         creditor: data.creditor,
         value: principal,
-        payment: paymentValue, // Salvando a entrada no banco/estado
-        interest: finalpaymentValue, // Juros totais (renomeado de payment para interest para evitar conflito)
-        rate: parseFloat(data.rate.replace(",", ".")),
+        downPayment: downPayment, // Salvando a entrada no banco/estado
+        payment: finalpaymentValue, // Juros totais
+        rate: parseFloat(String(data.rate).replace(",", ".")),
         status: data.status,
         date: finalDate.toISOString(),
+        interest: data.type,
         interestType: data.type,
-        installments: parseInt(data.installments, 10),
-        ratePeriod: data.ratePeriod,
-      } as DebtData & {
-        date?: string | null;
-        interestType?: string;
-        installments?: number;
-        ratePeriod?: string;
-        payment?: number;
-        interest?: number;
-      });
+        year: data.year,
+        installments: parseInt(String(data.installments), 10),
+        ratePeriod: data.year,
+      };
+
+      if (editingId) {
+        await updateDebt({ id: editingId, ...payload } as any);
+      } else {
+        await saveDebt(payload as any);
+      }
 
       toast({
         title: editingId
@@ -312,8 +311,8 @@ export default function Simulators() {
     setEditingId(debt.id || null);
 
     const formattedValue = formatCurrencyInput((debt.value * 100).toString());
-    const formattedPayment = debt.payment
-      ? formatCurrencyInput((debt.payment * 100).toString())
+    const formattedDownPayment = debt.downPayment
+      ? formatCurrencyInput((debt.downPayment * 100).toString())
       : "";
 
     const instStr = debt.installments ? debt.installments.toString() : "12";
@@ -324,18 +323,18 @@ export default function Simulators() {
     reset({
       creditor: debt.creditor,
       value: formattedValue,
-      payment: formattedPayment,
+      downPayment: formattedDownPayment,
       date: entryStr,
       rate: debt.rate ? debt.rate.toString() : "0",
-      ratePeriod: periodStr,
-      interestType: typeStr,
+      year: periodStr as "Mensal" | "Anual",
+      type: typeStr as "Simples" | "Composto",
       installments: instStr,
       status: debt.status,
     });
 
     const principal = debt.value;
-    const paymentValue = debt.payment || 0;
-    const financedpayment = principal - paymentValue;
+    const downPayment = debt.downPayment || 0;
+    const financedpayment = principal - downPayment;
 
     const rawRateDec = debt.rate ? debt.rate / 100 : 0;
     const isCompound = typeStr === "Composto";
@@ -364,10 +363,10 @@ export default function Simulators() {
     reset({
       creditor: "",
       value: "",
-      payment: "",
+      downPayment: "",
       date: new Date().toISOString(),
       rate: "",
-      ratePeriod: "Mensal",
+      year: "Mensal",
       type: "Composto",
       installments: "12",
       status: "Ativa",
@@ -413,8 +412,8 @@ export default function Simulators() {
   // O total é calculado sobre o (Valor Original - Entrada) + Juros Projetados
   const totalParcelamentos =
     simulators?.reduce((acc, d) => {
-      const financiado = (d.value || 0) - ((d as any).payment || 0);
-      return acc + financiado + ((d as any).interest || 0);
+      const financiado = (d.value || 0) - ((d as any).downPayment || 0);
+      return acc + financiado + (d.payment || 0);
     }, 0) || 0;
 
   const filteredsimulators =
@@ -572,6 +571,7 @@ export default function Simulators() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* O Grid mudou para 12 colunas no desktop para permitir a alocação perfeita */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
@@ -634,7 +634,7 @@ export default function Simulators() {
                     R$
                   </span>
                   <Controller
-                    name="payment"
+                    name="downPayment"
                     control={control}
                     render={({ field: { onChange, value } }) => (
                       <input
@@ -671,6 +671,7 @@ export default function Simulators() {
                 )}
               </div>
 
+              {/* Linha de Baixo */}
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Início
@@ -733,10 +734,10 @@ export default function Simulators() {
 
                   <div className="flex items-center border-l border-slate-200 dark:border-slate-700 ml-1">
                     <select
-                      {...register("ratePeriod")}
+                      {...register("year")}
                       className="bg-transparent text-slate-500 dark:text-slate-400 text-sm font-bold outline-none cursor-pointer py-3 pr-3 pl-2 appearance-none"
                       onChange={(e) => {
-                        register("ratePeriod").onChange(e);
+                        register("year").onChange(e);
                         setAnalysisData(null);
                       }}
                     >
@@ -1006,9 +1007,9 @@ export default function Simulators() {
               <AnimatePresence>
                 {filteredsimulators.map((d, i) => {
                   const valorOriginal = d.value || 0;
-                  const valorEntrada = (d as any).payment || 0;
+                  const valorEntrada = (d as any).downPayment || 0;
                   const valorFinanciado = valorOriginal - valorEntrada;
-                  const totalComJuros = valorFinanciado + ((d as any).interest || 0);
+                  const totalComJuros = valorFinanciado + (d.payment || 0);
 
                   return (
                     <motion.div

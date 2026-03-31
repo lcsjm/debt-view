@@ -439,12 +439,26 @@ export default function ExportExcelButton({ data }: Props) {
   }
 
   return (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={exportToExcel}
-      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition whitespace-nowrap"
+   <motion.button
+  whileHover={{ 
+    scale: 1.03,
+    filter: "brightness(1.1)" 
+  }}
+  whileTap={{ scale: 0.95 }}
+  onClick={exportToExcel}
+  className="relative overflow-hidden px-6 py-2.5 rounded-xl text-white text-sm font-semibold shadow-lg transition-all duration-300 whitespace-nowrap bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] hover:shadow-[#77127B]/30"
+>
+  <span className="relative z-10 flex items-center gap-2">
+    <svg 
+      className="w-4 h-4" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
     >
-      Exportar Excel
-    </motion.button>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    Exportar Excel
+  </span>
+</motion.button>
   );
 }
