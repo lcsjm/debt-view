@@ -235,7 +235,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
     setIsTyping(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = "AIzaSyCCAGqDVckbXVdWZ3BhjvNpFM9IsAfFtn8";
       if (!apiKey) {
         throw new Error("API Key não encontrada");
       }

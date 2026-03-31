@@ -213,7 +213,7 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
 `;
         }
 
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: "AIzaSyCCAGqDVckbXVdWZ3BhjvNpFM9IsAfFtn8" });
         
         // Convert existing messages to Gemini format, keeping only the last 10 for context
         const history = messages
