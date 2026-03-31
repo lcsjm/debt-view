@@ -16,7 +16,7 @@ export interface DebtData {
   downPayment?: number;
 }
 
-export function usesimulators() {
+export function useSimulators() {
   const queryClient = useQueryClient();
 
   const { data: simulators, isLoading, error } = useQuery({

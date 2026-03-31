@@ -22,7 +22,7 @@ vi.mock('@/hooks/use-toast', () => ({
 describe('Auth Component', () => {
   test('renders login form by default', () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Auth />
       </BrowserRouter>
     );
@@ -36,7 +36,7 @@ describe('Auth Component', () => {
 
   test('switches to register form when clicking "Cadastre-se aqui"', () => {
     render(
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Auth />
       </BrowserRouter>
     );
@@ -46,6 +46,6 @@ describe('Auth Component', () => {
     
     // Verifica se mudou para a tela de registro (Passo 1: Email)
     expect(screen.getByText(/Criar Conta/i)).toBeInTheDocument();
-    expect(screen.getByText(/Passo 1 de 8/i)).toBeInTheDocument();
+    expect(screen.getByText(/Passo 1 de 9/i)).toBeInTheDocument();
   });
 });

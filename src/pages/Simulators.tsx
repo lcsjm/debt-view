@@ -1,9 +1,9 @@
 import { useState } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { usesimulators, DebtData } from "../hooks/useSimulators";
+import { useSimulators, DebtData } from "../hooks/useSimulators";
 import {
   Trash2,
   Plus,
@@ -75,6 +75,9 @@ const parseCurrencyInput = (value: string) => {
   return parseInt(digits, 10) / 100;
 };
 
+const getFieldErrorMessage = (message: unknown) =>
+  typeof message === "string" ? message : "";
+
 const getStatusStyle = (status: string) => {
   const styles: Record<string, string> = {
     Pago: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
@@ -138,7 +141,7 @@ const generateChartData = (
   return chartData;
 };
 
-export default function simulators() {
+export default function Simulators() {
   const [activeSection, setActiveSection] = useState("simulators");
   const [collapsed, setCollapsed] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -146,7 +149,7 @@ export default function simulators() {
   const [analysisData, setAnalysisData] = useState<any[] | null>(null);
 
   const { simulators, isLoading, saveDebt, updateDebt, isSaving, deleteDebt } =
-    usesimulators();
+    useSimulators();
 
   const {
     register,
@@ -749,7 +752,7 @@ export default function simulators() {
                 {errors.rate && (
                   <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
                     <AlertCircle size={12} />
-                    {errors.rate.message}
+                    {getFieldErrorMessage(errors.rate.message)}
                   </p>
                 )}
               </div>
@@ -771,7 +774,7 @@ export default function simulators() {
                 {errors.installments && (
                   <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
                     <AlertCircle size={12} />
-                    {errors.installments.message}
+                    {getFieldErrorMessage(errors.installments.message)}
                   </p>
                 )}
               </div>
