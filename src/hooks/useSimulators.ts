@@ -13,6 +13,7 @@ export interface DebtData {
   year: string;
   installments:number;
   user_id?: string;
+  downPayment?: number;
 }
 
 export function usesimulators() {
@@ -28,7 +29,7 @@ export function usesimulators() {
         .from("simulators")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("date", { ascending: false });
 
       if (error) throw error;
       
