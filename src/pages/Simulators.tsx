@@ -47,12 +47,12 @@ const simulatorschema = z.object({
       const d = v.replace(/\D/g, "");
       return parseInt(d, 10) > 0;
     }, "Deve ser maior que zero"),
-  payment: z.number().optional(), // Novo campo de entrada
+  downPayment: z.any().optional(), // Novo campo de entrada
   date: z.string().nullable(),
-  rate: z.number().min(1, "Obrigatório"),
+  rate: z.any(),
   year: z.enum(["Mensal", "Anual"]),
   type: z.enum(["Simples", "Composto"]),
-  installments: z.number().min(1, "Obrigatório"),
+  installments: z.any(),
   status: z.string().min(2, "Informe o status"),
 });
 
@@ -145,7 +145,7 @@ export default function simulators() {
   const [filterStatus, setFilterStatus] = useState<string>("Todos");
   const [analysisData, setAnalysisData] = useState<any[] | null>(null);
 
-  const { simulators, isLoading, saveDebt, isSaving, deleteDebt } =
+  const { simulators, isLoading, saveDebt, updateDebt, isSaving, deleteDebt } =
     usesimulators();
 
   const {
@@ -161,12 +161,12 @@ export default function simulators() {
     defaultValues: {
       creditor: "",
       value: "",
-      payment: undefined,
+      downPayment: undefined,
       date: new Date().toISOString(),
-      rate: 0,
+      rate: "0",
       year: "Mensal",
       type: "Composto",
-      installments: 0,
+      installments: "0",
       status: "Ativa",
     },
   });
@@ -174,7 +174,7 @@ export default function simulators() {
   const handleAnalyze = async () => {
     const isValid = await trigger([
       "value",
-      "payment",
+      "downPayment",
       "rate",
       "installments",
       "type",
@@ -185,12 +185,12 @@ export default function simulators() {
 
     const data = getValues();
     const principal = parseCurrencyInput(data.value);
-    const downPayment = parseCurrencyInput(data.payment || "0");
+    const downPayment = parseCurrencyInput(data.downPayment || "0");
     const financedpayment = principal - downPayment;
 
     const isCompound = data.type === "Composto";
-    const months = parseInt(data.installments, 10);
-    const rawRateDec = parseFloat(data.rate.replace(",", ".")) / 100;
+    const months = parseInt(String(data.installments), 10);
+    const rawRateDec = parseFloat(String(data.rate).replace(",", ".")) / 100;
 
     if (financedpayment <= 0) {
       toast({
@@ -229,7 +229,7 @@ export default function simulators() {
 
   const onSubmit = async (data: DebtForm) => {
     const principal = parseCurrencyInput(data.value);
-    const downPayment = parseCurrencyInput(data.payment || "0");
+    const downPayment = parseCurrencyInput(data.downPayment || "0");
     const financedpayment = principal - downPayment;
 
     if (financedpayment <= 0) {
@@ -247,9 +247,9 @@ export default function simulators() {
       finalpaymentValue =
         analysisData[analysisData.length - 1].valor - financedpayment;
     } else {
-      const rawRateDec = parseFloat(data.rate.replace(",", ".")) / 100;
+      const rawRateDec = parseFloat(String(data.rate).replace(",", ".")) / 100;
       const isCompound = data.type === "Composto";
-      const months = parseInt(data.installments, 10);
+      const months = parseInt(String(data.installments), 10);
       const effectiveRate = calculateEffectiveMonthlyRate(
         rawRateDec,
         data.rate,
@@ -268,28 +268,29 @@ export default function simulators() {
 
     const startDate = new Date(data.date || new Date());
     const finalDate = new Date(startDate);
-    finalDate.setMonth(finalDate.getMonth() + parseInt(data.installments, 10));
+    finalDate.setMonth(finalDate.getMonth() + parseInt(String(data.installments), 10));
 
     try {
-      await saveDebt({
-        ...(editingId ? { id: editingId } : {}),
+      const payload = {
         creditor: data.creditor,
         value: principal,
         downPayment: downPayment, // Salvando a entrada no banco/estado
         payment: finalpaymentValue, // Juros totais
-        rate: parseFloat(data.rate.replace(",", ".")),
+        rate: parseFloat(String(data.rate).replace(",", ".")),
         status: data.status,
         date: finalDate.toISOString(),
+        interest: data.type,
         interestType: data.type,
-        installments: parseInt(data.installments, 10),
-        ratePeriod: data.rate,
-      } as DebtData & {
-        date?: string | null;
-        interestType?: string;
-        installments?: number;
-        ratePeriod?: string;
-        downPayment?: number;
-      });
+        year: data.year,
+        installments: parseInt(String(data.installments), 10),
+        ratePeriod: data.year,
+      };
+
+      if (editingId) {
+        await updateDebt({ id: editingId, ...payload } as any);
+      } else {
+        await saveDebt(payload as any);
+      }
 
       toast({
         title: editingId
@@ -322,11 +323,11 @@ export default function simulators() {
     reset({
       creditor: debt.creditor,
       value: formattedValue,
-      payment: formattedDownPayment,
+      downPayment: formattedDownPayment,
       date: entryStr,
       rate: debt.rate ? debt.rate.toString() : "0",
-      ratePeriod: periodStr,
-      interestType: typeStr,
+      year: periodStr as "Mensal" | "Anual",
+      type: typeStr as "Simples" | "Composto",
       installments: instStr,
       status: debt.status,
     });
@@ -365,8 +366,8 @@ export default function simulators() {
       downPayment: "",
       date: new Date().toISOString(),
       rate: "",
-      ratePeriod: "Mensal",
-      interestType: "Composto",
+      year: "Mensal",
+      type: "Composto",
       installments: "12",
       status: "Ativa",
     });
@@ -733,10 +734,10 @@ export default function simulators() {
 
                   <div className="flex items-center border-l border-slate-200 dark:border-slate-700 ml-1">
                     <select
-                      {...register("rate")}
+                      {...register("year")}
                       className="bg-transparent text-slate-500 dark:text-slate-400 text-sm font-bold outline-none cursor-pointer py-3 pr-3 pl-2 appearance-none"
                       onChange={(e) => {
-                        register("rate").onChange(e);
+                        register("year").onChange(e);
                         setAnalysisData(null);
                       }}
                     >
