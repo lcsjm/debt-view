@@ -1,7 +1,7 @@
 import { useState, KeyboardEvent, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ArrowRight, ArrowLeft, SkipForward, X, Download } from "lucide-react";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import supabase from "../../utils/supabase"; 
 import { useAuth } from "../context/AuthContext"; 
 import ScrollReveal from "./ScrollReveal";

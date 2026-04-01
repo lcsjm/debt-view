@@ -24,7 +24,7 @@ Diferente de sistemas de cobrança comuns, nós consideramos o Método de Maslow
 
 ## Como rodar o projeto localmente
 
-1. Certifique-se de ter o Node.js instalado na máquina.
+1. Certifique-se de ter o Node.js 20.19+ instalado na máquina.
 2. Clone o repositório.
 3. Instale as dependências executando:
    ```bash
