@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { SendHorizontal, Sparkles, Trash2 } from "lucide-react";
-import { GoogleGenAI } from "@google/genai";
+import { Sparkles, Trash2, SendHorizontal } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import supabase from "../../../utils/supabase";
@@ -236,22 +235,6 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
     setIsTyping(true);
 
     try {
-      const apiKey = "AIzaSyCCAGqDVckbXVdWZ3BhjvNpFM9IsAfFtn8";
-      if (!apiKey) {
-        throw new Error("API Key não encontrada");
-      }
-      
-      const ai = new GoogleGenAI({ apiKey });
-      
-      // Converte mensagens mantendo limite de 10 interações de contexto
-      const history = messages
-        .filter(m => m.role === "user" || m.role === "assistant")
-        .slice(-10)
-        .map(m => ({
-          role: m.role === "assistant" ? "model" as const : "user" as const,
-          parts: [{ text: m.content }]
-        }));
-
       // Fetch Real-time Context
       const { data: { user } } = await supabase.auth.getUser();
       let liveContextStr = buildPromptContext(financialData);
@@ -262,23 +245,30 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
 Use essas informações atualizadas agora mesmo para responder o usuário. Responda em Markdown. Seja empático, nunca leia as transações em lista a não ser que pedido, e se sinta à vontade para referenciar que 'acabei de dar uma olhada no seu perfil...'.`;
       }
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: input }] }
-        ],
-        config: {
-          systemInstruction: `Você é um assistente financeiro altamente especializado, amigável e focado no alívio de dívidas. Mantenha respostas não muito longas, diretas ao ponto, com tópicos importantes ressaltados em negrito. ${liveContextStr}`
+      // Invoca a Edge Function
+      const { data, error } = await supabase.functions.invoke('chat_handler', {
+        body: { 
+          message: input,
+          context: liveContextStr
         }
       });
 
-      const reply: Message = { id: `bot-${Date.now()}`, role: "assistant", content: response.text || "Desculpe, não consegui processar a resposta." };
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (!data || !data.success) {
+        throw new Error(data?.error || "Erro desconhecido na IA.");
+      }
+
+      const reply: Message = { id: `bot-${Date.now()}`, role: "assistant", content: data.response || "Desculpe, não consegui processar a resposta." };
       const finalMsgs = [...newMessages, reply];
       setMessages(finalMsgs);
-      saveHistory(finalMsgs);
+      
+      // A Edge function já gerencia a gravação no bucket e na tabela chat, não chamamos saveHistory aqui.
+      
     } catch (error) {
-      console.error("Gemini API Error:", error);
+      console.error("AI/Edge Function Error:", error);
       const erroMsg: Message = { id: `err-${Date.now()}`, role: "assistant", content: "Houve um problema de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde." };
       setMessages((prev) => [...prev, erroMsg]);
     } finally {
