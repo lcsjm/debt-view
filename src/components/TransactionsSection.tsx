@@ -7,6 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import ExportExcelButton from "./exportexcel";
 
 const transactionSchema = z.object({
   value: z.string().min(1, "Obrigatório").refine((val) => {
@@ -275,15 +276,22 @@ export default function TransactionSection() {
           <h2 className="text-lg font-heading font-bold text-foreground">
             Histórico Recente
           </h2>
-          <div className="relative w-full sm:w-64">
-            <input
-              type="text"
-              placeholder="🔎 Buscar..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="border border-border bg-background rounded-full px-4 py-1.5 w-full text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
-            />
-          </div>
+          
+         <div className="flex items-center w-full sm:w-auto gap-2">
+
+      <ExportExcelButton data={filteredTransactions} />
+      
+      <div className="relative flex-1 sm:flex-none sm:w-64">
+          <input
+            type="text"
+            placeholder="🔎 Buscar..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="border border-border bg-background rounded-full px-4 py-1.5 w-full text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
+          />
+  </div>
+
+</div>
         </div>
 
         {transactions.length === 0 && (

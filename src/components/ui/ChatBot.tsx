@@ -4,6 +4,7 @@ import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import supabase from "../../../utils/supabase";
+import { getAICachedContext } from "../../utils/aiContext";
 
 interface FinancialData {
   divida: number;
@@ -235,7 +236,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
     setIsTyping(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = "AIzaSyCCAGqDVckbXVdWZ3BhjvNpFM9IsAfFtn8";
       if (!apiKey) {
         throw new Error("API Key não encontrada");
       }
@@ -256,31 +257,8 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
       let liveContextStr = buildPromptContext(financialData);
 
       if (user) {
-        const [profileReq, financesReq, debtsReq, serasaReq, transReq] = await Promise.all([
-          supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
-          supabase.from('financial').select('*').eq('user_id', user.id).maybeSingle(),
-          supabase.from('debts').select('*').eq('user_id', user.id),
-          supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
-            .then((res: any) => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
-          supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
-        ]);
-
-        const p = profileReq.data;
-        const f = financesReq.data;
-        const d = debtsReq.data || [];
-        const s = serasaReq.data || [];
-        const t = transReq.data || [];
-
-        liveContextStr = `\n\n--- DADOS BANCÁRIOS E PERFIL (EXTRAÍDOS EM TEMPO REAL) ---
-Nome: ${p?.name || 'Desconhecido'}
-Gastos Fixos Mensais: ${fmt(f?.fixedExpenses || 0)}
-Gastos Variáveis Mensais: ${fmt(f?.variableExpenses || 0)}
-Renda Fixa Mensal: ${fmt(f?.fixedIncome || 0)}
-Renda Variável Mensal: ${fmt(f?.variableIncome || 0)}
-Dívidas Atuais (Serasa Mock): ${s.length > 0 ? s.map((x: any) => `${x.creditor_name} - ${fmt(x.current_amount)} (Vence em: ${x.due_date})`).join(', ') : 'Nenhuma'}
-Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} - ${fmt(x.amount)}`).join(', ') : 'Nenhuma'}
-Últimas Transações: ${t.length > 0 ? t.map((x: any) => `${x.category} (${x.type}): ${fmt(x.value)}`).join(', ') : 'Nenhuma'}
-
+        const cachedServerContext = await getAICachedContext(user);
+        liveContextStr = `${cachedServerContext}
 Use essas informações atualizadas agora mesmo para responder o usuário. Responda em Markdown. Seja empático, nunca leia as transações em lista a não ser que pedido, e se sinta à vontade para referenciar que 'acabei de dar uma olhada no seu perfil...'.`;
       }
 

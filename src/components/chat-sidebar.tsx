@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Send, Bot, Sparkles, ArrowRight, Trash2 } from "lucide-react";
 import supabase from "../../utils/supabase";
+import { getAICachedContext } from "../utils/aiContext";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Sheet,
@@ -129,7 +130,7 @@ export function ChatSidebar() {
         setHasAnalyzed(true);
         return prev;
       }
-      
+
       if (financialData) {
         const tips = generateAnalysis(financialData);
 
@@ -141,16 +142,16 @@ export function ChatSidebar() {
 
         setTimeout(() => {
           setMessages(current => {
-             // Prevines duplicata
-             if (current.length > 1) return current;
-             const newMsgs = [...current, ...analysisMessages];
-             saveHistory(newMsgs);
-             return newMsgs;
+            // Prevines duplicata
+            if (current.length > 1) return current;
+            const newMsgs = [...current, ...analysisMessages];
+            saveHistory(newMsgs);
+            return newMsgs;
           });
           setHasAnalyzed(true);
         }, 500);
       }
-      
+
       return prev;
     });
   }, [financialData, isOpen, hasAnalyzed, historyLoaded]);
@@ -185,36 +186,13 @@ export function ChatSidebar() {
         let userContext = "";
 
         if (user) {
-          const [profileReq, financesReq, debtsReq, serasaReq, transReq] = await Promise.all([
-            supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
-            supabase.from('financial').select('*').eq('user_id', user.id).maybeSingle(),
-            supabase.from('debts').select('*').eq('user_id', user.id),
-            // Serasa demands CPF...
-            supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
-              .then((res: any) => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
-            supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
-          ]);
-
-          const p = profileReq.data;
-          const f = financesReq.data;
-          const d = debtsReq.data || [];
-          const s = serasaReq.data || [];
-          const t = transReq.data || [];
-
-          userContext = `\n\n--- DADOS DO USUÁRIO PARA CONTEXTO OBRIGATÓRIO (NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SIMPLESMENTE FALE NATURALMENTE) ---
-Nome: ${p?.name || 'Desconhecido'}
-Gastos Fixos Mensais: ${fmt(f?.fixedExpenses || 0)}
-Gastos Variáveis Mensais: ${fmt(f?.variableExpenses || 0)}
-Renda Fixa Mensal: ${fmt(f?.fixedIncome || 0)}
-Renda Variável Mensal: ${fmt(f?.variableIncome || 0)}
-Dívidas Atuais (Serasa Mock): ${s.length > 0 ? s.map((x: any) => `${x.creditor_name} - ${fmt(x.current_amount)} (Vence em: ${x.due_date})`).join(', ') : 'Nenhuma'}
-Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} - ${fmt(x.amount)}`).join(', ') : 'Nenhuma'}
-Últimas Transações: ${t.length > 0 ? t.map((x: any) => `${x.category} (${x.type}): ${fmt(x.value)}`).join(', ') : 'Nenhuma'}
-`;
+          const cachedServerContext = await getAICachedContext(user);
+          userContext = `${cachedServerContext}
+Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SIMPLESMENTE FALE NATURALMENTE.`;
         }
 
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-        
+        const ai = new GoogleGenAI({ apiKey: "AIzaSyCCAGqDVckbXVdWZ3BhjvNpFM9IsAfFtn8" });
+
         // Convert existing messages to Gemini format, keeping only the last 10 for context
         const history = messages
           .filter(m => m.id !== "welcome" && !(m.id && m.id.startsWith("analysis")))
@@ -225,14 +203,14 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
           }));
 
         const response = await ai.models.generateContent({
-           model: 'gemini-2.5-flash',
-           contents: [
-             ...history,
-             { role: 'user', parts: [{ text: messageText }] }
-           ],
-           config: {
-             systemInstruction: "Você é o assistente do Serasa Humanizado. Seu objetivo é ajudar o usuário a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Priorize a sobrevivência do usuário (moradia, alimentação) antes do pagamento de dívidas (Método VITAL/Maslow Financeiro). Seja amigável, acolhedor e claro. Responda em Markdown. " + userContext
-           }
+          model: 'gemini-2.5-flash',
+          contents: [
+            ...history,
+            { role: 'user', parts: [{ text: messageText }] }
+          ],
+          config: {
+            systemInstruction: "Você é o assistente do Serasa Humanizado. Seu objetivo é ajudar o usuário a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Priorize a sobrevivência do usuário (moradia, alimentação) antes do pagamento de dívidas (Método VITAL/Maslow Financeiro). Seja amigável, acolhedor e claro. Responda em Markdown. " + userContext
+          }
         });
 
         const reply: ChatMessage = {
@@ -246,9 +224,9 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
       } catch (error) {
         console.error("Gemini API Error:", error);
         setMessages((prev) => [...prev, {
-            id: `bot-${Date.now()}`,
-            role: "assistant",
-            content: "Desculpe, ocorreu um erro de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde.",
+          id: `bot-${Date.now()}`,
+          role: "assistant",
+          content: "Desculpe, ocorreu um erro de conexão com nossos servidores I.A. Por favor, tente novamente mais tarde.",
         }]);
       } finally {
         setIsTyping(false);
@@ -302,8 +280,8 @@ Outras Dívidas Cadastradas: ${d.length > 0 ? d.map((x: any) => `${x.creditor} -
                   )}
                   <div
                     className={`rounded-2xl px-4 py-3 text-sm leading-relaxed prose prose-sm max-w-none ${msg.role === "user"
-                        ? "bg-primary text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-ul:text-primary-foreground"
-                        : "bg-muted text-foreground prose-p:text-foreground prose-strong:text-foreground prose-ul:text-foreground"
+                      ? "bg-primary text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-ul:text-primary-foreground"
+                      : "bg-muted text-foreground prose-p:text-foreground prose-strong:text-foreground prose-ul:text-foreground"
                       }`}
                   >
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
