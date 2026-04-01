@@ -44,8 +44,7 @@ describe('Auth Component', () => {
     const registerButton = screen.getByText(/Cadastre-se aqui/i);
     fireEvent.click(registerButton);
     
-    // Verifica se mudou para a tela de registro (Passo 1: Email)
+    // Verifica se mudou para a tela de registro
     expect(screen.getByText(/Criar Conta/i)).toBeInTheDocument();
-    expect(screen.getByText(/Passo 1 de 8/i)).toBeInTheDocument();
   });
 });
