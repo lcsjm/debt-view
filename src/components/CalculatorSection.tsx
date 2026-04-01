@@ -50,13 +50,17 @@ interface FinancialData {
   investimentos: number[];
 }
 
+// --- NOTA DO DESENVOLVEDOR ---
+// As imagens abaixo estão sendo servidas da pasta 'public'.
+// Certifique-se de que as extensões de arquivo (.jpg, .png, etc.)
+// correspondem exatamente aos arquivos reais na sua pasta 'public'.
 const steps = [
-  { key: "divida", title: "Dívida Ativa", question: "Você possui alguma dívida ativa?", description: "Dívida ativa é qualquer valor que você deve a terceiros.", image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80", multiple: true },
-  { key: "rendaFixa", title: "Renda Fixa", question: "Deseja adicionar alguma renda fixa?", description: "Renda fixa é todo valor que você recebe regularmente.", image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&q=80", multiple: true },
-  { key: "rendaVariavel", title: "Renda Variável", question: "Deseja adicionar alguma renda variável?", description: "Freelances, comissões ou ganhos sem valor fixo.", image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80", multiple: true },
-  { key: "gastosFixos", title: "Gastos Fixos", question: "Deseja adicionar algum gasto fixo?", description: "Aluguel, financiamentos ou escola.", image: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&q=80", multiple: true },
-  { key: "gastosVariaveis", title: "Gastos Variáveis", question: "Deseja adicionar algum gasto variável?", description: "Alimentação, lazer ou transporte.", image: "https://images.unsplash.com/photo-1607006411046-bf25eb6e1da3?w=800&q=80", multiple: true },
-  { key: "investimentos", title: "Investimentos", question: "Você possui algum valor investido mensalmente?", description: "Valores aplicados para multiplicar patrimônio.", image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80", multiple: true },
+  { key: "divida", title: "Dívida Ativa", question: "Você possui alguma dívida ativa?", description: "Dívida ativa é qualquer valor que você deve a terceiros.", image: "/divida.png", multiple: true },
+  { key: "rendaFixa", title: "Renda Fixa", question: "Deseja adicionar alguma renda fixa?", description: "Renda fixa é todo valor que você recebe regularmente.", image: "/rendafixa.png", multiple: true },
+  { key: "rendaVariavel", title: "Renda Variável", question: "Deseja adicionar alguma renda variável?", description: "Freelances, comissões ou ganhos sem valor fixo.", image: "/rendavariavel.png", multiple: true },
+  { key: "gastosFixos", title: "Gastos Fixos", question: "Deseja adicionar algum gasto fixo?", description: "Aluguel, financiamentos ou escola.", image: "/gastosfixos.png", multiple: true },
+  { key: "gastosVariaveis", title: "Gastos Variáveis", question: "Deseja adicionar algum gasto variável?", description: "Alimentação, lazer ou transporte.", image: "/gastosvariaveis.png", multiple: true },
+  { key: "investimentos", title: "Investimentos", question: "Você possui algum valor investido mensalmente?", description: "Valores aplicados para multiplicar patrimônio.", image: "/investimentos.png", multiple: true },
 ];
 
 const formatCurrency = (val: string) => {

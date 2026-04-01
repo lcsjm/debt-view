@@ -14,7 +14,7 @@ const transactionSchema = z.object({
     const digits = val.replace(/\D/g, "");
     return parseInt(digits, 10) > 0;
   }, "Maior que zero"),
-  type: z.enum(["Renda", "Despesa"], {
+  type: z.enum(["Renda", "Despesa", "Investimento"], {
     errorMap: () => ({ message: "Obrigatório" })
   }),
   category: z.string().min(3, "Min. 3 letras")
@@ -22,7 +22,6 @@ const transactionSchema = z.object({
 
 type TransactionForm = z.infer<typeof transactionSchema>;
 
-// Helpers de formatação para BRL Real-Time
 const formatCurrencyInput = (value: string) => {
   const digits = value.replace(/\D/g, "");
   if (!digits) return "";
@@ -68,10 +67,15 @@ export default function TransactionSection() {
       item.category.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
-      // Ordena Renda primeiro, depois Despesa, e então por maior valor
-      if (a.type === "Renda" && b.type !== "Renda") return -1;
-      if (a.type !== "Renda" && b.type === "Renda") return 1;
-      return b.value - a.value;
+      // Define pesos para a ordem: Investimento (1), Renda (2), Despesa (3)
+      const priority: Record<string, number> = { "Investimento": 1, "Renda": 2, "Despesa": 3 };
+      const priorityA = priority[a.type] || 4;
+      const priorityB = priority[b.type] || 4;
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      return b.value - a.value; // Desempate por valor
     });
 
   useEffect(() => {
@@ -139,7 +143,6 @@ export default function TransactionSection() {
 
     reset();
     await loadTransactions();
-    // 🎓 Avisa o React Query que os dados novos chegaram, para o Nivo Chart redesenhar a tela
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
   }
 
@@ -181,7 +184,6 @@ export default function TransactionSection() {
       <form
         onSubmit={handleSubmit(onSubmit)}
         onKeyDown={(e) => {
-          // Garante que pressionar Enter em qualquer campo do formulário envia os dados
           if (e.key === "Enter") {
             e.preventDefault();
             handleSubmit(onSubmit)();
@@ -189,8 +191,6 @@ export default function TransactionSection() {
         }}
         className="flex flex-wrap items-start gap-4 bg-muted/40 p-5 rounded-xl border border-border mb-8"
       >
-        
-        {/* Valor Input */}
         <div className="flex-1 min-w-[140px]">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Valor</label>
           <div className="relative flex items-center bg-background rounded-lg border border-border focus-within:ring-2 focus-within:ring-ring transition-all">
@@ -215,25 +215,23 @@ export default function TransactionSection() {
           )}
         </div>
     
-        {/* Tipo Select */}
         <div className="flex-1 min-w-[140px]">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Tipo</label>
           <select 
             {...register("type")}
             className="w-full border border-border bg-background rounded-lg px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring transition-all text-sm font-semibold h-[42px]"
           >
+            <option value="Investimento">Investimento</option>
             <option value="Renda">Renda fixa...</option>
             <option value="Renda">Renda variâvel...</option>
             <option value="Despesa">Gasto fixo...</option>
             <option value="Despesa">Gasto variâvel...</option>
-            <option value="Despesa">Investimento</option>
           </select>
           {errors.type && (
             <motion.span initial={{opacity:0, y:-5}} animate={{opacity:1, y:0}} className="text-destructive text-xs mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={12}/> {errors.type.message}</motion.span>
           )}
         </div>
        
-        {/* Categoria Input */}
         <div className="flex-[2] min-w-[200px]">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Categoria / Descrição</label>
           <input 
@@ -247,7 +245,6 @@ export default function TransactionSection() {
           )}
         </div>
         
-        {/* Botões Ação */}
         <div className="w-full flex gap-3 justify-end mt-2 md:mt-6 md:w-auto">
           {isEditing && (
             <motion.button 
@@ -270,7 +267,6 @@ export default function TransactionSection() {
         </div>
       </form>
 
-      {/* lista de transações */}
       <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sticky top-0 bg-card py-2 z-10 border-b border-border">
           <h2 className="text-lg font-heading font-bold text-foreground">
@@ -278,20 +274,17 @@ export default function TransactionSection() {
           </h2>
           
          <div className="flex items-center w-full sm:w-auto gap-2">
-
-      <ExportExcelButton data={filteredTransactions} />
-      
-      <div className="relative flex-1 sm:flex-none sm:w-64">
-          <input
-            type="text"
-            placeholder="🔎 Buscar..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="border border-border bg-background rounded-full px-4 py-1.5 w-full text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
-          />
-  </div>
-
-</div>
+            <ExportExcelButton data={filteredTransactions} />
+            <div className="relative flex-1 sm:flex-none sm:w-64">
+                <input
+                  type="text"
+                  placeholder="🔎 Buscar..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="border border-border bg-background rounded-full px-4 py-1.5 w-full text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
+                />
+            </div>
+          </div>
         </div>
 
         {transactions.length === 0 && (
@@ -318,13 +311,12 @@ export default function TransactionSection() {
               </div>
 
               <div className={`flex-1 text-right font-bold text-lg ${
-                item.type === "Renda" ? "text-green-500" : "text-destructive"
+                item.type === "Renda" ? "text-green-500" : item.type === "Investimento" ? "text-blue-500" : "text-destructive"
               }`}>
-                {item.type === "Renda" ? "+ " : "- "}
+                {item.type === "Renda" ? "+ " : item.type === "Investimento" ? " " : "- "}
                 R$ {item.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
 
-              {/* BOTÕES */}
               <div className="flex gap-2 ml-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
