@@ -191,36 +191,29 @@ export function ChatSidebar() {
 Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SIMPLESMENTE FALE NATURALMENTE.`;
         }
 
-        const ai = new GoogleGenAI({ apiKey: "AIzaSyCCAGqDVckbXVdWZ3BhjvNpFM9IsAfFtn8" });
-
-        // Convert existing messages to Gemini format, keeping only the last 10 for context
-        const history = messages
-          .filter(m => m.id !== "welcome" && !(m.id && m.id.startsWith("analysis")))
-          .slice(-10)
-          .map(m => ({
-            role: m.role === "assistant" ? "model" as const : "user" as const,
-            parts: [{ text: m.content }]
-          }));
-
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [
-            ...history,
-            { role: 'user', parts: [{ text: messageText }] }
-          ],
-          config: {
-            systemInstruction: "Você é o assistente do Serasa Humanizado. Seu objetivo é ajudar o usuário a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Priorize a sobrevivência do usuário (moradia, alimentação) antes do pagamento de dívidas (Método VITAL/Maslow Financeiro). Seja amigável, acolhedor e claro. Responda em Markdown. " + userContext
+        const { data, error } = await supabase.functions.invoke('chat_handler', {
+          body: { 
+            message: messageText,
+            context: userContext
           }
         });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        if (!data || !data.success) {
+          throw new Error(data?.error || "Erro desconhecido na IA.");
+        }
 
         const reply: ChatMessage = {
           id: `bot-${Date.now()}`,
           role: "assistant",
-          content: response.text || "Desculpe, não consegui gerar uma resposta.",
+          content: data.response || "Desculpe, não consegui gerar uma resposta.",
         };
         const finalMsgs = [...newMessages, reply];
         setMessages(finalMsgs);
-        saveHistory(finalMsgs);
+        // A edge function também já lida com salvar/atualizar o novo DB e bucket
       } catch (error) {
         console.error("Gemini API Error:", error);
         setMessages((prev) => [...prev, {
@@ -238,8 +231,12 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
   const handleClearHistory = () => {
     if (window.confirm("Certeza que deseja limpar completamente o histórico deste chat?")) {
       setMessages([INITIAL_MESSAGE]);
-      setHasAnalyzed(false); // Reinicia a analise de contexto da prox vez que abrir
-      saveHistory([INITIAL_MESSAGE]);
+      setHasAnalyzed(false);
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase.from('chat').upsert({ user_id: user.id, history: [INITIAL_MESSAGE], json_url: null }, { onConflict: 'user_id' });
+        }
+      });
     }
   };
 
