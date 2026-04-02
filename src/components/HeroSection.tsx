@@ -14,12 +14,12 @@ const slides = [
   {
     image: hero2,
     title: "Liberte-se das dívidas",
-    subtitle: "Planeje sua saída do endividamento com ferramentas profissionais.",
+    subtitle: "Planeje sua saída do endividamento, simule parcelamentos, tudo com nossas ferramentas profissionais.",
   },
   {
     image: hero3,
     title: "Invista no seu futuro",
-    subtitle: "Aprenda sobre investimentos e faça seu dinheiro trabalhar para você.",
+    subtitle: "Aprenda sobre investimentos, pirâmide de Masllow, entre outros.",
   },
 ];
 
