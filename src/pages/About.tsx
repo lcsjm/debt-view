@@ -44,35 +44,35 @@ const TeamSection = () => {
             {[
               {
                 name: "Guilherme",
-                role: "Desenvolvedor",
+                role: "Desenvolvedor back-end",
                 linkedinUrl: "https://www.linkedin.com/in/guilherme-cabral-2082653b9/",
                 avatarUrl: "https://ui-avatars.com/api/?name=Guilherme&background=0D8ABC&color=fff&size=128",
                 coverUrl: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=500&auto=format&fit=crop"
               },
               {
                 name: "Victor",
-                role: "Desenvolvedor",
+                role: "Desenvolvedor back-end",
                 linkedinUrl: "https://www.linkedin.com/in/v1cferr/",
                 avatarUrl: "Screenshot 2026-03-20 at 14-24-35 (1) Victor Ferreira LinkedIn.png",
                 coverUrl: "1710874898778.jpg"
               },
               {
                 name: "Lucas",
-                role: "Desenvolvedor",
+                role: "Desenvolvedor front-end",
                 linkedinUrl: "https://www.linkedin.com/in/lcsjm97/",
                 avatarUrl: "Screenshot 2026-03-20 at 14-19-32 (1) Lucas Jamus LinkedIn.png",
                 coverUrl: "public/Linkedin_Lucas_capa.jpg"
               },
               {
                 name: "Alexia",
-                role: "Desenvolvedora",
+                role: "Desenvolvedora back-end",
                 linkedinUrl: "https://www.linkedin.com/in/alexia-izabela-dos-santos-ba2b0028b/",
                 avatarUrl: "Screenshot 2026-03-24 at 14-11-55 (18) Alexia Izabela Dos Santos LinkedIn.png",
                 coverUrl: "1774372090329.jpg"
               },
               {
                 name: "Ketlyn",
-                role: "Desenvolvedora",
+                role: "Desenvolvedora back-end",
                 linkedinUrl: "https://www.linkedin.com/in/ketlyn-mucheroni-8b23932a9/",
                 avatarUrl: "Screenshot 2026-03-20 at 14-28-13 (1) Ketlyn Mucheroni LinkedIn.png",
                 coverUrl: "1748905084109.jpg"
