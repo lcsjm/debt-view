@@ -7,23 +7,8 @@ export async function getAICachedContext(user: any): Promise<string> {
   if (!user || !user.id) return "";
 
   const CACHE_KEY = `ai_context_${user.id}`;
-  const CACHE_MINUTES = 5;
-
-  const cachedStr = localStorage.getItem(CACHE_KEY);
-  if (cachedStr) {
-    try {
-      const cached = JSON.parse(cachedStr);
-      const ageInMs = Date.now() - cached.timestamp;
-      
-      // If Cache is valid (less than CACHE_MINUTES minutes old)
-      if (ageInMs < CACHE_MINUTES * 60 * 1000 && cached.context) {
-        return cached.context;
-      }
-    } catch (e) {
-       // Ignore parse error and proceed to fetch
-       console.warn("Failed to parse AI context cache. Re-fetching...");
-    }
-  }
+  // Removido o cache de 5 minutos a pedido para testes/uso 100% em tempo real.
+  // if (cachedStr) { ... }
 
   try {
     // Fetch real-time data from Supabase across all requested tables
