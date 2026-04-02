@@ -19,11 +19,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ChatProvider } from "@/components/chat-context";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import Education from "./pages/Education";
+import DirectMe from "./pages/directme";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
+
   // Esconder o chat na rota de autenticação
   const hideChatRoutes = ["/auth"]; 
   const showChat = !hideChatRoutes.includes(location.pathname);
@@ -31,17 +33,18 @@ const AppContent = () => {
   return (
     <>
       {showChat && <ChatSidebar />}
+
       <Routes>
         <Route path="/" element={<Index />} />
         
-        {/* Nova rota unificada de Autenticação */}
+        {/* Autenticação */}
         <Route path="/auth" element={
           <AuthRoute>
             <Auth />
           </AuthRoute>
         } />
         
-        {/* Redirecionar rotas antigas para a nova /auth */}
+        {/* Redirecionamentos antigos */}
         <Route path="/login" element={<Navigate to="/auth" replace />} />
         <Route path="/register" element={<Navigate to="/auth" replace />} />
         
@@ -56,7 +59,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
-          </ProtectedRoute>
+          </ProtectedRoute>                          
         } />
 
         <Route path="/profile" element={
@@ -65,13 +68,20 @@ const AppContent = () => {
           </ProtectedRoute>
         } />
 
+        {/* ✅ ROTA CORRIGIDA */}
+        <Route path="/directme" element={
+          <ProtectedRoute>
+            <DirectMe />
+          </ProtectedRoute>
+        } />
+
         <Route path="/education" element={
           <ProtectedRoute>
-            <Education/>
+            <Education />
           </ProtectedRoute>
         } />
         
-        {/* CATCH-ALL ROUTE (DEVE SER A ÚLTIMA A SER RENDERIZADA) */}
+        {/* CATCH-ALL */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
