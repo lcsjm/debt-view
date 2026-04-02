@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ResponsivePie } from "@nivo/pie";
 import { ResponsiveBar } from "@nivo/bar";
 import { 
@@ -48,8 +48,9 @@ const COLORS = {
 export default function ResultsSection({ data, onSave }: Props) {
   const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
 
-  // Estados interativos para edição
+  // Estados interativos
   const [isEditing, setIsEditing] = useState(false);
+  const [isChartMounted, setIsChartMounted] = useState(false); // <--- Novo estado para animação fluida
   const [valores, setValores] = useState({
     rendaFixa: sum(data.rendaFixa),
     rendaVariavel: sum(data.rendaVariavel),
@@ -59,10 +60,17 @@ export default function ResultsSection({ data, onSave }: Props) {
     investimentos: sum(data.investimentos),
   });
 
+  // Dispara a animação de entrada dos gráficos após a montagem do componente
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsChartMounted(true);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, []);
+
   const rendaTotal = valores.rendaFixa + valores.rendaVariavel;
   const saldo = rendaTotal - valores.gastosFixos - valores.gastosVariaveis - valores.investimentos;
 
-  // Função para testar inputs manuais de forma segura, com fallback
   const handleValueChange = (field: string, newValue: number) => {
     const val = isNaN(newValue) || newValue < 0 ? 0 : newValue;
     
@@ -83,33 +91,34 @@ export default function ResultsSection({ data, onSave }: Props) {
     }
   };
 
-  // Gráfico de Pizza
-  const pieData = useMemo(() => [
-    { id: "Renda Fixa", label: "Renda Fixa", value: valores.rendaFixa, color: COLORS.lightBlue },
-    { id: "Renda Variável", label: "Renda Variável", value: valores.rendaVariavel, color: COLORS.darkBlue },
-    { id: "Gastos Fixos", label: "Gastos Fixos", value: valores.gastosFixos, color: COLORS.magenta },
-    { id: "Gastos Variáveis", label: "Gastos Variáveis", value: valores.gastosVariaveis, color: COLORS.magenta },
-    { id: "Investimentos", label: "Investimentos", value: valores.investimentos, color: COLORS.purple },
-  ].filter(item => item.value > 0), [valores]);
+  // Gráfico de Pizza: Começa próximo a zero para dar o efeito de preenchimento fluido
+  const pieData = useMemo(() => {
+    const rawData = [
+      { id: "Renda Fixa", label: "Renda Fixa", value: isChartMounted ? valores.rendaFixa : 0.01, color: COLORS.lightBlue },
+      { id: "Renda Variável", label: "Renda Variável", value: isChartMounted ? valores.rendaVariavel : 0.01, color: COLORS.darkBlue },
+      { id: "Gastos Fixos", label: "Gastos Fixos", value: isChartMounted ? valores.gastosFixos : 0.01, color: COLORS.magenta },
+      { id: "Gastos Variáveis", label: "Gastos Variáveis", value: isChartMounted ? valores.gastosVariaveis : 0.01, color: COLORS.magenta },
+      { id: "Investimentos", label: "Investimentos", value: isChartMounted ? valores.investimentos : 0.01, color: COLORS.purple },
+    ];
+    // Se estiver montado, removemos os zeros. Se não, mantemos o 0.01 apenas para a fatia existir e poder animar crescendo.
+    return isChartMounted ? rawData.filter(item => item.value > 0) : rawData;
+  }, [valores, isChartMounted]);
 
-  // Gráfico de Barras: Saldo posicionado antes de Dívidas
+  // Gráfico de Barras: Começa zerado e cresce
   const barData = useMemo(() => [
-    { name: "Renda", value: rendaTotal, color: COLORS.darkBlue },
-    { name: "G. Fixos", value: valores.gastosFixos, color: COLORS.magenta },
-    { name: "G. Var.", value: valores.gastosVariaveis, color: COLORS.magenta },
-    { name: "Invest.", value: valores.investimentos, color: COLORS.purple },
-    { name: "Saldo", value: saldo, color: saldo >= 0 ? COLORS.lightBlue : "#ef4444" },
-    { name: "Dívidas", value: valores.dividas, color: COLORS.raspberry },
-  ], [rendaTotal, valores, saldo]);
+    { name: "Renda", value: isChartMounted ? rendaTotal : 0, color: COLORS.darkBlue },
+    { name: "G. Fixos", value: isChartMounted ? valores.gastosFixos : 0, color: COLORS.magenta },
+    { name: "G. Var.", value: isChartMounted ? valores.gastosVariaveis : 0, color: COLORS.magenta },
+    { name: "Invest.", value: isChartMounted ? valores.investimentos : 0, color: COLORS.purple },
+    { name: "Saldo", value: isChartMounted ? saldo : 0, color: saldo >= 0 ? COLORS.lightBlue : "#ef4444" },
+    { name: "Dívidas", value: isChartMounted ? valores.dividas : 0, color: COLORS.raspberry },
+  ], [rendaTotal, valores, saldo, isChartMounted]);
 
-  // Se houver saldo negativo, garante um respiro no fundo do gráfico
-  // para a barra negativa não sobrepor o texto do eixo X
   const minChartValue = saldo < 0 ? saldo * 1.3 : 0;
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-  // Tema customizado Premium para os gráficos
   const nivoTheme = {
     text: { fontSize: 13, fontWeight: 600, fill: "#6B7280", fontFamily: "inherit" },
     axis: {
@@ -175,11 +184,11 @@ export default function ResultsSection({ data, onSave }: Props) {
               theme={nivoTheme} 
               tooltip={CustomTooltipPie}
               animate={true}
-              motionConfig="gentle"
+              motionConfig="wobbly" // <--- Mudado para "wobbly" (elástico/vivo)
             />
           </div>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mt-6 w-full px-4">
-            {pieData.map(item => (
+            {isChartMounted && pieData.map(item => (
               <div key={item.id} className="flex items-center gap-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-default">
                 <span className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
                 {item.label}
@@ -215,7 +224,7 @@ export default function ResultsSection({ data, onSave }: Props) {
               theme={nivoTheme} 
               tooltip={CustomTooltipBar}
               animate={true}
-              motionConfig="gentle"
+              motionConfig="wobbly" // <--- Mudado para "wobbly"
             />
           </div>
         </motion.div>
@@ -235,7 +244,6 @@ export default function ResultsSection({ data, onSave }: Props) {
           <button
             onClick={() => {
               if (isEditing && onSave) {
-                // Ao salvar, passa os valores atualizados
                 onSave(valores);
               }
               setIsEditing(!isEditing);
@@ -266,7 +274,6 @@ export default function ResultsSection({ data, onSave }: Props) {
                 {item.label}
               </p>
               
-              {/* Input Dinâmico vs Texto Estático */}
               {isEditing && item.editable ? (
                 <div className="w-full relative mt-1 bg-white dark:bg-gray-800 rounded-xl px-2 py-1 shadow-inner border dark:border-gray-600">
                   <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold ${item.color} opacity-80`}>R$</span>
@@ -359,4 +366,4 @@ function AlertsPanel({
       ))}
     </div>
   );
-}
+}
