@@ -45,27 +45,14 @@ Deno.serve(async (req) => {
 
       jsonUrl = chatRow?.json_url
 
-      if (jsonUrl) {
-        // 2. Se já tiver json_url, baixa o arquivo JSON do bucket
-        const { data: bucketData } = await supabaseClient
-          .storage
-          .from('chat_history')
-          .download(jsonUrl)
-        
-        if (bucketData) {
-          const text = await bucketData.text()
-          try {
-            conversationHistory = JSON.parse(text)
-          } catch(e) {}
-        }
-      } else if (chatRow && chatRow.history && Array.isArray(chatRow.history)) {
-        // Se não tem url mas a tabela já tem um histórico migrado
+      // Sempre carrega preferencialmente do history da tabela para sync com o frontend
+      if (chatRow && chatRow.history && Array.isArray(chatRow.history)) {
         conversationHistory = chatRow.history
       }
     }
 
     // Adiciona a nova mensagem do usuário no conteúdo
-    conversationHistory.push({ role: "user", parts: [{ text: message }] })
+    conversationHistory.push({ id: `user-${Date.now()}`, role: "user", content: message })
 
     // 3. Comunica com a IA Gemini
     let systemInstruction = "Você é um assistente financeiro altamente especializado, amigável e focado no alívio de dívidas. Mantenha respostas não muito longas, diretas ao ponto, com tópicos importantes ressaltados em negrito."
@@ -77,8 +64,13 @@ Deno.serve(async (req) => {
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`
 
-    // Limita o histórico das últimas 15 mensagens para não estourar tokens
-    const recentHistory = conversationHistory.slice(-15)
+    // Prepara o formato exato que a API do Gemini exige
+    const geminiHistory = conversationHistory
+      .slice(-15) // Limita últimas 15 mensagens
+      .map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }))
 
     const response = await fetch(geminiUrl, {
       method: "POST",
@@ -87,7 +79,7 @@ Deno.serve(async (req) => {
         systemInstruction: {
           parts: [{ text: systemInstruction }]
         },
-        contents: recentHistory
+        contents: geminiHistory
       })
     })
     
@@ -101,7 +93,7 @@ Deno.serve(async (req) => {
     const aiMessageText = geminiResult.candidates?.[0]?.content?.parts?.[0]?.text || "Desculpe, não entendi a resposta da IA."
     
     // Adiciona a resposta da IA no histórico
-    conversationHistory.push({ role: "model", parts: [{ text: aiMessageText }] })
+    conversationHistory.push({ id: `bot-${Date.now()}`, role: "assistant", content: aiMessageText })
 
     // 4. Salva ou atualiza a conversa no bucket apenas se asutenticado
     if (userId) {
@@ -117,17 +109,17 @@ Deno.serve(async (req) => {
           upsert: true
         })
 
-      // 5. Atualiza a tabela (ou cadastra) a tupla no banco
-      const { data: currentChatRow } = await supabaseClient.from('chat').select('id, json_url').eq('user_id', userId).maybeSingle()
+      // 5. Atualiza a tabela com o json_url E O history (para o frontend renderizar quando fizer f5)
+      const { data: currentChatRow } = await supabaseClient.from('chat').select('id').eq('user_id', userId).maybeSingle()
       
       if (!currentChatRow) {
         await supabaseClient
           .from('chat')
-          .insert({ user_id: userId, json_url: jsonUrl, history: [] })
-      } else if (currentChatRow.json_url !== jsonUrl) {
+          .insert({ user_id: userId, json_url: jsonUrl, history: conversationHistory })
+      } else {
         await supabaseClient
           .from('chat')
-          .update({ json_url: jsonUrl })
+          .update({ json_url: jsonUrl, history: conversationHistory })
           .eq('id', currentChatRow.id)
       }
     }
