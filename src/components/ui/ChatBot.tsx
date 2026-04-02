@@ -280,10 +280,10 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
     if (window.confirm("Certeza que deseja limpar completamente o histórico com a I.A.?")) {
       setMessages([]);
       setInitialized(false);
-      // Ao limpar o estado do react local, a UseEffect de inicializacao ja vai salvar automaticamente o novo botMsg no Supabase!
+      // Ao limpar o estado do react local, limpa a referência tanto legada (history) quanto a nova (json_url) no DB
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) {
-          supabase.from('chat').upsert({ user_id: user.id, history: [] }, { onConflict: 'user_id' });
+          supabase.from('chat').upsert({ user_id: user.id, history: [], json_url: null }, { onConflict: 'user_id' });
         }
       });
     }
