@@ -317,7 +317,7 @@ const ChatbotWidget = ({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col bg-transparent">
+      <div className="flex-1 flex flex-col bg-transparent overflow-y-auto custom-chat-scrollbar">
         <Chatbot financialData={financialData} compact />
       </div>
     </div>
@@ -354,6 +354,29 @@ const AssistentSection = ({
 
   return (
     <>
+      <style>{`
+        /* Estilos da barra de rolagem do chat */
+        .custom-chat-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-chat-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-chat-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(156, 163, 175, 0.4);
+          border-radius: 10px;
+        }
+        .custom-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(107, 114, 128, 0.6);
+        }
+        .dark .custom-chat-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(75, 85, 99, 0.4);
+        }
+        .dark .custom-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(107, 114, 128, 0.6);
+        }
+      `}</style>
+
       <section
         id="chatbot"
         ref={sectionRef}
@@ -370,16 +393,16 @@ const AssistentSection = ({
           <div className="text-center mb-10 flex flex-col items-center">
             <div className="inline-flex items-center gap-2 mb-3 bg-[#1D4F91]/10 border border-[#426DA9]/30 px-4 py-1.5 rounded-full text-[#426DA9] dark:text-[#8CB4F5] text-sm font-semibold backdrop-blur-sm">
               <Sparkles className="w-4 h-4" />
-              Renegociação e Amortização
+              DVChat
             </div>
             <h2
               className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#C1188B] dark:from-[#8CB4F5] dark:via-[#E88CEE] dark:to-[#FF85BB] mb-3 transition-all duration-300 drop-shadow-sm"
               style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
             >
-              DebtView IA
+              Conheça nosso chatbot
             </h2>
             <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-lg transition-all duration-300">
-              Precisa de ajuda? Fale com nosso chatbot especializado.
+              Você pode transformá-lo em um Widget para te acompanhar por toda a página.
             </p>
           </div>
 
@@ -401,7 +424,7 @@ const AssistentSection = ({
               >
                 <div
                   className="relative rounded-[20px] overflow-hidden flex flex-col w-full bg-white/90 dark:bg-[#0a0f1d]/80 backdrop-blur-xl border border-slate-200 dark:border-blue-500/20 shadow-xl dark:shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)]"
-                  style={{ minHeight: 520 }} 
+                  style={{ height: 520 }} // TRAVAMOS A ALTURA FIXA AQUI
                 >
                   <div className="absolute top-4 right-4 z-20">
                     <button
@@ -412,7 +435,8 @@ const AssistentSection = ({
                       <Maximize2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="flex-1 flex flex-col w-full h-full">
+                  {/* ADICIONADO SCROLL AQUI (overflow-y-auto custom-chat-scrollbar) */}
+                  <div className="flex-1 flex flex-col w-full h-full overflow-y-auto custom-chat-scrollbar">
                     <Chatbot financialData={financialData} compact />
                   </div>
                 </div>
