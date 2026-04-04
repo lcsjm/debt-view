@@ -53,7 +53,7 @@ const maslowData = [
 ];
 
 export default function MaslowSection() {
-  const [activeLayer, setActiveLayer] = useState(maslowData[4]); 
+  const [activeLayer, setActiveLayer] = useState(null); 
 
   return (
     <>
@@ -118,7 +118,7 @@ export default function MaslowSection() {
                     key={layer.id}
                     onClick={() => setActiveLayer(layer)}
                     initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: activeLayer.id === layer.id ? 1 : 0.8, y: 0 }}
+                    whileInView={{ opacity: activeLayer?.id === layer.id ? 1 : 0.8, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: layer.id * 0.15 }}
                     whileHover={{ scale: 1.01 }}
@@ -136,42 +136,44 @@ export default function MaslowSection() {
             </div>
 
             {/* PAINEL GLASSMORPHISM CRISTALINO */}
-            <ScrollReveal delay={0.4}>
-              <div className="bg-white/10 dark:bg-slate-900/10 backdrop-blur-3xl border border-white/40 dark:border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] min-h-[440px] flex flex-col justify-center relative ring-1 ring-inset ring-white/50 transition-all duration-500 hover:border-white/60">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeLayer.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-6"
-                  >
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${activeLayer.color}`}>
-                      {activeLayer.icon}
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-3xl font-black text-slate-950 dark:text-white mb-1">
-                        {activeLayer.level.replace('\n', ' ')}
-                      </h3>
-                      <h4 className="text-sm font-bold mb-6 uppercase tracking-[0.2em] text-[#C1188B] dark:text-[#ff4da6]">
-                        {activeLayer.shortDesc}
-                      </h4>
-                      <p className="text-slate-900 dark:text-slate-50 text-xl leading-relaxed font-bold drop-shadow-sm">
-                        {activeLayer.fullDesc}
-                      </p>
-                    </div>
+            {activeLayer && (
+              <ScrollReveal delay={0.4}>
+                <div className="bg-white/10 dark:bg-slate-900/10 backdrop-blur-3xl border border-white/40 dark:border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] min-h-[440px] flex flex-col justify-center relative ring-1 ring-inset ring-white/50 transition-all duration-500 hover:border-white/60">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeLayer.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="space-y-6"
+                    >
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${activeLayer.color}`}>
+                        {activeLayer.icon}
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-3xl font-black text-slate-950 dark:text-white mb-1">
+                          {activeLayer.level.replace('\n', ' ')}
+                        </h3>
+                        <h4 className="text-sm font-bold mb-6 uppercase tracking-[0.2em] text-[#C1188B] dark:text-[#ff4da6]">
+                          {activeLayer.shortDesc}
+                        </h4>
+                        <p className="text-slate-900 dark:text-slate-50 text-xl leading-relaxed font-bold drop-shadow-sm">
+                          {activeLayer.fullDesc}
+                        </p>
+                      </div>
 
-                    <div className="pt-6 border-t border-slate-950/10 dark:border-white/20">
-                      <span className="text-sm font-black text-slate-800 dark:text-slate-400 flex items-center gap-2">
-                        <span className={`w-3 h-3 rounded-full ${activeLayer.color} animate-pulse`} />
-                        Nível {activeLayer.id} de 5
-                      </span>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </ScrollReveal>
+                      <div className="pt-6 border-t border-slate-950/10 dark:border-white/20">
+                        <span className="text-sm font-black text-slate-800 dark:text-slate-400 flex items-center gap-2">
+                          <span className={`w-3 h-3 rounded-full ${activeLayer.color} animate-pulse`} />
+                          Nível {activeLayer.id} de 5
+                        </span>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </ScrollReveal>
+            )}
 
           </div>
         </div>
