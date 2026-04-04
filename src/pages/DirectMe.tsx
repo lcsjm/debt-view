@@ -56,22 +56,44 @@ export default function DirectMe() {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.1 }
-    }
+      transition: { staggerChildren: 0.2, delayChildren: 0.1 },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 40 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
   };
 
   return (
     <div className="relative min-h-screen text-white flex flex-col bg-[#0A101D] overflow-hidden">
       
-      {/* BACKGROUND CORRIGIDO */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1D4F91] via-[#77127B] to-[#E80070] bg-[length:300%_300%] animate-gradient-slow blur-3xl mix-blend-screen opacity-60" />
-        <div className="absolute inset-0 bg-gradient-to-tl from-[#426DA9] via-transparent to-[#C1188B] bg-[length:300%_300%] animate-gradient-fast blur-2xl opacity-40" />
+      {/* BACKGROUND DINÂMICO COM FRAMER MOTION */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.5, 0.7, 0.5]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] bg-[#1D4F91] rounded-full blur-[120px] mix-blend-screen" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.4, 0.6, 0.4]
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-[20%] right-[10%] w-[60%] h-[60%] bg-[#77127B] rounded-full blur-[150px] mix-blend-screen" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.15, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute -bottom-[10%] left-[20%] w-[80%] h-[60%] bg-[#E80070] rounded-full blur-[140px] mix-blend-screen" 
+        />
       </div>
 
       {/* BOTÃO VOLTAR */}
@@ -79,13 +101,13 @@ export default function DirectMe() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        whileHover={{ scale: 1.05, x: -5 }}
+        whileHover={{ scale: 1.05, x: -5, backgroundColor: "rgba(255,255,255,0.2)" }}
         whileTap={{ scale: 0.95 }}
         onClick={handleBack}
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 bg-white/10 backdrop-blur-md hover:bg-white/20 px-5 py-2.5 rounded-full border border-white/10"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/20 shadow-lg transition-colors"
       >
-        <ArrowLeft size={18} />
-        Voltar
+        <ArrowLeft size={20} strokeWidth={2.5} />
+        <span className="font-semibold">Voltar</span>
       </motion.button>
 
       {/* CONTEÚDO */}
@@ -94,30 +116,41 @@ export default function DirectMe() {
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="w-full max-w-6xl grid md:grid-cols-2 gap-10 mt-16 md:mt-0"
+          className="w-full max-w-6xl grid md:grid-cols-2 gap-10 mt-20 md:mt-0"
         >
 
           {/* INFO */}
           <motion.div
             variants={itemVariants}
-            className="bg-white/5 backdrop-blur-2xl p-10 rounded-[2rem] shadow-2xl border border-white/10 flex flex-col justify-center"
+            className="bg-white/5 backdrop-blur-2xl p-10 rounded-[2rem] shadow-2xl border border-white/10 flex flex-col justify-center relative overflow-hidden group"
           >
-            <h2 className="text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#426DA9] to-[#E80070]">
+            {/* Brilho sutil no card */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <h2 className="text-5xl font-black mb-8 text-white drop-shadow-md tracking-tight">
               Fale Conosco
             </h2>
 
-            <div className="space-y-6 mt-6">
-              <div className="flex items-center gap-4">
-                <Mail className="text-[#E80070]" size={24} />
-                <span>suporte@serasaexperian.com</span>
+            <div className="space-y-6 mt-2 relative z-10">
+              <div className="flex items-center gap-5 group/item cursor-pointer">
+                <div className="p-3.5 rounded-full bg-gradient-to-br from-[#E80070] to-[#C1188B] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
+                  <Mail className="text-white" size={24} strokeWidth={2.5} />
+                </div>
+                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">suporte@serasaexperian.com</span>
               </div>
-              <div className="flex items-center gap-4">
-                <Phone className="text-[#C1188B]" size={24} />
-                <span>(11) 99999-9999</span>
+              
+              <div className="flex items-center gap-5 group/item cursor-pointer">
+                <div className="p-3.5 rounded-full bg-gradient-to-br from-[#77127B] to-[#C1188B] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
+                  <Phone className="text-white" size={24} strokeWidth={2.5} />
+                </div>
+                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">(11) 99999-9999</span>
               </div>
-              <div className="flex items-center gap-4">
-                <MapPin className="text-[#77127B]" size={24} />
-                <span>São Carlos-SP</span>
+              
+              <div className="flex items-center gap-5 group/item cursor-pointer">
+                <div className="p-3.5 rounded-full bg-gradient-to-br from-[#1D4F91] to-[#426DA9] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
+                  <MapPin className="text-white" size={24} strokeWidth={2.5} />
+                </div>
+                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">São Carlos - SP</span>
               </div>
             </div>
           </motion.div>
@@ -126,9 +159,9 @@ export default function DirectMe() {
           <motion.form
             variants={itemVariants}
             onSubmit={handleSubmit}
-            className="bg-[#0b132b]/50 backdrop-blur-2xl p-10 rounded-[2rem] shadow-2xl space-y-6 border border-white/10"
+            className="bg-[#0b132b]/60 backdrop-blur-3xl p-10 rounded-[2rem] shadow-2xl border border-white/10 flex flex-col gap-6"
           >
-            <h2 className="text-3xl font-semibold">Envie uma mensagem</h2>
+            <h2 className="text-3xl font-bold text-white mb-2">Envie uma mensagem</h2>
 
             <div className="grid md:grid-cols-2 gap-5">
               <input
@@ -138,7 +171,7 @@ export default function DirectMe() {
                 onChange={handleChange}
                 placeholder="Seu nome"
                 required
-                className="p-4 rounded-xl bg-white/5"
+                className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#426DA9] focus:ring-2 focus:ring-[#426DA9]/30"
               />
               <input
                 type="email"
@@ -147,7 +180,7 @@ export default function DirectMe() {
                 onChange={handleChange}
                 placeholder="Seu e-mail"
                 required
-                className="p-4 rounded-xl bg-white/5"
+                className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#426DA9] focus:ring-2 focus:ring-[#426DA9]/30"
               />
             </div>
 
@@ -158,30 +191,34 @@ export default function DirectMe() {
               onChange={handleChange}
               placeholder="Assunto"
               required
-              className="p-4 rounded-xl bg-white/5 w-full"
+              className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#77127B] focus:ring-2 focus:ring-[#77127B]/30 w-full"
             />
 
             <textarea
               name="message"
               value={form.message}
               onChange={handleChange}
-              placeholder="Mensagem"
+              placeholder="Sua mensagem..."
               required
-              className="p-4 rounded-xl bg-white/5 w-full"
+              rows={4}
+              className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#E80070] focus:ring-2 focus:ring-[#E80070]/30 w-full resize-none"
             />
 
-            <button
+            <motion.button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#1D4F91] to-[#E80070] p-4 rounded-xl"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full mt-2 bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] p-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(232,0,112,0.2)] hover:shadow-[0_0_30px_rgba(232,0,112,0.5)] transition-shadow duration-300"
             >
-              Enviar
-            </button>
+              <Send size={20} strokeWidth={2.5} />
+              Enviar Mensagem
+            </motion.button>
           </motion.form>
         </motion.div>
       </div>
 
-      {/* FOOTER COM Z-INDEX */}
-      <div className="relative z-10">
+      {/* FOOTER */}
+      <div className="relative z-10 mt-auto">
         <Footer />
       </div>
     </div>

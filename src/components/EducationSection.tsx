@@ -7,8 +7,9 @@ import {
 } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
 import supabase from "../../utils/supabase";
+import MaslowSection from "./MaslowSection"; // <-- Componente importado aqui!
 
-// 1. Mapeamento de Ícones (Necessário pois o banco só retorna texto)F
+// 1. Mapeamento de Ícones (Necessário pois o banco só retorna texto)
 const iconMap: Record<string, JSX.Element> = {
   "Educação": <GraduationCap size={28} />,
   "Liquidez diária": <Droplets size={28} />,
@@ -97,13 +98,7 @@ const ScrollingRow = ({
       sliderRef.current.scrollLeft = startPos;
       exactScrollLeft.current = startPos;
     }
-  }, [cards]); // Reinicia quando os cards carregarem do banco
-
-  const handleScroll = () => {
-    if (!sliderRef.current) return;
-    exactScrollLeft.current = sliderRef.current.scrollLeft;
-    handleBoundary();
-  };
+  }, [cards]);
 
   return (
     <div
@@ -147,7 +142,7 @@ const ScrollingRow = ({
                   className={`bg-white/10 dark:bg-slate-900/20 backdrop-blur-2xl shadow-lg p-6 min-w-[300px] max-w-[300px] flex-shrink-0 flex flex-col group transition-all duration-300 rounded-2xl ring-1 ring-inset ring-white/20 dark:ring-white/5 ${isViewed ? "border border-emerald-500/80" : "border border-white/20 dark:border-white/10"
                     }`}
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-raspberry/10 group-hover:text-raspberry transition-colors duration-300">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-raspberry/10 group-hover:text-[#C1188B] transition-colors duration-300">
                     {iconMap[card.title] || <Building2 size={28} />}
                   </div>
                   <h4 className="font-heading font-bold text-slate-900 dark:text-white text-lg mb-4">{card.title}</h4>
@@ -181,14 +176,12 @@ const EducationSection = () => {
 
         const { data, error } = await supabase
           .from('cards')
-          .select('*'); // Pegamos tudo para testar
+          .select('*'); 
 
         if (error) {
           console.error("Erro na consulta Supabase:", error.message);
           return;
         }
-
-        console.log("Dados brutos vindos do banco:", data);
 
         if (data && data.length > 0) {
           const formattedCards = data.map(item => ({
@@ -198,11 +191,6 @@ const EducationSection = () => {
             categoria: item.categoria ? String(item.categoria).toLowerCase() : ""
           }));
 
-          console.log("Cards formatados com sucesso:", formattedCards);
-
-          // VAMOS DESATIVAR O FILTRO TEMPORARIAMENTE:
-          // Isso vai jogar metade dos cards em cima e metade em baixo, 
-          // independente do que está escrito na coluna categoria.
           setInvestmentCards(formattedCards.slice(0, 6));
           setConceptCards(formattedCards.slice(6, 12));
 
@@ -240,6 +228,7 @@ const EducationSection = () => {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
+      {/* SEÇÃO PRINCIPAL DE EDUCAÇÃO */}
       <section id="education" className="relative w-full min-h-screen py-24 bg-slate-50 dark:bg-slate-950 overflow-hidden border-t border-slate-200 dark:border-white/10">
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-50 dark:opacity-60">
           <div className="dynamic-blob blob-dark-blue"></div>
@@ -250,26 +239,26 @@ const EducationSection = () => {
         <div className="relative z-10 w-full">
           <div className="container mx-auto px-4">
             <ScrollReveal>
-              <h2 className="fluid-title-lg font-heading font-bold text-center text-slate-900 dark:text-white mb-16">
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-center text-slate-900 dark:text-white mb-16">
                 Educação Financeira
               </h2>
             </ScrollReveal>
           </div>
 
           {loading ? (
-            <div className="text-center text-slate-500 py-20">Carregando conteúdos...</div>
+            <div className="text-center text-slate-500 py-20 font-medium">Carregando conteúdos...</div>
           ) : (
             <>
               <ScrollReveal delay={0.1}>
                 <div className="mb-16 w-full">
-                  <h3 className="fluid-title-md font-heading font-bold text-center text-slate-800 dark:text-slate-200 mb-8">Investimentos</h3>
+                  <h3 className="text-2xl font-heading font-bold text-center text-slate-800 dark:text-slate-200 mb-8">Investimentos</h3>
                   <ScrollingRow cards={investmentCards} direction="left" onCardClick={setSelectedCard} viewedCards={viewedCards} />
                 </div>
               </ScrollReveal>
 
               <ScrollReveal delay={0.2}>
                 <div className="w-full">
-                  <h3 className="fluid-title-md font-heading font-bold text-center text-slate-800 dark:text-slate-200 mb-8">Conceitos</h3>
+                  <h3 className="text-2xl font-heading font-bold text-center text-slate-800 dark:text-slate-200 mb-8">Conceitos</h3>
                   <ScrollingRow cards={conceptCards} direction="right" onCardClick={setSelectedCard} viewedCards={viewedCards} />
                 </div>
               </ScrollReveal>
@@ -278,6 +267,10 @@ const EducationSection = () => {
         </div>
       </section>
 
+      {/* COMPONENTE DA PIRÂMIDE DE MASLOW IMPORTADO AQUI */}
+      <MaslowSection />
+
+      {/* MODAL DOS CARDS DE EDUCAÇÃO */}
       <AnimatePresence>
         {selectedCard && (
           <motion.div
@@ -290,16 +283,16 @@ const EducationSection = () => {
               className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/20 shadow-2xl rounded-3xl p-8 max-w-lg w-full relative ring-1 ring-inset ring-white/40 dark:ring-white/5"
               onClick={(e) => e.stopPropagation()}
             >
-              <button onClick={handleCloseModal} className="absolute top-4 right-4 p-2 rounded-full text-slate-500 hover:text-white transition-colors">
-                <X size={24} />
+              <button onClick={handleCloseModal} className="absolute top-4 right-4 p-2 rounded-full text-slate-500 hover:text-[#E80070] transition-colors duration-300">
+                <X size={24} strokeWidth={2.5} />
               </button>
 
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1D4F91] to-[#426DA9] shadow-md flex items-center justify-center text-white mb-6">
                 {iconMap[selectedCard.title]}
               </div>
-              <h3 className="text-2xl font-heading font-bold text-slate-900 dark:text-white mb-2">{selectedCard.title}</h3>
-              <p className="text-slate-800 dark:text-slate-200 font-semibold mb-4">{selectedCard.desc}</p>
-              <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{selectedCard.fullDesc}</p>
+              <h3 className="text-2xl font-heading font-black text-slate-900 dark:text-white mb-2">{selectedCard.title}</h3>
+              <p className="text-[#C1188B] dark:text-[#E80070] font-bold mb-4 uppercase tracking-wide text-sm">{selectedCard.desc}</p>
+              <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">{selectedCard.fullDesc}</p>
             </motion.div>
           </motion.div>
         )}
