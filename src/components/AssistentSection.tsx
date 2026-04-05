@@ -2,17 +2,15 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { 
   ChevronLeft, 
   ChevronRight, 
-  MessageCircle, 
   Maximize2, 
   Minimize2, 
   X, 
-  GripHorizontal,
   Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Chatbot from "./ui/ChatBot";
 
-// Referências apontando para a pasta public com as extensões reais dos arquivos
+// Referências apontando para a pasta public
 const storySerasaLimpaNome = "/LimpaNomeSerasa.png";
 const storyDesenrola = "/DesenrolaBrasil.png";
 const storyAmortizacao = "/AmortizacaoSerasa.webp";
@@ -227,30 +225,43 @@ const StoryCard = ({
   );
 };
 
-/* ─── Chatbot Widget (Draggable) ─── */
-const ChatbotWidget = ({
+/* ─── Main Section ─── */
+const AssistentSection = ({
   financialData,
-  onDock,
+  isDashboard = false,
 }: {
-  financialData: FinancialData | null;
-  onDock: () => void;
+  financialData: FinancialData | null | undefined;
+  isDashboard?: boolean;
 }) => {
+  const [isChatbotFloating, setIsChatbotFloating] = useState(false);
   const [minimized, setMinimized] = useState(false);
-  const [pos, setPos] = useState({ x: window.innerWidth - 420, y: window.innerHeight - 620 });
+  
+  // Posicionamento inicial seguro
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    setPos({ 
+      x: Math.max(20, window.innerWidth - 390), 
+      y: Math.max(20, window.innerHeight - 570) 
+    });
+  }, []);
+
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [sectionVisible, setSectionVisible] = useState(false);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!isChatbotFloating || minimized) return;
     dragging.current = true;
     dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
     e.preventDefault();
-  }, [pos]);
+  }, [isChatbotFloating, minimized, pos]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragging.current) return;
       setPos({
-        x: Math.max(0, Math.min(window.innerWidth - 380, e.clientX - dragOffset.current.x)),
+        x: Math.max(0, Math.min(window.innerWidth - 370, e.clientX - dragOffset.current.x)),
         y: Math.max(0, Math.min(window.innerHeight - 100, e.clientY - dragOffset.current.y)),
       });
     };
@@ -262,79 +273,6 @@ const ChatbotWidget = ({
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, []);
-
-  if (minimized) {
-    return (
-      <button
-        onClick={() => setMinimized(false)}
-        className="fixed z-50 w-16 h-16 rounded-full shadow-2xl shadow-blue-500/30 flex items-center justify-center text-white active:scale-95 transition-all duration-300 hover:scale-105 border border-white/20"
-        style={{
-          bottom: 24,
-          right: 24,
-          background: "linear-gradient(135deg, #2563eb, #7c3aed, #db2777)",
-        }}
-      >
-        <Sparkles className="w-7 h-7" />
-      </button>
-    );
-  }
-
-  return (
-    <div
-      className="fixed z-50 rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col bg-white dark:bg-slate-900"
-      style={{
-        left: pos.x,
-        top: pos.y,
-        width: 370,
-        height: 550,
-        animation: "scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-      }}
-    >
-      <div
-        onMouseDown={handleMouseDown}
-        className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing border-b border-slate-200 dark:border-slate-800"
-        style={{ background: "linear-gradient(90deg, #1D4F91, #426DA9)" }}
-      >
-        <div className="flex items-center gap-2 text-white">
-          <Sparkles className="w-4 h-4 text-blue-200" />
-          <span className="font-semibold text-sm tracking-wide">DebtView AI</span>
-        </div>
-        <div className="flex gap-1">
-          <button
-            onClick={onDock}
-            className="w-6 h-6 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-            title="Reencaixar"
-          >
-            <Minimize2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setMinimized(true)}
-            className="w-6 h-6 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-            title="Minimizar"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col bg-transparent overflow-y-auto custom-chat-scrollbar">
-        <Chatbot financialData={financialData} compact />
-      </div>
-    </div>
-  );
-};
-
-/* ─── Main Section ─── */
-const AssistentSection = ({
-  financialData,
-  isDashboard = false,
-}: {
-  financialData: FinancialData | null | undefined;
-  isDashboard?: boolean;
-}) => {
-  const [isChatbotFloating, setIsChatbotFloating] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [sectionVisible, setSectionVisible] = useState(false);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -355,7 +293,6 @@ const AssistentSection = ({
   return (
     <>
       <style>{`
-        /* Estilos da barra de rolagem do chat */
         .custom-chat-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
@@ -377,17 +314,19 @@ const AssistentSection = ({
         }
       `}</style>
 
+      {/* Overflow foi removido da Section para garantir que Fixed Elements não sejam cortados */}
       <section
         id="chatbot"
         ref={sectionRef}
-        className={`w-full ${isDashboard ? 'py-8 bg-slate-50 dark:bg-transparent dark:bg-gradient-to-r dark:from-[#070b13] dark:to-[#0a101f]' : 'py-16'} assistant-section-bg relative overflow-hidden`}
+        className={`w-full ${isDashboard ? 'py-8 bg-slate-50 dark:bg-transparent dark:bg-gradient-to-r dark:from-[#070b13] dark:to-[#0a101f]' : 'py-16'} assistant-section-bg relative`}
         style={{
           opacity: sectionVisible ? 1 : 0,
-          transform: sectionVisible ? "scale(1)" : "scale(0.95)",
+          // Retornar para "none" em vez de "scale(1)" remove o bloco de contenção e conserta o pulo
+          transform: sectionVisible ? "none" : "scale(0.95)",
           transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
       >
-        <div className="absolute inset-0 backdrop-blur-[2px] bg-white/40 dark:bg-black/20" />
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-white/40 dark:bg-black/20 overflow-hidden" />
         
         <div className="max-w-[1366px] mx-auto px-[3%] relative z-10 w-full">
           <div className="text-center mb-10 flex flex-col items-center">
@@ -399,70 +338,124 @@ const AssistentSection = ({
               className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#C1188B] dark:from-[#8CB4F5] dark:via-[#E88CEE] dark:to-[#FF85BB] mb-3 transition-all duration-300 drop-shadow-sm"
               style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
             >
-              Conheça nosso chatbot
+              Conheça nosso assistente!
             </h2>
             <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-lg transition-all duration-300">
-              Você pode transformá-lo em um Widget para te acompanhar por toda a página.
+              Você pode transformá-lo em um Widget que vai te acompanhar por toda a página.
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-6 items-center md:items-stretch w-full overflow-hidden">
+          {/* Wrapper flex agora não possui overflow-hidden */}
+          <div className="flex flex-col md:flex-row gap-6 items-center md:items-stretch w-full">
             
             {/* 1ª Div — Limpa Nome & Desenrola */}
-            <div 
-              className={`w-full transition-all duration-500 ease-in-out flex justify-center ${
-                isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'
-              }`}
-            >
+            <div className={`w-full transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex justify-center ${isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'}`}>
               <StoryCard slides={col1Slides} revealDelay={0} />
             </div>
 
-            {/* 2ª Div — Chatbot Fixo */}
-            {!isChatbotFloating && (
-              <div 
-                className="w-full md:w-[50%] flex justify-center transition-all duration-500 ease-in-out"
+            {/* 2ª Div — Container Inteligente do Chatbot (Gera o Morphing) */}
+            <div className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex justify-center items-center ${isChatbotFloating ? 'w-0 md:w-0' : 'w-full md:w-[50%]'}`}>
+              
+              <div
+                onMouseDown={isChatbotFloating ? handleMouseDown : undefined}
+                className={`
+                  ${isChatbotFloating ? "fixed z-50 shadow-2xl" : "relative z-10 shadow-xl"}
+                  overflow-hidden flex flex-col bg-white/90 dark:bg-[#0a0f1d]/80 backdrop-blur-xl
+                  border border-slate-200 dark:border-blue-500/20
+                `}
+                style={{
+                  position: isChatbotFloating ? 'fixed' : 'relative',
+                  width: minimized ? 64 : (isChatbotFloating ? 370 : '100%'),
+                  height: minimized ? 64 : (isChatbotFloating ? 550 : 520),
+                  // Usando calc seguras com interpolação de string exata
+                  left: isChatbotFloating ? (minimized ? 'calc(100vw - 100px)' : `${pos.x}px`) : 'auto',
+                  top: isChatbotFloating ? (minimized ? 'calc(100vh - 100px)' : `${pos.y}px`) : 'auto',
+                  borderRadius: minimized ? '50%' : '20px',
+                  transition: dragging.current ? "none" : "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
               >
+                {/* Conteúdo Real do Chatbot */}
                 <div
-                  className="relative rounded-[20px] overflow-hidden flex flex-col w-full bg-white/90 dark:bg-[#0a0f1d]/80 backdrop-blur-xl border border-slate-200 dark:border-blue-500/20 shadow-xl dark:shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)]"
-                  style={{ height: 520 }} // TRAVAMOS A ALTURA FIXA AQUI
+                  className="flex flex-col w-full h-full transition-opacity duration-300"
+                  style={{ 
+                    opacity: minimized ? 0 : 1, 
+                    pointerEvents: minimized ? 'none' : 'auto' 
+                  }}
                 >
-                  <div className="absolute top-4 right-4 z-20">
-                    <button
-                      onClick={() => setIsChatbotFloating(true)}
-                      className="w-9 h-9 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-105 border border-slate-200 dark:border-slate-600/50 shadow-lg transition-all active:scale-95"
-                      title="Destacar assistente"
-                    >
-                      <Maximize2 className="w-4 h-4" />
-                    </button>
+                  {/* Cabeçalho Unificado */}
+                  <div
+                     className={`flex items-center justify-between transition-all duration-500 ${
+                       isChatbotFloating
+                         ? "px-4 py-3 cursor-grab active:cursor-grabbing border-b border-slate-200 dark:border-slate-800"
+                         : "absolute top-4 right-4 z-20 w-full px-4 py-0 justify-end pointer-events-none"
+                     }`}
+                     style={{
+                       background: isChatbotFloating ? "linear-gradient(90deg, #1D4F91, #426DA9)" : "transparent"
+                     }}
+                  >
+                     <div className={`flex items-center gap-2 text-white transition-opacity duration-500 ${isChatbotFloating ? "opacity-100" : "opacity-0"}`}>
+                       <Sparkles className="w-4 h-4 text-blue-200" />
+                       <span className="font-semibold text-sm tracking-wide">DebtView AI</span>
+                     </div>
+
+                     <div className="flex gap-1.5 pointer-events-auto">
+                       <button
+                         onClick={() => setIsChatbotFloating(!isChatbotFloating)}
+                         className={`flex items-center justify-center transition-all duration-300 ${
+                           isChatbotFloating
+                             ? "w-6 h-6 rounded text-white/70 hover:text-white hover:bg-white/10"
+                             : "w-9 h-9 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-105 border border-slate-200 dark:border-slate-600/50 shadow-lg active:scale-95"
+                         }`}
+                         title={isChatbotFloating ? "Reencaixar na página" : "Destacar assistente"}
+                         onMouseDown={(e) => e.stopPropagation()}
+                       >
+                         {isChatbotFloating ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-4 h-4" />}
+                       </button>
+
+                       {isChatbotFloating && (
+                         <button
+                           onClick={() => setMinimized(true)}
+                           className="w-6 h-6 rounded flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 hover:bg-destructive/80 transition-colors"
+                           title="Minimizar"
+                           onMouseDown={(e) => e.stopPropagation()}
+                         >
+                           <X className="w-3.5 h-3.5" />
+                         </button>
+                       )}
+                     </div>
                   </div>
-                  {/* ADICIONADO SCROLL AQUI (overflow-y-auto custom-chat-scrollbar) */}
+
+                  {/* Scroll do Chat */}
                   <div className="flex-1 flex flex-col w-full h-full overflow-y-auto custom-chat-scrollbar">
                     <Chatbot financialData={financialData} compact />
                   </div>
                 </div>
+
+                {/* Visual Modo Minimizado - Posicionado por último para garantir z-index absoluto sobre o chat */}
+                <div
+                  className="absolute inset-0 flex items-center justify-center cursor-pointer z-50 transition-all duration-500"
+                  style={{
+                    background: "linear-gradient(135deg, #2563eb, #7c3aed, #db2777)",
+                    opacity: minimized ? 1 : 0,
+                    pointerEvents: minimized ? 'auto' : 'none',
+                    transform: minimized ? 'scale(1)' : 'scale(0.8)'
+                  }}
+                  onClick={() => setMinimized(false)}
+                  title="Abrir DebtView AI"
+                >
+                  <Sparkles className="w-7 h-7 text-white" />
+                </div>
               </div>
-            )}
+            </div>
 
             {/* 3ª Div — Amortização & Feirão */}
-            <div 
-              className={`w-full transition-all duration-500 ease-in-out flex justify-center ${
-                isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'
-              }`}
-            >
+            <div className={`w-full transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex justify-center ${isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'}`}>
               <StoryCard slides={col3Slides} revealDelay={200} />
             </div>
 
           </div>
         </div>
       </section>
-
-      {/* Renderiza o Widget flutuante caso o estado isChatbotFloating seja true */}
-      {isChatbotFloating && (
-        <ChatbotWidget 
-          financialData={financialData} 
-          onDock={() => setIsChatbotFloating(false)} 
-        />
-      )}
     </>
   );
 };
