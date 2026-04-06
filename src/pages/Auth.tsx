@@ -322,7 +322,7 @@ const Auth = () => {
                     </div>
                 ) : STEPS[step].key === "lgpd" ? (
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-start gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                      <div className="flex items-start gap-3 bg-slate-800 border border-white/10 p-4 rounded-xl">
                         <input
                           type="checkbox"
                           id="lgpd-consent"
@@ -335,7 +335,7 @@ const Auth = () => {
                           <button 
                             type="button" 
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveModal("terms"); }} 
-                            className="text-[#E80070] hover:text-white transition-colors underline"
+                            className="text-[#FF6BBA] font-bold hover:text-white transition-colors underline"
                           >
                             Termos de Uso
                           </button>{' '}
@@ -343,11 +343,11 @@ const Auth = () => {
                           <button 
                             type="button" 
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveModal("privacy"); }} 
-                            className="text-[#E80070] hover:text-white transition-colors underline"
+                            className="text-[#FF6BBA] font-bold hover:text-white transition-colors underline"
                           >
                             Política de Privacidade
                           </button>
-                          , e aceito o tratamento dos meus dados conforme a LGPD.
+                          , e aceito o tratamento dos meus dados conforme a Lei Geral de Proteção de Dados Pessoais (LGPD - Lei nº 13.709/2018).
                         </label>
                       </div>
                     </div>

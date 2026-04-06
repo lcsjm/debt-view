@@ -70,7 +70,7 @@ export default function Dashboard() {
                 Bem-vindo de volta, {profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Visitante'} 👋
               </p>
               <h2 className="text-xl md:text-2xl font-heading font-semibold text-foreground">
-                Dashboard DebtView
+                 Aproveite nosso site!
               </h2>
             </div>
           </div>

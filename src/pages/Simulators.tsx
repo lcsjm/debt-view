@@ -27,7 +27,6 @@ import { toast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import {
   AreaChart,
   Area,
@@ -47,7 +46,7 @@ const simulatorschema = z.object({
       const d = v.replace(/\D/g, "");
       return parseInt(d, 10) > 0;
     }, "Deve ser maior que zero"),
-  downPayment: z.any().optional(), // Novo campo de entrada
+  downPayment: z.any().optional(),
   date: z.string().nullable(),
   rate: z.any(),
   year: z.enum(["Mensal", "Anual"]),
@@ -75,9 +74,6 @@ const parseCurrencyInput = (value: string) => {
   return parseInt(digits, 10) / 100;
 };
 
-const getFieldErrorMessage = (message: unknown) =>
-  typeof message === "string" ? message : "";
-
 const getStatusStyle = (status: string) => {
   const styles: Record<string, string> = {
     Pago: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
@@ -97,9 +93,27 @@ const calculateEffectiveMonthlyRate = (
   isCompound: boolean,
 ) => {
   if (period === "Anual") {
-    return isCompound ? Math.pow(1 + rateDec, 1 / 12) - 1 : rateDec / 12;
+    return isCompound ?
+      Math.pow(1 + rateDec, 1 / 12) - 1 : rateDec / 12;
   }
   return rateDec;
+};
+
+const calculateInstallment = (
+  principal: number,
+  monthlyRate: number,
+  months: number,
+  isCompound: boolean,
+) => {
+  if (months <= 0) return 0;
+  if (isCompound) {
+    if (monthlyRate === 0) return principal / months;
+    const factor = Math.pow(1 + monthlyRate, months);
+    return (principal * (monthlyRate * factor)) / (factor - 1);
+  } else {
+    const total = principal * (1 + monthlyRate * months);
+    return total / months;
+  }
 };
 
 const generateChartData = (
@@ -111,7 +125,12 @@ const generateChartData = (
 ) => {
   const chartData = [];
   const startDate = startDateStr ? new Date(startDateStr) : new Date();
-
+  const installment = calculateInstallment(
+    principal,
+    monthlyRate,
+    months,
+    isCompound,
+  );
   for (let i = 0; i <= months; i++) {
     let currentVal = principal;
     if (i > 0) {
@@ -124,21 +143,52 @@ const generateChartData = (
 
     const stepDate = new Date(startDate);
     stepDate.setMonth(stepDate.getMonth() + i);
-
     const monthName = stepDate
       .toLocaleDateString("pt-BR", { month: "short" })
       .replace(".", "");
-    const year = stepDate.getFullYear();
-    const dateLabel = `${monthName}/${year}`;
+    const year = stepDate.getFullYear().toString().slice(-2);
+    const dateLabel = `${monthName}/${year}`; // Ex: Jan/26
 
     chartData.push({
       index: i,
       name: i === 0 ? `Início (${dateLabel})` : `Parc. ${i} (${dateLabel})`,
       shortName: i === 0 ? "Início" : `P${i}`,
       valor: Number(currentVal.toFixed(2)),
+      parcela: Number(installment.toFixed(2)),
     });
   }
   return chartData;
+};
+
+// Componente Customizado para o Tooltip do Gráfico
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const match = data.name.match(/\((.*?)\)/);
+    const monthYear = match ? match[1] : data.name;
+    const parcLabel = data.index === 0 ?
+      "Início" : `Parcela ${data.index}`;
+
+    return (
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-[#426DA9]/30 p-5 rounded-2xl shadow-xl shadow-[#1D4F91]/10">
+        <p className="text-[#1D4F91] dark:text-[#8CB4F5] font-black text-sm mb-2 uppercase tracking-widest">
+          {monthYear}
+        </p>
+        <p className="text-2xl font-black text-[#C1188B] dark:text-[#FF66A3] mb-1 flex items-end gap-2">
+          {data.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            Saldo
+          </span>
+        </p>
+        {data.parcela > 0 && (
+          <p className="text-sm font-semibold text-[#426DA9] dark:text-[#8CB4F5] bg-[#426DA9]/10 py-1.5 px-3 rounded-lg inline-block mt-2">
+            {parcLabel}: {data.parcela.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          </p>
+         )}
+      </div>
+    );
+  }
+  return null;
 };
 
 export default function Simulators() {
@@ -147,10 +197,8 @@ export default function Simulators() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("Todos");
   const [analysisData, setAnalysisData] = useState<any[] | null>(null);
-
-  const { simulators, isLoading, saveDebt, updateDebt, isSaving, deleteDebt } =
-    useSimulators();
-
+  const [simulatedSummary, setSimulatedSummary] = useState<{ original: number; total: number } | null>(null);
+  const { simulators, isLoading, saveDebt, updateDebt, isSaving, deleteDebt } = useSimulators();
   const {
     register,
     handleSubmit,
@@ -173,6 +221,11 @@ export default function Simulators() {
       status: "Ativa",
     },
   });
+
+  const clearAnalysis = () => {
+    setAnalysisData(null);
+    setSimulatedSummary(null);
+  };
 
   const handleAnalyze = async () => {
     const isValid = await trigger([
@@ -198,8 +251,7 @@ export default function Simulators() {
     if (financedpayment <= 0) {
       toast({
         title: "Valor Inválido",
-        description:
-          "O valor de entrada não pode ser maior ou igual ao original.",
+        description: "O valor de entrada não pode ser maior ou igual ao original.",
         variant: "destructive",
       });
       return;
@@ -215,7 +267,7 @@ export default function Simulators() {
 
     const effectiveMonthlyRate = calculateEffectiveMonthlyRate(
       rawRateDec,
-      data.rate,
+      data.year,
       isCompound,
     );
     const chartData = generateChartData(
@@ -225,8 +277,11 @@ export default function Simulators() {
       isCompound,
       data.date,
     );
-
     setAnalysisData(chartData);
+    setSimulatedSummary({
+      original: principal,
+      total: chartData[chartData.length - 1].valor + downPayment,
+    });
     toast({ title: "Análise gerada com sucesso! 📊" });
   };
 
@@ -234,12 +289,10 @@ export default function Simulators() {
     const principal = parseCurrencyInput(data.value);
     const downPayment = parseCurrencyInput(data.downPayment || "0");
     const financedpayment = principal - downPayment;
-
     if (financedpayment <= 0) {
       toast({
         title: "Erro",
-        description:
-          "O valor financiado (Original - Entrada) deve ser maior que zero.",
+        description: "O valor financiado (Original - Entrada) deve ser maior que zero.",
         variant: "destructive",
       });
       return;
@@ -247,48 +300,34 @@ export default function Simulators() {
 
     let finalpaymentValue = 0;
     if (analysisData) {
-      finalpaymentValue =
-        analysisData[analysisData.length - 1].valor - financedpayment;
+      finalpaymentValue = analysisData[analysisData.length - 1].valor - financedpayment;
     } else {
       const rawRateDec = parseFloat(String(data.rate).replace(",", ".")) / 100;
       const isCompound = data.type === "Composto";
       const months = parseInt(String(data.installments), 10);
-      const effectiveRate = calculateEffectiveMonthlyRate(
-        rawRateDec,
-        data.rate,
-        isCompound,
-      );
 
-      const chart = generateChartData(
-        financedpayment,
-        effectiveRate,
-        months,
-        isCompound,
-        data.date,
-      );
+      const effectiveRate = calculateEffectiveMonthlyRate(rawRateDec, data.year, isCompound);
+      const chart = generateChartData(financedpayment, effectiveRate, months, isCompound, data.date);
+
       finalpaymentValue = chart[chart.length - 1].valor - financedpayment;
     }
 
     const startDate = new Date(data.date || new Date());
-    const finalDate = new Date(startDate);
-    finalDate.setMonth(finalDate.getMonth() + parseInt(String(data.installments), 10));
-
     try {
       const payload = {
         creditor: data.creditor,
         value: principal,
-        downPayment: downPayment, // Salvando a entrada no banco/estado
-        payment: finalpaymentValue, // Juros totais
+        downPayment: downPayment,
+        payment: finalpaymentValue,
         rate: parseFloat(String(data.rate).replace(",", ".")),
         status: data.status,
-        date: finalDate.toISOString(),
+        date: startDate.toISOString(),
         interest: data.type,
         interestType: data.type,
         year: data.year,
         installments: parseInt(String(data.installments), 10),
         ratePeriod: data.year,
       };
-
       if (editingId) {
         await updateDebt({ id: editingId, ...payload } as any);
       } else {
@@ -296,9 +335,7 @@ export default function Simulators() {
       }
 
       toast({
-        title: editingId
-          ? "Parcelamento atualizado! ✅"
-          : "Parcelamento salvo com sucesso! ✅",
+        title: editingId ? "Parcelamento atualizado! ✅" : "Parcelamento salvo com sucesso! ✅",
       });
       cancelEdit();
     } catch (e: any) {
@@ -312,7 +349,6 @@ export default function Simulators() {
 
   const handleEdit = (debt: any) => {
     setEditingId(debt.id || null);
-
     const formattedValue = formatCurrencyInput((debt.value * 100).toString());
     const formattedDownPayment = debt.downPayment
       ? formatCurrencyInput((debt.downPayment * 100).toString())
@@ -334,35 +370,36 @@ export default function Simulators() {
       installments: instStr,
       status: debt.status,
     });
-
     const principal = debt.value;
     const downPayment = debt.downPayment || 0;
     const financedpayment = principal - downPayment;
-
     const rawRateDec = debt.rate ? debt.rate / 100 : 0;
     const isCompound = typeStr === "Composto";
     const months = parseInt(instStr, 10);
 
-    const effectiveRate = calculateEffectiveMonthlyRate(
-      rawRateDec,
-      periodStr,
-      isCompound,
-    );
-    const chartData = generateChartData(
-      financedpayment,
-      effectiveRate,
-      months,
-      isCompound,
-      entryStr,
-    );
+    const effectiveRate = calculateEffectiveMonthlyRate(rawRateDec, periodStr, isCompound);
+    const chartData = generateChartData(financedpayment, effectiveRate, months, isCompound, entryStr);
 
     setAnalysisData(chartData);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setSimulatedSummary({
+      original: principal,
+      total: chartData[chartData.length - 1].valor + downPayment,
+    });
+    
+    // Rolar suavemente para o formulário de edição
+    setTimeout(() => {
+      const element = document.getElementById("formulario-parcelamento");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 100);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setAnalysisData(null);
+    clearAnalysis();
     reset({
       creditor: "",
       value: "",
@@ -378,12 +415,7 @@ export default function Simulators() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (
-      !window.confirm(
-        "Tem certeza que deseja excluir este parcelamento de forma permanente?",
-      )
-    )
-      return;
+    if (!window.confirm("Tem certeza que deseja excluir este parcelamento de forma permanente?")) return;
     try {
       await deleteDebt(id);
       toast({ title: "Parcelamento excluído." });
@@ -412,20 +444,52 @@ export default function Simulators() {
     toast({ title: "Relatório Excel gerado!" });
   };
 
-  // O total é calculado sobre o (Valor Original - Entrada) + Juros Projetados
   const totalParcelamentos =
     simulators?.reduce((acc, d) => {
       const financiado = (d.value || 0) - ((d as any).downPayment || 0);
       return acc + financiado + (d.payment || 0);
     }, 0) || 0;
 
-  const filteredsimulators =
-    simulators?.filter(
-      (d) => filterStatus === "Todos" || d.status === filterStatus,
-    ) || [];
+  const statusPriority: Record<string, number> = {
+    "Pendente": 1,
+    "Negociando": 2,
+    "Ativa": 3,
+    "Pago": 4,
+  };
 
+  const filteredsimulators =
+    (simulators?.filter((d) => filterStatus === "Todos" || d.status === filterStatus) || [])
+    .sort((a, b) => {
+      const priorityA = statusPriority[a.status] || 99;
+      const priorityB = statusPriority[b.status] || 99;
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      const creditorA = (a.creditor || "").toLowerCase();
+      const creditorB = (b.creditor || "").toLowerCase();
+      
+      return creditorA.localeCompare(creditorB);
+    });
+
+  const handleStatusClick = (status: string) => {
+    setFilterStatus(status);
+    setTimeout(() => {
+      const element = document.getElementById("lista-parcelamentos");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
+
+  // Inputs muito mais dinâmicos com hover, focus ring, sombras suaves e efeito de elevação
   const fieldClass =
-    "w-full border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#426DA9]/50 focus:border-[#426DA9] transition-all text-sm backdrop-blur-md";
+    "w-full border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none hover:bg-white/80 dark:hover:bg-slate-900/80 hover:border-[#426DA9]/50 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-[#426DA9]/20 focus:border-[#426DA9] hover:shadow-md focus:shadow-lg focus:-translate-y-0.5 transition-all duration-300 text-sm backdrop-blur-md";
+  
+  // Classe semelhante para os wrappers de inputs de moeda para que eles compartilhem do mesmo dinamismo
+  const currencyWrapperClass = 
+    "flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-white/80 dark:hover:bg-slate-900/80 hover:border-[#426DA9]/50 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#426DA9]/20 focus-within:border-[#426DA9] hover:shadow-md focus-within:shadow-lg focus-within:-translate-y-0.5 transition-all duration-300 backdrop-blur-md";
 
   return (
     <div className="min-h-screen relative overflow-hidden text-slate-900 dark:text-slate-100">
@@ -437,7 +501,7 @@ export default function Simulators() {
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #426DA9; border-radius: 10px; opacity: 0.5; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #1D4F91; }
         @keyframes gradientMove {
-          0% { background-position: 0% 50%; }
+               0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
@@ -480,9 +544,8 @@ export default function Simulators() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center justify-center gap-2 border border-[#426DA9]/30 bg-white/90 dark:bg-slate-900/90 text-[#1D4F91] dark:text-slate-200 px-5 py-3 rounded-xl text-sm font-semibold hover:bg-[#426DA9] hover:text-white transition-all shadow-sm group"
-          >
-            <Download className="w-4 h-4 group-hover:animate-bounce" /> Exportar
-            Excel
+           >
+            <Download className="w-4 h-4 group-hover:animate-bounce" /> Exportar Excel
           </motion.button>
         </div>
 
@@ -492,57 +555,85 @@ export default function Simulators() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#E80070]/20 rounded-3xl p-6 shadow-lg shadow-[#E80070]/5 group hover:border-[#E80070]/40 transition-colors"
+            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#E80070]/20 rounded-3xl p-6 shadow-lg shadow-[#E80070]/5 group hover:border-[#E80070]/40 transition-colors flex flex-col h-full min-h-[160px]"
           >
-            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#E80070] dark:text-[#FF66A3]">
-              <Wallet size={64} />
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#E80070] dark:text-[#FF66A3] pointer-events-none">
+               <Wallet size={64} />
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2">
+            <p className="relative z-10 text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
               Total em Parcelamentos
             </p>
-            <p className="text-3xl font-black bg-gradient-to-r from-[#E80070] to-[#C1188B] bg-clip-text text-transparent">
-              {totalParcelamentos.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
-            </p>
+            <div className="flex-1 flex items-center justify-center mt-2">
+              <p className="relative z-10 text-4xl lg:text-5xl font-black bg-gradient-to-r from-[#E80070] to-[#C1188B] bg-clip-text text-transparent">
+                {totalParcelamentos.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </p>
+            </div>
           </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#77127B]/20 rounded-3xl p-6 shadow-lg shadow-[#77127B]/5 group hover:border-[#77127B]/40 transition-colors"
+            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#77127B]/20 rounded-3xl p-6 shadow-lg shadow-[#77127B]/5 group hover:border-[#77127B]/40 transition-colors flex flex-col h-full min-h-[160px]"
           >
-            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#77127B] dark:text-[#C1188B]">
-              <Target size={64} />
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#77127B] dark:text-[#C1188B] pointer-events-none">
+               <Target size={64} />
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2">
+            <p className="relative z-10 text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
               Nº de Parcelamentos
             </p>
-            <p className="text-3xl font-black text-[#77127B] dark:text-white">
-              {simulators?.length || 0}
-            </p>
+            <div className="flex-1 flex items-center justify-center mt-2">
+              <p className="relative z-10 text-4xl lg:text-5xl font-black text-[#77127B] dark:text-white">
+                {simulators?.length || 0}
+              </p>
+            </div>
           </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#426DA9]/20 rounded-3xl p-6 shadow-lg shadow-[#426DA9]/5 group hover:border-[#426DA9]/40 transition-colors"
+            className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#426DA9]/20 rounded-3xl p-5 shadow-lg shadow-[#426DA9]/5 group hover:border-[#426DA9]/40 transition-colors flex items-center justify-center h-full min-h-[160px]"
           >
-            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#426DA9] dark:text-[#8CB4F5]">
+            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 group-hover:scale-110 transition-all text-[#426DA9] dark:text-[#8CB4F5] pointer-events-none">
               <Activity size={64} />
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-2">
-              Parcelamentos Ativos
-            </p>
-            <p className="text-3xl font-black text-[#426DA9] dark:text-white">
-              {simulators?.filter((d) => d.status === "Ativa").length || 0}
-            </p>
+            <div className="grid grid-cols-2 gap-3 w-full relative z-10">
+              <div 
+                onClick={() => handleStatusClick("Pendente")}
+                className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-[#E80070]/20 dark:hover:bg-[#E80070]/30 transition-all duration-300 border border-transparent hover:border-[#E80070]/30 flex flex-col items-center justify-center p-2 rounded-xl bg-[#E80070]/10 text-[#E80070] dark:bg-[#E80070]/20 dark:text-[#FF85BB]"
+              >
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Pendente").length || 0}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Pendente</span>
+              </div>
+              <div 
+                onClick={() => handleStatusClick("Negociando")}
+                className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all duration-300 border border-transparent hover:border-amber-400/30 flex flex-col items-center justify-center p-2 rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+              >
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Negociando").length || 0}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Negociando</span>
+              </div>
+              <div 
+                onClick={() => handleStatusClick("Ativa")}
+                className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-[#426DA9]/20 dark:hover:bg-[#426DA9]/30 transition-all duration-300 border border-transparent hover:border-[#426DA9]/30 flex flex-col items-center justify-center p-2 rounded-xl bg-[#426DA9]/10 text-[#426DA9] dark:bg-[#426DA9]/20 dark:text-[#8CB4F5]"
+              >
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Ativa").length || 0}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Ativo</span>
+              </div>
+              <div 
+                onClick={() => handleStatusClick("Pago")}
+                className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-all duration-300 border border-transparent hover:border-emerald-400/30 flex flex-col items-center justify-center p-2 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              >
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Pago").length || 0}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Pago</span>
+              </div>
+            </div>
           </motion.div>
         </div>
 
         {/* Formulário */}
         <motion.div
+          id="formulario-parcelamento"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -553,28 +644,21 @@ export default function Simulators() {
               <div
                 className={`p-2 rounded-lg ${editingId ? "bg-[#E80070]/20 text-[#E80070]" : "bg-[#E80070]/10 text-[#E80070]"}`}
               >
-                {editingId ? (
-                  <Edit2 className="w-5 h-5" />
-                ) : (
-                  <Calculator className="w-5 h-5" />
-                )}
+                {editingId ? <Edit2 className="w-5 h-5" /> : <Calculator className="w-5 h-5" />}
               </div>
-              {editingId
-                ? "Visualizando / Editando Parcelamento"
-                : "Simular & Registrar Parcelamento"}
+              {editingId ? "Editando Parcelamento" : "Simular & Registrar Parcelamento"}
             </h2>
             {editingId && (
               <button
                 onClick={cancelEdit}
-                className="text-sm flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white transition-colors"
-              >
+                className="text-sm flex items-center gap-1 bg-[#E80070]/10 px-4 py-2 rounded-xl text-[#E80070] font-bold hover:bg-[#E80070]/20 hover:text-[#C1188B] hover:scale-105 transition-all shadow-sm"
+               >
                 <X size={16} /> Fechar Edição
               </button>
             )}
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* O Grid mudou para 12 colunas no desktop para permitir a alocação perfeita */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
@@ -584,12 +668,12 @@ export default function Simulators() {
                   {...register("creditor")}
                   placeholder="Ex: Empréstimo, carro, casa própria, etc."
                   className={fieldClass}
-                  onChange={() => setAnalysisData(null)}
+                  onChange={clearAnalysis}
                 />
                 {errors.creditor && (
                   <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
                     <AlertCircle size={12} />
-                    {errors.creditor.message}
+                     {errors.creditor.message}
                   </p>
                 )}
               </div>
@@ -598,23 +682,21 @@ export default function Simulators() {
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Valor Original *
                 </label>
-                <div className="flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-md">
-                  <span className="pl-4 text-slate-500 text-sm font-medium select-none">
-                    R$
-                  </span>
+                <div className={currencyWrapperClass}>
+                  <span className="pl-4 text-slate-500 text-sm font-medium select-none pointer-events-none">R$</span>
                   <Controller
                     name="value"
                     control={control}
                     render={({ field: { onChange, value } }) => (
                       <input
-                        type="text"
+                       type="text"
                         inputMode="numeric"
                         placeholder="0,00"
                         className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
                         value={value}
                         onChange={(e) => {
                           onChange(formatCurrencyInput(e.target.value));
-                          setAnalysisData(null);
+                          clearAnalysis();
                         }}
                       />
                     )}
@@ -626,16 +708,14 @@ export default function Simulators() {
                     {errors.value.message}
                   </p>
                 )}
-              </div>
+               </div>
 
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
-                  Valor de Entrada
+                  Entrada (Opcional)
                 </label>
-                <div className="flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-md">
-                  <span className="pl-4 text-slate-500 text-sm font-medium select-none">
-                    R$
-                  </span>
+                <div className={currencyWrapperClass}>
+                  <span className="pl-4 text-slate-500 text-sm font-medium select-none pointer-events-none">R$</span>
                   <Controller
                     name="downPayment"
                     control={control}
@@ -647,9 +727,9 @@ export default function Simulators() {
                         className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
                         value={value}
                         onChange={(e) => {
-                          onChange(formatCurrencyInput(e.target.value));
-                          setAnalysisData(null);
-                        }}
+                           onChange(formatCurrencyInput(e.target.value));
+                           clearAnalysis();
+                         }}
                       />
                     )}
                   />
@@ -661,26 +741,25 @@ export default function Simulators() {
                   Status *
                 </label>
                 <select {...register("status")} className={fieldClass}>
-                  <option value="Pago">Pago</option>
                   <option value="Ativa">Ativa</option>
                   <option value="Negociando">Negociando</option>
                   <option value="Pendente">Pendente</option>
+                  <option value="Pago">Pago</option>
                 </select>
                 {errors.status && (
-                  <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
+                   <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
                     <AlertCircle size={12} />
                     {errors.status.message}
                   </p>
                 )}
-              </div>
+               </div>
 
-              {/* Linha de Baixo */}
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Início
                 </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <div className="relative group">
+                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-[#426DA9] transition-colors" />
                   <Controller
                     name="date"
                     control={control}
@@ -689,19 +768,19 @@ export default function Simulators() {
                         selected={value ? new Date(value) : null}
                         onChange={(date) => {
                           onChange(date ? date.toISOString() : null);
-                          setAnalysisData(null);
+                          clearAnalysis();
                         }}
                         dateFormat="dd/MM/yyyy"
                         locale={ptBR}
-                        placeholderText="Início do parcelamento"
+                        placeholderText="DD/MM/AAAA"
                         className={`${fieldClass} pl-10`}
-                      />
+                       />
                     )}
                   />
                 </div>
               </div>
 
-              <div className="lg:col-span-3">
+               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Tipo de Juros *
                 </label>
@@ -710,7 +789,7 @@ export default function Simulators() {
                   className={fieldClass}
                   onChange={(e) => {
                     register("type").onChange(e);
-                    setAnalysisData(null);
+                    clearAnalysis();
                   }}
                 >
                   <option value="Composto">Juros Composto</option>
@@ -718,237 +797,152 @@ export default function Simulators() {
                 </select>
               </div>
 
-              <div className="lg:col-span-3">
+               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
-                  Taxa de Juros *
+                  Taxa de Juros (%) *
                 </label>
-                <div className="flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl focus-within:ring-2 focus-within:ring-[#426DA9]/50 focus-within:border-[#426DA9] transition-all backdrop-blur-md">
+                <div className="flex gap-2">
                   <input
                     {...register("rate")}
-                    type="number"
-                    step="0.01"
-                    placeholder="Ex: 2.5"
-                    className="w-full bg-transparent pl-4 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    className={`${fieldClass} w-2/3`}
                     onChange={(e) => {
                       register("rate").onChange(e);
-                      setAnalysisData(null);
+                      clearAnalysis();
                     }}
                   />
-
-                  <div className="flex items-center border-l border-slate-200 dark:border-slate-700 ml-1">
-                    <select
-                      {...register("year")}
-                      className="bg-transparent text-slate-500 dark:text-slate-400 text-sm font-bold outline-none cursor-pointer py-3 pr-3 pl-2 appearance-none"
-                      onChange={(e) => {
-                        register("year").onChange(e);
-                        setAnalysisData(null);
-                      }}
-                    >
-                      <option value="Mensal">% a.m.</option>
-                      <option value="Anual">% a.a.</option>
-                    </select>
-                  </div>
+                  <select
+                    {...register("year")}
+                    className={`${fieldClass} w-1/3 px-2`}
+                    onChange={(e) => {
+                      register("year").onChange(e);
+                      clearAnalysis();
+                    }}
+                  >
+                    <option value="Mensal">a.m</option>
+                    <option value="Anual">a.a</option>
+                  </select>
                 </div>
-                {errors.rate && (
-                  <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
-                    <AlertCircle size={12} />
-                    {getFieldErrorMessage(errors.rate.message)}
-                  </p>
-                )}
-              </div>
+               </div>
 
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
-                  Nº de Parcelas *
+                  Nº Parcelas *
                 </label>
                 <input
                   {...register("installments")}
                   type="number"
-                  placeholder="Ex: 12"
+                  min="0"
                   className={fieldClass}
                   onChange={(e) => {
-                    register("installments").onChange(e);
-                    setAnalysisData(null);
+                     register("installments").onChange(e);
+                     clearAnalysis();
                   }}
                 />
-                {errors.installments && (
-                  <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
-                    <AlertCircle size={12} />
-                    {getFieldErrorMessage(errors.installments.message)}
-                  </p>
-                )}
               </div>
             </div>
 
+            {/* Renderização do Gráfico & Resumo */}
             <AnimatePresence>
-              {analysisData && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, height: "auto", scale: 1 }}
-                  exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                  className="mt-8 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl p-6 bg-slate-50/50 dark:bg-slate-800/20"
-                >
-                  <h3 className="font-bold text-[#1D4F91] dark:text-[#8CB4F5] mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    Evolução do Parcelamento ({getValues("type")})
+              {analysisData && simulatedSummary && (
+                 <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="pt-8 border-t border-slate-100 dark:border-slate-800/50"
+                 >
+                  <h3 className="font-bold text-xl mb-6 text-[#1D4F91] dark:text-white flex items-center gap-2">
+                    <TrendingUp className="text-[#E80070] w-5 h-5" />
+                    Projeção de Pagamento
                   </h3>
-
-                  <div className="h-64 w-full">
+                  
+                  <div className="h-[320px] w-full mb-8">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={analysisData}
-                        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                      >
+                      <AreaChart data={analysisData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
                         <defs>
-                          <linearGradient
-                            id="colorValor"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="#E80070"
-                              stopOpacity={0.3}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="#E80070"
-                              stopOpacity={0}
-                            />
+                          <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#E80070" stopOpacity={0.6} />
+                            <stop offset="95%" stopColor="#E80070" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <XAxis
-                          dataKey="shortName"
-                          stroke="#94a3b8"
-                          fontSize={11}
+                        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#cbd5e1" opacity={0.5} />
+                        <XAxis 
+                          dataKey="shortName" 
+                          tick={{ fill: '#426DA9', fontSize: 13, fontWeight: 600 }} 
+                          tickMargin={15} 
+                          axisLine={{ stroke: '#94a3b8' }}
                           tickLine={false}
-                          axisLine={false}
                         />
-                        <YAxis
-                          stroke="#94a3b8"
-                          fontSize={11}
+                        <YAxis 
+                          tick={{ fill: '#C1188B', fontSize: 12, fontWeight: 600 }} 
+                          tickFormatter={(val) => `R$ ${val}`} 
+                          axisLine={false}
                           tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(value) => `R$ ${value}`}
                         />
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          vertical={false}
-                          stroke="#e2e8f0"
-                          opacity={0.5}
-                        />
-                        <Tooltip
-                          labelFormatter={(label, payload) =>
-                            payload?.[0]?.payload?.name || label
-                          }
-                          formatter={(value: number) => [
-                            `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-                            "Valor Projetado",
-                          ]}
-                          contentStyle={{
-                            borderRadius: "12px",
-                            border: "none",
-                            boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                            fontSize: "12px",
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="valor"
-                          stroke="#E80070"
-                          strokeWidth={3}
-                          fillOpacity={1}
-                          fill="url(#colorValor)"
-                          activeDot={{
-                            r: 6,
-                            fill: "#E80070",
-                            stroke: "#fff",
-                            strokeWidth: 2,
-                          }}
-                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Area 
+                          type="monotone" 
+                          dataKey="valor" 
+                          stroke="#E80070" 
+                          strokeWidth={4} 
+                          fillOpacity={1} 
+                          fill="url(#colorValor)" 
+                         />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
 
-                  <div className="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 gap-4">
-                    <div className="text-center sm:text-left">
-                      <span className="text-slate-500 block text-xs uppercase tracking-wider font-semibold">
-                        Valor Financiado
-                      </span>
-                      <strong className="text-slate-800 dark:text-slate-200 text-lg">
-                        R${" "}
-                        {analysisData[0].valor.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </strong>
+                  {/* Resumo Final Destacado */}
+                  <div className="grid grid-cols-2 gap-4 bg-[#1D4F91]/5 dark:bg-[#1D4F91]/10 p-5 rounded-2xl mb-6 border border-[#1D4F91]/10">
+                    <div className="text-left border-r border-[#1D4F91]/10 pr-4">
+                      <p className="text-xs md:text-sm font-bold text-[#426DA9] dark:text-[#8CB4F5] uppercase tracking-widest mb-1">
+                        Valor Original
+                      </p>
+                      <p className="text-2xl md:text-3xl font-black text-[#1D4F91] dark:text-white">
+                        {simulatedSummary.original.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </p>
                     </div>
-                    <div className="hidden sm:block text-slate-300 dark:text-slate-700">
-                      ➜
-                    </div>
-                    <div className="text-center sm:text-right">
-                      <span className="text-slate-500 block text-xs uppercase tracking-wider font-semibold text-[#E80070]">
-                        Valor Final Projetado
-                      </span>
-                      <strong className="text-[#E80070] text-xl font-black">
-                        R${" "}
-                        {analysisData[
-                          analysisData.length - 1
-                        ].valor.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </strong>
+                    <div className="text-right pl-4">
+                      <p className="text-xs md:text-sm font-bold text-[#E80070] uppercase tracking-widest mb-1">
+                        Valor Total c/ Juros
+                      </p>
+                      <p className="text-2xl md:text-3xl font-black text-[#C1188B] dark:text-[#FF66A3]">
+                        {simulatedSummary.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </p>
                     </div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div className="flex justify-end gap-4 pt-6 border-t border-slate-200/50 dark:border-slate-800/50 mt-2">
-              {!analysisData ? (
-                <motion.button
+            <div className={`flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-100 dark:border-slate-800/50 ${editingId ? 'justify-end' : ''}`}>
+              {!editingId && (
+                <button
                   type="button"
                   onClick={handleAnalyze}
-                  whileHover={{
-                    scale: 1.02,
-                    boxShadow: "0 10px 25px -5px rgba(66, 109, 169, 0.4)",
-                  }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-gradient-to-r from-[#1D4F91] to-[#426DA9] text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#426DA9]/10 text-[#426DA9] dark:bg-[#426DA9]/20 dark:text-[#8CB4F5] px-6 py-4 rounded-xl font-bold hover:bg-[#426DA9]/20 dark:hover:bg-[#426DA9]/30 transition-all"
                 >
-                  <TrendingUp size={18} /> Analisar Parcelamento
-                </motion.button>
-              ) : (
-                <>
-                  <motion.button
-                    type="button"
-                    onClick={() => setAnalysisData(null)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-2 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all"
-                  >
-                    <RefreshCw size={18} /> Recalcular
-                  </motion.button>
+                  <TrendingUp size={18} /> Simular Análise
+                </button>
+              )}
 
-                  <motion.button
-                    type="submit"
-                    whileHover={{
-                      scale: 1.02,
-                      boxShadow: "0 10px 25px -5px rgba(232, 0, 112, 0.4)",
-                    }}
-                    whileTap={{ scale: 0.97 }}
-                    disabled={isSaving}
-                    className="bg-gradient-to-r from-[#E80070] to-[#C1188B] text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {editingId ? <Edit2 size={18} /> : <Plus size={18} />}
-                    {isSaving
-                      ? "Salvando..."
-                      : editingId
-                        ? "Atualizar Parcelamento"
-                        : "Registrar Parcelamento"}
-                  </motion.button>
-                </>
+              {(analysisData || editingId) && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={isSaving}
+                  type="submit"
+                  className={`flex items-center justify-center gap-2 bg-gradient-to-r from-[#E80070] to-[#C1188B] text-white rounded-xl font-bold shadow-lg shadow-[#E80070]/20 hover:shadow-xl hover:shadow-[#E80070]/30 transition-all disabled:opacity-70 ${
+                    editingId ? "px-6 py-2.5 text-sm w-full sm:w-auto" : "flex-1 px-6 py-4"
+                  }`}
+                >
+                  {isSaving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                  {editingId ? "Atualizar Parcelamento" : "Registrar Parcelamento"}
+                </motion.button>
               )}
             </div>
           </form>
@@ -956,6 +950,7 @@ export default function Simulators() {
 
         {/* Lista de Parcelamentos */}
         <motion.div
+          id="lista-parcelamentos"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -968,115 +963,118 @@ export default function Simulators() {
               </div>
               Parcelamentos Registrados
             </h2>
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-              <Filter className="w-4 h-4 text-slate-500 ml-2" />
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-[#426DA9]/50 transition-colors">
+               <Filter className="w-4 h-4 text-slate-400 ml-2" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="bg-transparent text-sm text-slate-700 dark:text-slate-300 font-medium px-2 py-1 outline-none cursor-pointer"
-              >
-                <option value="Todos">Todos os status</option>
-                <option value="Pago">Pago</option>
-                <option value="Ativa">Ativa</option>
+                className="bg-transparent border-none text-sm text-slate-700 dark:text-slate-300 outline-none pr-4 cursor-pointer"
+               >
+                <option value="Todos">Todos</option>
+                <option value="Ativa">Ativos</option>
+                <option value="Pendente">Pendentes</option>
                 <option value="Negociando">Negociando</option>
-                <option value="Pendente">Pendente</option>
+                <option value="Pago">Pagos</option>
               </select>
-            </div>
+             </div>
           </div>
 
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 opacity-50">
-              <div className="w-8 h-8 border-4 border-[#426DA9] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-[#426DA9] dark:text-slate-300 font-medium">
-                Carregando parcelamentos...
+          {!filteredsimulators.length ? (
+            <div className="text-center py-12 bg-white/40 dark:bg-slate-900/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+              <CreditCard className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-500 dark:text-slate-400 font-medium">
+                Nenhum parcelamento encontrado para este filtro.
               </p>
-            </div>
-          ) : !simulators || simulators.length === 0 ? (
-            <div className="text-center py-16 bg-white/50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-[#426DA9]/30 text-slate-600 dark:text-slate-400">
-              <Wallet className="w-12 h-12 mx-auto mb-4 text-[#426DA9]/40" />
-              <p className="font-bold text-[#1D4F91] dark:text-white text-lg mb-1">
-                Tudo limpo por aqui!
-              </p>
-              <p className="text-sm dark:text-slate-400">
-                Use o formulário acima para registrar seu primeiro parcelamento.
-              </p>
-            </div>
-          ) : filteredsimulators.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
-              Nenhum parcelamento encontrado com o status "{filterStatus}".
             </div>
           ) : (
-            <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scroll">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <AnimatePresence>
-                {filteredsimulators.map((d, i) => {
+                {filteredsimulators.map((d) => {
                   const valorOriginal = d.value || 0;
-                  const valorEntrada = (d as any).downPayment || 0;
-                  const valorFinanciado = valorOriginal - valorEntrada;
-                  const totalComJuros = valorFinanciado + (d.payment || 0);
+                  const entrada = (d as any).downPayment || 0;
+                  const totalComJuros = valorOriginal - entrada + (d.payment || 0);
+
+                  const startDateStr = d.date ? new Date(d.date) : new Date();
+                  const installmentsCount = parseInt(String((d as any).installments || 1), 10);
+                  const endDateObj = new Date(startDateStr);
+                  endDateObj.setMonth(endDateObj.getMonth() + installmentsCount);
+                  const formatMY = (dObj: Date) => {
+                    const m = dObj.toLocaleDateString("pt-BR", { month: "long" });
+                    return `${m.charAt(0).toUpperCase() + m.slice(1)}/${dObj.getFullYear()}`;
+                  };
+
+                  const startMY = formatMY(startDateStr);
+                  const endMY = formatMY(endDateObj);
+                  const valorParcela = installmentsCount > 0 ? totalComJuros / installmentsCount : 0;
 
                   return (
                     <motion.div
-                      key={d.id}
                       layout
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, x: 20 }}
-                      transition={{
-                        delay: i * 0.05,
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 24,
-                      }}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      key={d.id}
                       onClick={() => handleEdit(d)}
-                      className={`group cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white/95 dark:bg-slate-800/95 rounded-2xl border transition-all backdrop-blur-sm ${editingId === d.id ? "border-[#E80070] ring-1 ring-[#E80070]" : "border-slate-100 dark:border-slate-700 hover:border-[#426DA9]/40 hover:shadow-lg hover:shadow-[#426DA9]/5"}`}
+                      className={`group bg-white dark:bg-slate-900 border ${
+                        editingId === d.id
+                          ? "border-[#E80070] shadow-md shadow-[#E80070]/10"
+                          : "border-slate-100 dark:border-slate-800 hover:border-[#426DA9]/30 hover:-translate-y-1 hover:shadow-lg"
+                      } rounded-2xl p-5 transition-all duration-300 cursor-pointer relative overflow-hidden`}
                     >
-                      <div className="flex-1 min-w-0 mb-4 sm:mb-0">
-                        <p className="font-bold text-lg truncate text-[#1D4F91] dark:text-white group-hover:text-[#E80070] transition-colors">
-                          {d.creditor}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          <span
-                            className={`text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md ${getStatusStyle(d.status)}`}
-                          >
-                            {d.status}
-                          </span>
-                          {(d as any).installments && (
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                              {(d as any).installments} Parcelas
+                      <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[#1D4F91] to-[#426DA9] opacity-50" />
+                      <div className="flex justify-between items-start mb-4 pl-2">
+                        <div>
+                          <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 truncate pr-2 group-hover:text-[#1D4F91] dark:group-hover:text-[#8CB4F5] transition-colors">
+                            {d.creditor}
+                          </h3>
+                          <div className="flex items-center gap-3 mt-3 flex-wrap">
+                            <span
+                              className={`text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md ${getStatusStyle(
+                                d.status,
+                              )}`}
+                            >
+                              {d.status}
                             </span>
-                          )}
-                          {(d.rate || 0) > 0 && (
-                            <span className="text-xs font-medium text-[#C1188B] dark:text-[#E88CEE]">
-                              Taxa: {d.rate}%{" "}
-                              {(d as any).ratePeriod === "Anual"
-                                ? "a.a."
-                                : "a.m."}
+                            {(d as any).installments && (
+                              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                                {(d as any).installments} parcelas
+                              </span>
+                            )}
+                            {(d.rate || 0) > 0 && (
+                              <span className="text-sm font-medium text-[#C1188B] dark:text-[#E88CEE]">
+                                Taxa: {d.rate}% {(d as any).ratePeriod === "Anual" ? "a.a." : "a.m."}
+                              </span>
+                            )}
+
+                            <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-full mt-1">
+                              Início: {startMY} • Término: {endMY}
                             </span>
-                          )}
+
+                            {valorParcela > 0 && (
+                              <span className="text-sm font-bold text-[#426DA9] dark:text-[#8CB4F5] mt-1">
+                                Parcela: {valorParcela.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              </span>
+                            )}
+                         </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
-                        <div className="text-left sm:text-right mr-2">
-                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">
-                            Original:{" "}
-                            {valorOriginal.toLocaleString("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            })}
-                            {valorEntrada > 0 && (
-                              <span className="text-amber-600 dark:text-amber-400">
-                                {" "}
-                                | Entrada: -
-                                {valorEntrada.toLocaleString("pt-BR", {
-                                  style: "currency",
-                                  currency: "BRL",
-                                })}
+                      <div className="flex justify-between items-end border-t border-slate-100 dark:border-slate-800 mt-2 pt-4 pl-2">
+                        <div>
+                          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+                            Valor Total c/ Juros
+                          </p>
+                          <p className="font-black text-xl text-[#1D4F91] dark:text-white flex items-baseline gap-2">
+                            {entrada > 0 && (
+                              <span className="text-sm text-slate-400">
+                                Entrada: <strong className="text-emerald-500 dark:text-emerald-400">
+                                  {entrada.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })}
+                                </strong>
                               </span>
                             )}
-                          </p>
-                          <p className="font-black text-[15px] text-[#E80070] dark:text-[#FF66A3]">
-                            Total c/ Juros:{" "}
                             {totalComJuros.toLocaleString("pt-BR", {
                               style: "currency",
                               currency: "BRL",
