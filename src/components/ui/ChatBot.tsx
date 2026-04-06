@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Sparkles, Trash2, SendHorizontal } from "lucide-react";
+import { BotMessageSquare, Trash2, SendHorizontal } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import supabase from "../../../utils/supabase";
@@ -201,7 +201,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
     if (financialData && !initialized) {
       const analysis = generateAnalysis(financialData);
       const botMsgs: Message[] = [
-        { id: `ana-0`, role: "assistant", content: "Olá! Sou o seu Assistente I.A. Analisei seus dados mais recentes e aqui estão algumas dicas:" },
+        { id: `ana-0`, role: "assistant", content: "Olá! Sou o seu Assistente DebtView. Analisei seus dados mais recentes e aqui estão algumas dicas:" },
         ...analysis.map((t, idx) => ({ id: `ana-${idx+1}`, role: "assistant" as const, content: t })),
         { id: `ana-end`, role: "assistant", content: "Você pode me perguntar qualquer dúvida financeira! Como posso te ajudar a atingir seus objetivos hoje?" },
       ];
@@ -210,7 +210,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
       setInitialized(true);
     } else if (!financialData && !initialized) {
       const msgs: Message[] = [
-        { role: "assistant", content: "Olá! Sou o seu Assistente I.A. DebtView. Você pode cadastrar seus dados ao longo do site para uma análise personalizada de suas finanças!\n\nPosso te ajudar com dúvidas como:\n- *Qual o primeiro passo para quitar minhas contas?*\n- *Como funcionam os métodos de amortização?*" },
+        { role: "assistant", content: "Olá! Sou o seu Assistente DebtView. Você pode cadastrar seus dados ao longo do site para uma análise personalizada de suas finanças!\n\nPosso te ajudar com dúvidas como:\n- *Qual o primeiro passo para quitar minhas contas?*\n- *Como funcionam os métodos de amortização?*" },
       ];
       setMessages(msgs);
       saveHistory(msgs);
@@ -301,10 +301,10 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
 
         <div className="flex items-center gap-3 relative z-10 w-full">
           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
-            <Sparkles className="w-5 h-5 text-blue-200" />
+            <BotMessageSquare className="w-5 h-5 text-blue-200" />
           </div>
           <div>
-            <h3 className="font-bold text-white tracking-tight leading-tight">Assistente I.A.</h3>
+            <h3 className="font-bold text-white tracking-tight leading-tight">Assistente DebtView</h3>
             <p className="text-[11px] text-blue-200/80 font-medium tracking-wide">Assistente Inteligente</p>
           </div>
         </div>
@@ -315,7 +315,7 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
           <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
               <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 border border-blue-500/20 mt-1">
-                <Sparkles className="w-4 h-4 text-blue-300" />
+                <BotMessageSquare className="w-4 h-4 text-blue-300" />
               </div>
             )}
             <div
@@ -339,7 +339,7 @@ Use essas informações atualizadas agora mesmo para responder o usuário. Respo
         {isTyping && (
           <div className="flex gap-3 justify-start items-end mt-1">
             <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
-              <Sparkles className="w-4 h-4 text-blue-300 animate-pulse" />
+              <BotMessageSquare className="w-4 h-4 text-blue-300 animate-pulse" />
             </div>
             <div className="bg-slate-800 px-4 py-3 rounded-2xl rounded-tl-sm border border-slate-700 shadow-md flex gap-1.5 items-center justify-center h-10">
               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
