@@ -1,6 +1,7 @@
 import { useState, KeyboardEvent, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ArrowRight, ArrowLeft, SkipForward, X, Download } from "lucide-react";
+// Adicionado o ícone RefreshCw para o botão de reiniciar
+import { Plus, ArrowRight, ArrowLeft, SkipForward, X, Download, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx-js-style";
 import supabase from "../../utils/supabase"; 
 import { useAuth } from "../context/AuthContext"; 
@@ -242,12 +243,26 @@ export default function CalculatorSection() {
           <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
             Raio-X Financeiro
           </h2>
+          
+          {/* --- BOTÃO REINICIAR ATUALIZADO --- */}
           <MagneticButton 
             onClick={resetCalculator} 
-            className="flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 text-[#1D4F91] dark:text-[#426DA9] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:border-[#426DA9] hover:text-[#E80070] transition-all font-bold text-sm hover:shadow-md"
+            className="group relative overflow-hidden flex items-center px-6 py-3 rounded-2xl font-bold text-sm text-white shadow-lg shadow-[#1D4F91]/20 hover:shadow-[#E80070]/40 transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
           >
-            🔄 Reiniciar Calculadora
+            {/* Gradiente Padrão: Dark Blue -> Purple */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1D4F91] to-[#77127B] transition-opacity duration-500 group-hover:opacity-0" />
+            
+            {/* Gradiente de Hover: Purple -> Raspberry -> Magenta */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#77127B] via-[#C1188B] to-[#E80070] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            
+            {/* Conteúdo em z-index alto para ficar acima do fundo */}
+            <span className="relative z-10 flex items-center gap-2.5">
+              <RefreshCw className="w-4 h-4 group-hover:-rotate-180 transition-transform duration-500 ease-in-out" />
+              Reiniciar Calculadora
+            </span>
           </MagneticButton>
+          {/* --------------------------------- */}
+
         </div>
         <ResultsSection data={data} onSave={handleSaveEdits} />
       </div>

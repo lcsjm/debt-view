@@ -1,17 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Send, Bot, Sparkles, ArrowRight, Trash2 } from "lucide-react";
+import { Send, Bot, Sparkles, ArrowRight, Trash2, Maximize2, Minimize2, X } from "lucide-react";
 import supabase from "../../utils/supabase";
 import { getAICachedContext } from "../utils/aiContext";
 import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { useChat, type FinancialData } from "@/components/chat-context";
 
 interface ChatMessage {
@@ -24,7 +17,7 @@ const INITIAL_MESSAGE: ChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "Oi! Sou o assistente do Serasa Humanizado. Posso te ajudar a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Como posso ajudar?",
+    "Oi! Sou o assistente do DebtView. Posso te ajudar a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Como posso ajudar?",
 };
 
 const SUGGESTIONS = [
@@ -82,6 +75,13 @@ export function ChatSidebar() {
   const [isTyping, setIsTyping] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  
+  // Estados para o Widget Arrastável
+  const [isDetached, setIsDetached] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -142,7 +142,6 @@ export function ChatSidebar() {
 
         setTimeout(() => {
           setMessages(current => {
-            // Prevines duplicata
             if (current.length > 1) return current;
             const newMsgs = [...current, ...analysisMessages];
             saveHistory(newMsgs);
@@ -156,7 +155,6 @@ export function ChatSidebar() {
     });
   }, [financialData, isOpen, hasAnalyzed, historyLoaded]);
 
-  // Reset analysis if data is cleared (optional, depends on if financialData becomes null)
   useEffect(() => {
     if (!financialData) {
       setHasAnalyzed(false);
@@ -181,7 +179,6 @@ export function ChatSidebar() {
       setIsTyping(true);
 
       try {
-        // Fetch User Context
         const { data: { user } } = await supabase.auth.getUser();
         let userContext = "";
 
@@ -191,36 +188,28 @@ export function ChatSidebar() {
 Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SIMPLESMENTE FALE NATURALMENTE.`;
         }
 
-        const ai = new GoogleGenAI({ apiKey: "AIzaSyCCAGqDVckbXVdWZ3BhjvNpFM9IsAfFtn8" });
-
-        // Convert existing messages to Gemini format, keeping only the last 10 for context
-        const history = messages
-          .filter(m => m.id !== "welcome" && !(m.id && m.id.startsWith("analysis")))
-          .slice(-10)
-          .map(m => ({
-            role: m.role === "assistant" ? "model" as const : "user" as const,
-            parts: [{ text: m.content }]
-          }));
-
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [
-            ...history,
-            { role: 'user', parts: [{ text: messageText }] }
-          ],
-          config: {
-            systemInstruction: "Você é o assistente do Serasa Humanizado. Seu objetivo é ajudar o usuário a entender como funciona a renegociação, tirar dúvidas sobre o Método Maslow Financeiro ou simular seu orçamento. Priorize a sobrevivência do usuário (moradia, alimentação) antes do pagamento de dívidas (Método VITAL/Maslow Financeiro). Seja amigável, acolhedor e claro. Responda em Markdown. " + userContext
+        const { data, error } = await supabase.functions.invoke('chat_handler', {
+          body: { 
+            message: messageText,
+            context: userContext
           }
         });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        if (!data || !data.success) {
+          throw new Error(data?.error || "Erro desconhecido na IA.");
+        }
 
         const reply: ChatMessage = {
           id: `bot-${Date.now()}`,
           role: "assistant",
-          content: response.text || "Desculpe, não consegui gerar uma resposta.",
+          content: data.response || "Desculpe, não consegui gerar uma resposta.",
         };
         const finalMsgs = [...newMessages, reply];
         setMessages(finalMsgs);
-        saveHistory(finalMsgs);
       } catch (error) {
         console.error("Gemini API Error:", error);
         setMessages((prev) => [...prev, {
@@ -238,34 +227,142 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
   const handleClearHistory = () => {
     if (window.confirm("Certeza que deseja limpar completamente o histórico deste chat?")) {
       setMessages([INITIAL_MESSAGE]);
-      setHasAnalyzed(false); // Reinicia a analise de contexto da prox vez que abrir
-      saveHistory([INITIAL_MESSAGE]);
+      setHasAnalyzed(false);
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase.from('chat').upsert({ user_id: user.id, history: [INITIAL_MESSAGE], json_url: null }, { onConflict: 'user_id' });
+        }
+      });
     }
   };
 
+  // --- Lógica de Transição Fluida e Arrasto ---
+
+  const handleToggleDetach = () => {
+    if (!isDetached) {
+      // Quando vai para modo widget, define a posição inicial próxima de onde a sidebar já estava
+      setPosition({
+        x: Math.max(16, window.innerWidth - 440),
+        y: 24,
+      });
+    }
+    setIsDetached(!isDetached);
+  };
+
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDetached) return; // Só permite arrastar no modo widget
+    setIsDragging(true);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: position.x,
+      initialY: position.y,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [isDetached, position]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging && dragRef.current) {
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setPosition({
+        x: Math.max(0, Math.min(window.innerWidth - 400, dragRef.current.initialX + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 100, dragRef.current.initialY + dy)),
+      });
+    }
+  }, [isDragging]);
+
+  const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      setIsDragging(false);
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }, [isDragging]);
+
+
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col p-0 sm:max-w-[420px]"
+    <>
+      {/* Backdrop condicional apenas para o modo Sidebar */}
+      {!isDetached && (
+        <div 
+          className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-500 ease-in-out ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Container Unificado (Faz o morph de Sidebar para Widget) */}
+      <div
+        className={`fixed z-50 flex flex-col bg-background border-border shadow-2xl overflow-hidden
+          ${isDragging ? 'transition-none' : 'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]'}
+        `}
+        style={{
+          // Dimensões fluidas
+          width: "100%",
+          maxWidth: "420px",
+          height: isDetached ? "75vh" : "100vh",
+          maxHeight: isDetached ? "750px" : "100vh",
+          minHeight: isDetached ? "450px" : "100vh",
+          
+          // Posição Inteligente
+          top: isDetached ? position.y : 0,
+          left: isDetached ? position.x : `calc(100vw - min(100vw, 420px))`,
+          
+          // Estilo condicional
+          borderRadius: isDetached ? "0.75rem" : "0",
+          borderWidth: isDetached ? "1px" : "0 0 0 1px",
+          
+          // Lógica de aparecer/desaparecer e arrastar
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? "auto" : "none",
+          transform: isOpen 
+            ? (isDetached ? "scale(1) translateY(0)" : "translateX(0)")
+            : (isDetached ? "scale(0.95) translateY(10px)" : "translateX(100%)")
+        }}
       >
-        {/* Sidebar header */}
-        <SheetHeader className="flex-none border-b border-border px-5 py-4">
-          <div className="flex items-center gap-3">
+        {/* Cabeçalho Unificado (Arrastável se for widget) */}
+        <div
+          className={`flex-none border-b border-border px-5 py-4 flex flex-row justify-between items-center transition-colors 
+            ${isDetached ? 'cursor-move hover:bg-muted/30 active:cursor-grabbing' : 'bg-background'}`}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
+          <div className="flex items-center gap-3 select-none pointer-events-none">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <SheetTitle className="text-base text-left">Assistente Serasa</SheetTitle>
-              <SheetDescription className="text-xs text-left">
+              <div className="text-base font-semibold text-left text-foreground">Assistente DebtView</div>
+              <div className="text-xs text-left text-muted-foreground">
                 Tire suas dúvidas sobre renegociação
-              </SheetDescription>
+              </div>
             </div>
           </div>
-        </SheetHeader>
+          
+          {/* BOTÕES: Lado a Lado perfeitamente isolados */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleToggleDetach}
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+              title={isDetached ? "Fixar na Lateral" : "Destacar como Widget"}
+              onPointerDown={(e) => e.stopPropagation()} // Evita que o click arraste a tela
+            >
+              {isDetached ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-destructive hover:text-destructive-foreground text-muted-foreground transition-colors"
+              title="Fechar Chat"
+              onPointerDown={(e) => e.stopPropagation()} // Evita que o click arraste a tela
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
 
-        {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        {/* Área de Mensagens */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
           <div className="flex flex-col gap-4">
             {messages.map((msg, idx) => (
               <div
@@ -310,7 +407,6 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggestion chips -- shown only when just the welcome message exists */}
           {messages.length === 1 && !isTyping && (
             <div className="mt-6 flex flex-col gap-2">
               <p className="text-xs font-medium text-muted-foreground">
@@ -333,8 +429,8 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
           )}
         </div>
 
-        {/* Input area */}
-        <div className="flex-none border-t border-border px-5 py-4">
+        {/* Input */}
+        <div className="flex-none border-t border-border px-5 py-4 bg-background">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -368,10 +464,10 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
             </button>
           </form>
           <p className="mt-2 text-center text-[11px] text-muted-foreground/60">
-            {"As respostas do Assistente são geradas por Inteligência Artificial e podem conter imprecisões."}
+            As respostas do Assistente são geradas por I.A e podem conter imprecisões.
           </p>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </>
   );
 }

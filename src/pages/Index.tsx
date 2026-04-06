@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import CalculatorIndex from "@/components/CalculatorIndex";
 import AnalysisSection from "@/components/AnalysisSection";
-import EducationSection from "@/components/EducationSection";
+import EducationIndex from "@/components/ui/EducationIndex";
 import Footer from "@/components/footer";
 
 const Index = () => {
@@ -13,7 +13,7 @@ const Index = () => {
       <HeroSection />
       <CalculatorIndex />
       <AnalysisSection />
-      <EducationSection />
+      <EducationIndex />
        <Footer/>
     <footer/>
     </div>

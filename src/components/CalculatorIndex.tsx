@@ -1,12 +1,10 @@
-import { useState, KeyboardEvent, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ArrowRight, ArrowLeft, SkipForward, X, Download } from "lucide-react";
-import * as XLSX from "xlsx-js-style";
-import supabase from "../../utils/supabase"; 
-import { useAuth } from "../context/AuthContext"; 
+import { Plus, ArrowRight, ArrowLeft, X, RefreshCw, Lock } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
 import ResultsSection from "./ResultsSection";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; 
 
 // --- COMPONENTE MAGNETIC BUTTON ---
 const MagneticButton = ({ children, className, onClick, disabled }: any) => {
@@ -52,12 +50,12 @@ interface FinancialData {
 }
 
 const steps = [
-  { key: "divida", title: "Dívida Ativa", question: "Você possui alguma dívida ativa?", description: "Dívida ativa é qualquer valor que você deve a terceiros.", image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80", multiple: true },
-  { key: "rendaFixa", title: "Renda Fixa", question: "Deseja adicionar alguma renda fixa?", description: "Renda fixa é todo valor que você recebe regularmente.", image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&q=80", multiple: true },
-  { key: "rendaVariavel", title: "Renda Variável", question: "Deseja adicionar alguma renda variável?", description: "Freelances, comissões ou ganhos sem valor fixo.", image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80", multiple: true },
-  { key: "gastosFixos", title: "Gastos Fixos", question: "Deseja adicionar algum gasto fixo?", description: "Aluguel, financiamentos ou escola.", image: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&q=80", multiple: true },
-  { key: "gastosVariaveis", title: "Gastos Variáveis", question: "Deseja adicionar algum gasto variável?", description: "Alimentação, lazer ou transporte.", image: "https://images.unsplash.com/photo-1607006411046-bf25eb6e1da3?w=800&q=80", multiple: true },
-  { key: "investimentos", title: "Investimentos", question: "Você possui algum valor investido mensalmente?", description: "Valores aplicados para multiplicar patrimônio.", image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80", multiple: true },
+  { key: "divida", title: "Dívida Ativa", question: "Você possui alguma dívida ativa?", description: "Dívida ativa é qualquer valor que você deve a terceiros.", image: "/divida.png", multiple: true },
+  { key: "rendaFixa", title: "Renda Fixa", question: "Deseja adicionar alguma renda fixa?", description: "Renda fixa é todo valor que você recebe regularmente.", image: "/rendafixa.png", multiple: true },
+  { key: "rendaVariavel", title: "Renda Variável", question: "Deseja adicionar alguma renda variável?", description: "Freelances, comissões ou ganhos sem valor fixo.", image: "/rendavariavel.png", multiple: true },
+  { key: "gastosFixos", title: "Gastos Fixos", question: "Deseja adicionar algum gasto fixo?", description: "Aluguel, financiamentos ou escola.", image: "/gastosfixos.png", multiple: true },
+  { key: "gastosVariaveis", title: "Gastos Variáveis", question: "Deseja adicionar algum gasto variável?", description: "Alimentação, lazer ou transporte.", image: "/gastosvariaveis.png", multiple: true },
+  { key: "investimentos", title: "Investimentos", question: "Você possui algum valor investido mensalmente?", description: "Valores aplicados para multiplicar patrimônio.", image: "/investimentos.png", multiple: true },
 ];
 
 const formatCurrency = (val: string) => {
@@ -67,8 +65,8 @@ const formatCurrency = (val: string) => {
 };
 
 export default function CalculatorIndex() {
-  const { user } = useAuth(); 
   const navigate = useNavigate();
+  const { user } = useAuth(); // Recupera o usuário logado
 
   const [currentStep, setCurrentStep] = useState<number>(() => {
     const saved = localStorage.getItem("calc_step");
@@ -96,72 +94,10 @@ export default function CalculatorIndex() {
     localStorage.setItem("calc_showResults", showResults.toString());
   }, [data, currentStep, showResults]);
 
-  useEffect(() => {
-    async function fetchExistingData() {
-      if (!user) return;
-      if (localStorage.getItem("calc_forceEdit") === "true") return;
-
-      const { data: existing } = await supabase
-        .from("financial")
-        .select('*')
-        .eq('user_id', user.id)
-        .order('id', { ascending: false })
-        .limit(1)
-        .single();
-        
-      if (existing) {
-        setData({
-          divida: [], 
-          rendaFixa: [existing.fixedIncome || 0],
-          rendaVariavel: [existing.variableIncome || 0],
-          gastosFixos: [existing.fixedExpenses || 0],
-          gastosVariaveis: [existing.variableExpenses || 0],
-          investimentos: [existing.investments || 0]
-        });
-        setShowResults(true);
-      }
-    }
-    
-    if (!localStorage.getItem("calc_showResults")) {
-      fetchExistingData();
-    }
-  }, [user]);
-
   const step = steps[currentStep];
   const progressPercentage = ((currentStep + 1) / steps.length) * 100;
 
-  async function saveToSupabase(finalData: FinancialData) {
-    if (!user) return;
-
-    const payload = {
-      user_id: user.id,
-      fixedIncome: finalData.rendaFixa.reduce((acc, val) => acc + val, 0),
-      variableIncome: finalData.rendaVariavel.reduce((acc, val) => acc + val, 0),
-      fixedExpenses: finalData.gastosFixos.reduce((acc, val) => acc + val, 0),
-      variableExpenses: finalData.gastosVariaveis.reduce((acc, val) => acc + val, 0),
-      investimentos: finalData.investimentos.reduce((acc, val) => acc + val, 0),
-    };
-
-    const { data: existing } = await supabase
-      .from("financial")
-      .select('id')
-      .eq('user_id', user.id)
-      .order('id', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (existing) {
-      const { error } = await supabase.from("financial").update(payload).eq('id', existing.id);
-      if (error) console.error("Erro Supabase Update:", error.message);
-    } else {
-      const { error } = await supabase.from("financial").insert([payload]);
-      if (error) console.error("Erro Supabase Insert:", error.message);
-    }
-    
-    localStorage.removeItem("calc_forceEdit");
-  }
-
-  const handleSaveEdits = async (valores: {
+  const handleSaveEdits = (valores: {
     rendaFixa: number;
     rendaVariavel: number;
     gastosFixos: number;
@@ -179,7 +115,6 @@ export default function CalculatorIndex() {
     };
 
     setData(newData); 
-    await saveToSupabase(newData); 
   };
 
   const handleAddItem = () => {
@@ -200,13 +135,9 @@ export default function CalculatorIndex() {
     }
 
     if (currentStep === steps.length - 1) {
-      // Reseta os dados inseridos localmente antes de redirecionar
-      localStorage.removeItem("calc_data");
-      localStorage.removeItem("calc_step");
-      localStorage.removeItem("calc_showResults");
-      
-      // Envia diretamente para Auth
-      navigate("/auth");
+      // Mostra a tela de resultados. O overlay assumirá se não houver usuário logado.
+      setData(newData);
+      setShowResults(true);
       return;
     }
 
@@ -244,14 +175,42 @@ export default function CalculatorIndex() {
           <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
             Raio-X Financeiro
           </h2>
+          
           <MagneticButton 
             onClick={resetCalculator} 
-            className="flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 text-[#1D4F91] dark:text-[#426DA9] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:border-[#426DA9] hover:text-[#E80070] transition-all font-bold text-sm hover:shadow-md"
+            className="group relative overflow-hidden flex items-center px-6 py-3 rounded-2xl font-bold text-sm text-white shadow-lg shadow-[#1D4F91]/20 hover:shadow-[#E80070]/40 transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
           >
-            🔄 Reiniciar Calculadora
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1D4F91] to-[#77127B] transition-opacity duration-500 group-hover:opacity-0" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#77127B] via-[#C1188B] to-[#E80070] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            <span className="relative z-10 flex items-center gap-2.5">
+              <RefreshCw className="w-4 h-4 group-hover:-rotate-180 transition-transform duration-500 ease-in-out" />
+              Reiniciar Calculadora
+            </span>
           </MagneticButton>
         </div>
-        <ResultsSection data={data} onSave={handleSaveEdits} />
+
+        {/* --- CAMADA CONDICIONAL DE RESULTADOS EM TAMANHO CHEIO --- */}
+        <div className="w-full relative rounded-3xl overflow-hidden transition-all duration-700 ease-in-out bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-2xl">
+          
+          {!user && (
+            <div 
+              onClick={() => navigate('/auth')}
+              className="absolute inset-0 z-50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[4px] hover:bg-white/60 dark:hover:bg-gray-900/60 hover:backdrop-blur-md flex items-center justify-center group cursor-pointer transition-all duration-500"
+            >
+              <div className="transform scale-95 group-hover:scale-100 transition-all duration-500 ease-out">
+                <div className="bg-gradient-to-r from-[#1D4F91] to-[#E80070] p-[2px] rounded-2xl shadow-2xl shadow-[#E80070]/30">
+                  <button className="bg-white dark:bg-gray-900 text-[#1D4F91] dark:text-white px-10 py-5 rounded-2xl font-extrabold text-xl flex items-center gap-4 hover:bg-transparent hover:text-white transition-colors duration-300">
+                    <Lock className="w-6 h-6 text-[#E80070] group-hover:text-white transition-colors" />
+                    Entrar para ver seu Raio-X
+                    <ArrowRight className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <ResultsSection data={data} onSave={handleSaveEdits} />
+        </div>
       </div>
     );
   }
@@ -267,6 +226,7 @@ export default function CalculatorIndex() {
       </ScrollReveal>
 
       <div className="w-full bg-white dark:bg-gray-800 shadow-2xl shadow-[#1D4F91]/10 rounded-3xl overflow-hidden flex flex-col md:flex-row relative border border-gray-100 dark:border-gray-700">
+          
           <div className="absolute top-0 left-0 h-1.5 bg-gray-100 dark:bg-gray-700 w-full z-10">
             <motion.div 
               className="h-full bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070]" 
