@@ -5,7 +5,7 @@ import {
   Maximize2, 
   Minimize2, 
   X, 
-  Sparkles
+  BotMessageSquare
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Chatbot from "./ui/ChatBot";
@@ -331,7 +331,7 @@ const AssistentSection = ({
         <div className="max-w-[1366px] mx-auto px-[3%] relative z-10 w-full">
           <div className="text-center mb-10 flex flex-col items-center">
             <div className="inline-flex items-center gap-2 mb-3 bg-[#1D4F91]/10 border border-[#426DA9]/30 px-4 py-1.5 rounded-full text-[#426DA9] dark:text-[#8CB4F5] text-sm font-semibold backdrop-blur-sm">
-              <Sparkles className="w-4 h-4" />
+              <BotMessageSquare className="w-4 h-4" />
               DVChat
             </div>
             <h2
@@ -394,7 +394,7 @@ const AssistentSection = ({
                      }}
                   >
                      <div className={`flex items-center gap-2 text-white transition-opacity duration-500 ${isChatbotFloating ? "opacity-100" : "opacity-0"}`}>
-                       <Sparkles className="w-4 h-4 text-blue-200" />
+                       <BotMessageSquare className="w-4 h-4 text-blue-200" />
                        <span className="font-semibold text-sm tracking-wide">DebtView AI</span>
                      </div>
 
@@ -443,7 +443,7 @@ const AssistentSection = ({
                   onClick={() => setMinimized(false)}
                   title="Abrir DebtView AI"
                 >
-                  <Sparkles className="w-7 h-7 text-white" />
+                  <BotMessageSquare className="w-7 h-7 text-white" />
                 </div>
               </div>
             </div>

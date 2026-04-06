@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Send, Bot, Sparkles, ArrowRight, Trash2, Maximize2, Minimize2, X } from "lucide-react";
+import { Send, Bot, Sparkles, ArrowRight, Trash2, Maximize2, Minimize2, X, BotMessageSquare } from "lucide-react";
 import supabase from "../../utils/supabase";
 import { getAICachedContext } from "../utils/aiContext";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -330,7 +330,8 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
         >
           <div className="flex items-center gap-3 select-none pointer-events-none">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-              <Sparkles className="h-5 w-5 text-primary" />
+              {/* Ícone do cabeçalho alterado aqui também! */}
+              <BotMessageSquare className="h-5 w-5 text-primary" />
             </div>
             <div>
               <div className="text-base font-semibold text-left text-foreground">Assistente DebtView</div>
@@ -372,7 +373,8 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
                 <div className="flex max-w-[90%] gap-2.5">
                   {msg.role === "assistant" && (
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Bot className="h-4 w-4 text-primary" />
+                      {/* Ícone de mensagem alterado aqui! */}
+                      <BotMessageSquare className="h-4 w-4 text-primary" />
                     </div>
                   )}
                   <div
@@ -393,7 +395,8 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
               <div className="flex justify-start">
                 <div className="flex gap-2.5">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <Bot className="h-4 w-4 text-primary" />
+                    {/* Ícone de digitando alterado aqui! */}
+                    <BotMessageSquare className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex items-center gap-1.5 rounded-2xl bg-muted px-4 py-3">
                     <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:0ms]" />
