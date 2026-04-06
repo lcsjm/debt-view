@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, LogIn, UserPlus, X } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ArrowRight, Check, LogIn, UserPlus, X, Mail } from "lucide-react";
 import supabase from "../../utils/supabase";
 
 const STEPS = [
@@ -46,6 +46,7 @@ const MagneticButton = ({ children, onClick, disabled, variant = "primary", clas
 
 const Auth = () => {
   const navigate = useNavigate();
+  // step -1: Login | step -2: Esqueci a Senha | step 0+: Cadastro
   const [step, setStep] = useState(-1);
   const [showPassword, setShowPassword] = useState(false);
   const [animating, setAnimating] = useState(false);
@@ -83,6 +84,28 @@ const Auth = () => {
     setIsLoading(false);
   };
 
+  // NOVA FUNÇÃO: Dispara o e-mail de recuperação de senha
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email) {
+      setErrors({ email: "Insira seu e-mail para recuperar a senha." });
+      return;
+    }
+    
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+      redirectTo: `${window.location.origin}/reset-password`, // Adapte para a rota onde o usuário digitará a nova senha
+    });
+
+    if (error) {
+      toast({ title: "Erro", description: "Falha ao enviar e-mail: " + error.message, variant: "destructive" });
+    } else {
+      toast({ title: "E-mail enviado!", description: "Verifique sua caixa de entrada para redefinir a senha." });
+      setStep(-1); // Volta para a tela de login
+    }
+    setIsLoading(false);
+  };
+
   const handleNextStep = async () => {
     const currentStep = STEPS[step];
     
@@ -91,7 +114,6 @@ const Auth = () => {
         return;
     }
 
-    // MODIFICADO: Validação do E-mail e verificação no banco logo no primeiro passo
     if (currentStep.key === "email") {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
@@ -101,7 +123,6 @@ const Auth = () => {
 
         setIsLoading(true);
         try {
-            // Chama a RPC criada no Supabase
             const { data: emailExists, error } = await supabase.rpc('check_email_exists', { check_email: formData.email });
             
             if (error) {
@@ -172,7 +193,6 @@ const Auth = () => {
           }
         });
 
-        // Mantido como redundância caso o usuário tente burlar a interface
         if (authError) {
           if (authError.message === "User already registered") {
             throw new Error("Este e-mail já foi cadastrado anteriormente.");
@@ -231,7 +251,33 @@ const Auth = () => {
       <div className="relative z-10 w-full max-w-md mx-4 transition-all duration-500">
         <div className="backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl p-8 shadow-2xl">
           
-          {step === -1 ? (
+          {step === -2 ? (
+            // === TELA DE ESQUECI MINHA SENHA ===
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Recuperar Senha</h1>
+                <p className="text-white/50">Enviaremos um link para o seu e-mail para redefinir sua senha.</p>
+              </div>
+
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div>
+                  <input type="email" placeholder="Seu e-mail cadastrado" className={inputClass} required aria-label="Email"
+                    value={formData.email} onChange={(e) => updateField("email", e.target.value)} />
+                  {errors.email && <p className="text-[#E80070] text-sm font-medium mt-2">{errors.email}</p>}
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <MagneticButton variant="secondary" onClick={() => setStep(-1)} disabled={isLoading} className="px-4">
+                     <ArrowLeft size={18}/>
+                  </MagneticButton>
+                  <MagneticButton type="submit" className="flex-1 justify-center" disabled={isLoading}>
+                    {isLoading ? "Enviando..." : <><Mail size={18}/> Enviar Link</>}
+                  </MagneticButton>
+                </div>
+              </form>
+            </div>
+          ) : step === -1 ? (
+            // === TELA DE LOGIN ===
             <div className="animate-in fade-in zoom-in-95 duration-500">
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-white mb-2">Acessar</h1>
@@ -242,15 +288,24 @@ const Auth = () => {
                 <input type="email" placeholder="Email" className={inputClass} required aria-label="Email"
                   value={formData.email} onChange={(e) => updateField("email", e.target.value)} />
                 
-                <div className="relative">
-                  <input type={showPassword ? "text" : "password"} placeholder="Senha" className={inputClass} required aria-label="Senha"
-                    value={formData.password} onChange={(e) => updateField("password", e.target.value)} />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input type={showPassword ? "text" : "password"} placeholder="Senha" className={inputClass} required aria-label="Senha"
+                      value={formData.password} onChange={(e) => updateField("password", e.target.value)} />
+                    <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  
+                  {/* LINK ESQUECI MINHA SENHA */}
+                  <div className="flex justify-end">
+                    <button type="button" onClick={() => setStep(-2)} className="text-sm text-white/50 hover:text-white transition-colors">
+                      Esqueci minha senha
+                    </button>
+                  </div>
                 </div>
 
-                <MagneticButton type="submit" className="w-full justify-center" disabled={isLoading}>
+                <MagneticButton type="submit" className="w-full justify-center mt-2" disabled={isLoading}>
                   {isLoading ? "Entrando..." : <><LogIn size={18}/> Entrar</>}
                 </MagneticButton>
               </form>
@@ -262,6 +317,7 @@ const Auth = () => {
               </div>
             </div>
           ) : (
+            // === TELA DE CADASTRO ===
             <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-white">Criar Conta</h2>
@@ -379,7 +435,7 @@ const Auth = () => {
         </div>
       </div>
 
-      {/* RENDERIZAÇÃO CONDICIONAL DOS MODAIS */}
+      {/* RENDERIZAÇÃO CONDICIONAL DOS MODAIS (Mantidos Exatamente Iguais) */}
       {activeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-slate-800 border border-white/20 rounded-2xl p-6 max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
