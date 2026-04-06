@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn, Sun, Moon, MessageCircle } from "lucide-react";
+import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn, Sun, Moon, MessageCircle, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useChat } from "@/components/chat-context";
@@ -72,7 +72,7 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 dark:bg-background/95 backdrop-blur-md shadow-lg dark:shadow-none border-b border-transparent dark:border-border/40 transition-colors duration-300">
-      <div className="container mx-auto flex items-center justify-between py-3 px-4">
+      <div className="container mx-auto flex items-center justify-between py-3 md:py-4 px-4">
         {/* Logo */}
         <a href="#hero" className="flex items-center gap-3" onClick={() => scrollTo("#hero")}>
           <span className="font-heading font-bold text-primary-foreground text-lg hidden sm:inline">
@@ -93,7 +93,7 @@ const Header = () => {
 
           <MagneticIcon key="sobre" onClick={() => toAbout()}>
             <div className="flex items-center gap-1.5 text-sm font-medium">
-              <BookOpen size={20} />
+              <UserRound size={20} />
               <span>Sobre</span>
             </div>
           </MagneticIcon>
@@ -144,7 +144,7 @@ const Header = () => {
             >
               <LogIn size={18} />
             </motion.span>
-            Entrar
+            Acessar
           </motion.button>
 
           {/* Mobile menu toggle */}
@@ -183,7 +183,7 @@ const Header = () => {
                 className="btn-raspberry-serasa mt-2 flex items-center justify-center gap-2"
               >
                 <LogIn size={18} />
-                Entrar
+                Acessar
               </motion.button>
             </div>
           </motion.nav>

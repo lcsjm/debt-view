@@ -1,324 +1,395 @@
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { Download, AlertTriangle, CheckCircle } from "lucide-react";
-import * as XLSX from "xlsx";
+import { useState, KeyboardEvent, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+// Adicionado o ícone RefreshCw para o botão de reiniciar
+import { Plus, ArrowRight, ArrowLeft, SkipForward, X, Download, RefreshCw } from "lucide-react";
+import * as XLSX from "xlsx-js-style";
+import supabase from "../../utils/supabase"; 
+import { useAuth } from "../context/AuthContext"; 
 import ScrollReveal from "./ScrollReveal";
+import ResultsSection from "./ResultsSection";
 
-const COLORS = {
-  primary: "hsl(213, 66%, 34%)",
-  light: "hsl(213, 43%, 46%)",
-  secondary: "hsl(298, 75%, 28%)",
-  raspberry: "hsl(320, 79%, 43%)",
-  magenta: "hsl(331, 100%, 45%)",
-  muted: "hsl(220, 14%, 75%)",
+// --- COMPONENTE MAGNETIC BUTTON ---
+const MagneticButton = ({ children, className, onClick, disabled }: any) => {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouse = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return; 
+    const { clientX, clientY } = e;
+    const { height, width, left, top } = ref.current!.getBoundingClientRect();
+    const middleX = clientX - (left + width / 2);
+    const middleY = clientY - (top + height / 2);
+    setPosition({ x: middleX * 0.3, y: middleY * 0.3 }); 
+  };
+
+  const reset = () => {
+    setPosition({ x: 0, y: 0 });
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      onMouseMove={handleMouse}
+      onMouseLeave={reset}
+      animate={{ x: position.x, y: position.y }}
+      transition={{ type: "spring", stiffness: 300, damping: 20, mass: 0.5 }}
+      className={className}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </motion.button>
+  );
 };
 
-interface FormData {
-  renda: number;
-  gastosFixos: number;
-  gastosVariaveis: number;
-  dividas: number;
-  investimentos: number;
-  wantsXlsx: boolean | null;
+interface FinancialData {
+  divida: number[];
+  rendaFixa: number[];
+  rendaVariavel: number[];
+  gastosFixos: number[];
+  gastosVariaveis: number[];
+  investimentos: number[];
 }
 
-const CalculatorSection = () => {
-  const [step, setStep] = useState(0);
-  const [showResults, setShowResults] = useState(false);
-  const [form, setForm] = useState<FormData>({
-    renda: 0,
-    gastosFixos: 0,
-    gastosVariaveis: 0,
-    dividas: 0,
-    investimentos: 0,
-    wantsXlsx: null,
+// --- NOTA DO DESENVOLVEDOR ---
+// As imagens abaixo estão sendo servidas da pasta 'public'.
+// Certifique-se de que as extensões de arquivo (.jpg, .png, etc.)
+// correspondem exatamente aos arquivos reais na sua pasta 'public'.
+const steps = [
+  { key: "divida", title: "Dívida Ativa", question: "Você possui alguma dívida ativa?", description: "Dívida ativa é qualquer valor que você deve a terceiros.", image: "/divida.png", multiple: true },
+  { key: "rendaFixa", title: "Renda Fixa", question: "Deseja adicionar alguma renda fixa?", description: "Renda fixa é todo valor que você recebe regularmente.", image: "/rendafixa.png", multiple: true },
+  { key: "rendaVariavel", title: "Renda Variável", question: "Deseja adicionar alguma renda variável?", description: "Freelances, comissões ou ganhos sem valor fixo.", image: "/rendavariavel.png", multiple: true },
+  { key: "gastosFixos", title: "Gastos Fixos", question: "Deseja adicionar algum gasto fixo?", description: "Aluguel, financiamentos ou escola.", image: "/gastosfixos.png", multiple: true },
+  { key: "gastosVariaveis", title: "Gastos Variáveis", question: "Deseja adicionar algum gasto variável?", description: "Alimentação, lazer ou transporte.", image: "/gastosvariaveis.png", multiple: true },
+  { key: "investimentos", title: "Investimentos", question: "Você possui algum valor investido mensalmente?", description: "Valores aplicados para multiplicar patrimônio.", image: "/investimentos.png", multiple: true },
+];
+
+const formatCurrency = (val: string) => {
+  const num = val.replace(/\D/g, "");
+  const parsed = (parseInt(num || "0") / 100).toFixed(2);
+  return parsed.replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+export default function CalculatorSection() {
+  const { user } = useAuth(); 
+
+  const [currentStep, setCurrentStep] = useState<number>(() => {
+    const saved = localStorage.getItem("calc_step");
+    return saved ? parseInt(saved) : 0;
   });
 
-  const questions = [
-    { key: "renda" as const, label: "Qual é a sua renda mensal total?", icon: "💰" },
-    { key: "gastosFixos" as const, label: "Qual o valor dos seus gastos fixos mensais?", icon: "🏠" },
-    { key: "gastosVariaveis" as const, label: "Qual o valor dos seus gastos variáveis mensais?", icon: "🛒" },
-    { key: "dividas" as const, label: "Qual o valor total das suas dívidas?", icon: "📋" },
-    { key: "investimentos" as const, label: "Quanto você investe por mês?", icon: "📈" },
-  ];
+  const [data, setData] = useState<FinancialData>(() => {
+    const saved = localStorage.getItem("calc_data");
+    return saved ? JSON.parse(saved) : {
+      divida: [], rendaFixa: [], rendaVariavel: [], gastosFixos: [], gastosVariaveis: [], investimentos: [],
+    };
+  });
 
-  const handleSubmit = () => {
-    if (step < questions.length) {
-      setStep(step + 1);
-    } else if (form.wantsXlsx === null) {
-      return;
+  const [showResults, setShowResults] = useState<boolean>(() => {
+    return localStorage.getItem("calc_showResults") === "true";
+  });
+
+  const [inputValue, setInputValue] = useState("");
+  const [items, setItems] = useState<number[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    localStorage.setItem("calc_data", JSON.stringify(data));
+    localStorage.setItem("calc_step", currentStep.toString());
+    localStorage.setItem("calc_showResults", showResults.toString());
+  }, [data, currentStep, showResults]);
+
+  useEffect(() => {
+    async function fetchExistingData() {
+      if (!user) return;
+      if (localStorage.getItem("calc_forceEdit") === "true") return;
+
+      const { data: existing } = await supabase
+        .from("financial")
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: false })
+        .limit(1)
+        .single();
+        
+      if (existing) {
+        setData({
+          divida: [], 
+          rendaFixa: [existing.fixedIncome || 0],
+          rendaVariavel: [existing.variableIncome || 0],
+          gastosFixos: [existing.fixedExpenses || 0],
+          gastosVariaveis: [existing.variableExpenses || 0],
+          investimentos: [existing.investments || 0]
+        });
+        setShowResults(true);
+      }
+    }
+    
+    if (!localStorage.getItem("calc_showResults")) {
+      fetchExistingData();
+    }
+  }, [user]);
+
+  const step = steps[currentStep];
+  const progressPercentage = ((currentStep + 1) / steps.length) * 100;
+
+  async function saveToSupabase(finalData: FinancialData) {
+    if (!user) return;
+
+    const payload = {
+      user_id: user.id,
+      fixedIncome: finalData.rendaFixa.reduce((acc, val) => acc + val, 0),
+      variableIncome: finalData.rendaVariavel.reduce((acc, val) => acc + val, 0),
+      fixedExpenses: finalData.gastosFixos.reduce((acc, val) => acc + val, 0),
+      variableExpenses: finalData.gastosVariaveis.reduce((acc, val) => acc + val, 0),
+      investments: finalData.investimentos.reduce((acc, val) => acc + val, 0),
+    };
+
+    const { data: existing } = await supabase
+      .from("financial")
+      .select('id')
+      .eq('user_id', user.id)
+      .order('id', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (existing) {
+      const { error } = await supabase.from("financial").update(payload).eq('id', existing.id);
+      if (error) console.error("Erro Supabase Update:", error.message);
     } else {
-      setShowResults(true);
+      const { error } = await supabase.from("financial").insert([payload]);
+      if (error) console.error("Erro Supabase Insert:", error.message);
+    }
+    
+    localStorage.removeItem("calc_forceEdit");
+  }
+
+  const handleSaveEdits = async (valores: {
+    rendaFixa: number;
+    rendaVariavel: number;
+    gastosFixos: number;
+    gastosVariaveis: number;
+    dividas: number;
+    investimentos: number;
+  }) => {
+    const newData: FinancialData = {
+      rendaFixa: [valores.rendaFixa],
+      rendaVariavel: [valores.rendaVariavel],
+      gastosFixos: [valores.gastosFixos],
+      gastosVariaveis: [valores.gastosVariaveis],
+      divida: [valores.dividas], 
+      investimentos: [valores.investimentos]
+    };
+
+    setData(newData); 
+    await saveToSupabase(newData); 
+  };
+
+  const handleAddItem = () => {
+    const num = parseFloat(inputValue.replace(/\./g, "").replace(",", ".")) || 0;
+    if (num > 0) {
+      setItems([...items, num]);
+      setInputValue("");
     }
   };
 
-  const saldo = form.renda - form.gastosFixos - form.gastosVariaveis - form.investimentos;
+  const handleNext = () => {
+    const num = parseFloat(inputValue.replace(/\./g, "").replace(",", ".")) || 0;
+    const newData = { ...data };
 
-  const pieData = useMemo(() => [
-    { name: "Gastos Fixos", value: form.gastosFixos },
-    { name: "Gastos Variáveis", value: form.gastosVariaveis },
-    { name: "Investimentos", value: form.investimentos },
-    { name: "Saldo Livre", value: Math.max(0, saldo) },
-  ], [form, saldo]);
+    if (step.multiple) {
+      const allItems = num > 0 ? [...items, num] : items;
+      (newData as any)[step.key] = allItems;
+    }
 
-  const barData = useMemo(() => [
-    { name: "Renda", value: form.renda },
-    { name: "G. Fixos", value: form.gastosFixos },
-    { name: "G. Variáveis", value: form.gastosVariaveis },
-    { name: "Dívidas", value: form.dividas },
-    { name: "Investimentos", value: form.investimentos },
-  ], [form]);
+    if (currentStep === steps.length - 1) {
+      setData(newData);
+      setShowResults(true);
+      saveToSupabase(newData);
+      return;
+    }
 
-  const pieColors = [COLORS.primary, COLORS.raspberry, COLORS.secondary, COLORS.light];
-
-  const downloadXlsx = () => {
-    const ws = XLSX.utils.json_to_sheet([
-      { Categoria: "Renda Mensal", "Valor (R$)": form.renda },
-      { Categoria: "Gastos Fixos", "Valor (R$)": form.gastosFixos },
-      { Categoria: "Gastos Variáveis", "Valor (R$)": form.gastosVariaveis },
-      { Categoria: "Dívidas Totais", "Valor (R$)": form.dividas },
-      { Categoria: "Investimentos", "Valor (R$)": form.investimentos },
-      { Categoria: "Saldo Livre", "Valor (R$)": saldo },
-      { Categoria: "% Gastos Fixos", "Valor (R$)": form.renda > 0 ? ((form.gastosFixos / form.renda) * 100).toFixed(1) + "%" : "0%" },
-      { Categoria: "% Gastos Variáveis", "Valor (R$)": form.renda > 0 ? ((form.gastosVariaveis / form.renda) * 100).toFixed(1) + "%" : "0%" },
-    ]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Análise Financeira");
-    XLSX.writeFile(wb, "DebtView_Analise.xlsx");
+    setHistory([...history, { data: { ...data }, items }]);
+    setData(newData);
+    setCurrentStep(currentStep + 1);
+    setInputValue("");
+    setItems([]);
   };
 
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const handleBack = () => {
+    if (history.length === 0) {
+        if(currentStep > 0) setCurrentStep(currentStep - 1);
+        return;
+    }
+    const prev = history[history.length - 1];
+    setData(prev.data);
+    setItems(prev.items);
+    setHistory(history.slice(0, -1));
+    setCurrentStep(currentStep - 1);
+  };
 
-  const currentValue = step < questions.length ? form[questions[step].key] : 0;
+  const resetCalculator = () => {
+    localStorage.removeItem("calc_data");
+    localStorage.removeItem("calc_step");
+    localStorage.removeItem("calc_showResults");
+    localStorage.setItem("calc_forceEdit", "true");
+    window.location.reload(); 
+  };
+
+  if (showResults) {
+    return (
+      <div className="w-full relative animate-in fade-in duration-500">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
+            Raio-X Financeiro
+          </h2>
+          
+          {/* --- BOTÃO REINICIAR ATUALIZADO --- */}
+          <MagneticButton 
+            onClick={resetCalculator} 
+            className="group relative overflow-hidden flex items-center px-6 py-3 rounded-2xl font-bold text-sm text-white shadow-lg shadow-[#1D4F91]/20 hover:shadow-[#E80070]/40 transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+          >
+            {/* Gradiente Padrão: Dark Blue -> Purple */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1D4F91] to-[#77127B] transition-opacity duration-500 group-hover:opacity-0" />
+            
+            {/* Gradiente de Hover: Purple -> Raspberry -> Magenta */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#77127B] via-[#C1188B] to-[#E80070] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            
+            {/* Conteúdo em z-index alto para ficar acima do fundo */}
+            <span className="relative z-10 flex items-center gap-2.5">
+              <RefreshCw className="w-4 h-4 group-hover:-rotate-180 transition-transform duration-500 ease-in-out" />
+              Reiniciar Calculadora
+            </span>
+          </MagneticButton>
+          {/* --------------------------------- */}
+
+        </div>
+        <ResultsSection data={data} onSave={handleSaveEdits} />
+      </div>
+    );
+  }
 
   return (
-    <section id="calculator" className="py-24 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <ScrollReveal>
-          <h2 className="fluid-title-lg font-heading font-bold text-center text-foreground mb-4">
-            Calculadora Financeira
+    <div id="calculator" className="w-full animate-in slide-in-from-bottom-4 duration-500">
+      <ScrollReveal>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
+            Raio-X Financeiro
           </h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto fluid-body">
-            Responda algumas perguntas para analisar sua situação financeira
-          </p>
-        </ScrollReveal>
+        </div>
+      </ScrollReveal>
 
-        {!showResults ? (
-          <ScrollReveal>
-            <div className="max-w-lg mx-auto">
-              {step < questions.length ? (
-                <motion.div
-                  key={step}
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  className="neu-card p-8"
-                >
-                  <div className="text-center mb-6">
-                    <span className="text-4xl mb-3 block">{questions[step].icon}</span>
-                    <h3 className="font-heading font-semibold text-lg text-foreground">{questions[step].label}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Pergunta {step + 1} de {questions.length + 1}</p>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">R$</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1000000000}
-                        value={currentValue || ""}
-                        onChange={(e) => {
-                          const val = Math.min(Number(e.target.value), 1000000000);
-                          setForm({ ...form, [questions[step].key]: val });
-                        }}
-                        className="neu-btn w-full py-4 pl-12 pr-4 text-lg font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="0,00"
+      <div className="w-full bg-white dark:bg-gray-800 shadow-2xl shadow-[#1D4F91]/10 rounded-3xl overflow-hidden flex flex-col md:flex-row relative border border-gray-100 dark:border-gray-700">
+          <div className="absolute top-0 left-0 h-1.5 bg-gray-100 dark:bg-gray-700 w-full z-10">
+            <motion.div 
+              className="h-full bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070]" 
+              initial={{ width: 0 }} 
+              animate={{ width: `${progressPercentage}%` }} 
+              transition={{ duration: 0.5, ease: "easeInOut" }} 
+            />
+          </div>
+
+          <div className="w-full h-48 md:h-auto md:w-5/12 relative bg-gray-900 overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={step.image} 
+                src={step.image} 
+                alt={step.title} 
+                initial={{ scale: 1.05, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 0.7 }} 
+                exit={{ scale: 0.95, opacity: 0 }} 
+                transition={{ duration: 0.4 }} 
+                className="absolute inset-0 w-full h-full object-cover" 
+              />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1D4F91]/90 via-[#1D4F91]/40 to-transparent flex items-end p-8">
+              <p className="text-white text-lg font-medium drop-shadow-md">{step.description}</p>
+            </div>
+          </div>
+
+          <div className="w-full md:w-7/12 p-8 md:p-12 flex flex-col justify-center min-h-[500px]">
+            <AnimatePresence mode="wait">
+              <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="flex flex-col h-full w-full">
+                
+                <motion.div layout className="mb-3 text-sm font-extrabold text-[#C1188B] uppercase tracking-widest bg-[#C1188B]/10 dark:bg-[#C1188B]/20 inline-block px-4 py-1.5 rounded-full w-max">
+                  Passo {currentStep + 1} de {steps.length}
+                </motion.div>
+                
+                <motion.h3 layout className="text-3xl font-extrabold text-[#1D4F91] dark:text-white mb-3 tracking-tight">
+                  {step.title}
+                </motion.h3>
+                <motion.p layout className="text-gray-500 dark:text-gray-300 mb-8 text-lg leading-relaxed">
+                  {step.question}
+                </motion.p>
+
+                <div className="flex flex-col flex-grow justify-end">
+                  {items.length > 0 && (
+                    <motion.div layout className="flex flex-wrap gap-2.5 mb-6 max-h-[160px] overflow-y-auto pr-2 pb-2 custom-scrollbar">
+                      <AnimatePresence>
+                        {items.map((item, i) => (
+                          <motion.div 
+                            layout
+                            initial={{ scale: 0.8, opacity: 0, y: 10 }} 
+                            animate={{ scale: 1, opacity: 1, y: 0 }} 
+                            exit={{ scale: 0.8, opacity: 0, width: 0 }}
+                            transition={{ duration: 0.2 }}
+                            key={i} 
+                            className="flex items-center gap-2 bg-[#426DA9]/10 dark:bg-[#426DA9]/20 border border-[#426DA9]/30 text-[#1D4F91] dark:text-[#426DA9] px-4 py-2.5 rounded-full font-bold shadow-sm"
+                          >
+                            R$ {item.toFixed(2).replace(".", ",")}
+                            <MagneticButton 
+                              onClick={() => setItems(items.filter((_, idx) => idx !== i))} 
+                              className="text-[#E80070] hover:text-[#C1188B] hover:scale-110 transition-all p-1 flex items-center justify-center"
+                            >
+                              <X className="w-4 h-4" />
+                            </MagneticButton>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+
+                  <motion.div layout className="flex flex-col sm:flex-row gap-4 mt-auto mb-6">
+                    <div className="relative flex-1 group">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg group-focus-within:text-[#E80070] dark:group-focus-within:text-[#E80070] transition-colors">R$</span>
+                      <input 
+                        value={inputValue} 
+                        onChange={(e) => setInputValue(formatCurrency(e.target.value))} 
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddItem(); }}
+                        className="w-full h-14 pl-12 pr-4 border-2 border-gray-200 bg-gray-50 text-gray-900 focus:bg-white focus:border-[#E80070] focus:ring-4 focus:ring-[#E80070]/10 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:bg-gray-700 dark:focus:border-[#E80070] dark:focus:text-white dark:focus:ring-[#E80070]/20 rounded-2xl outline-none transition-all font-bold text-lg" 
+                        placeholder="0,00" 
                       />
                     </div>
-                    <div className="flex gap-3">
-                      {step > 0 && (
-                        <button onClick={() => setStep(step - 1)} className="btn-light-blue-serasa flex-1">
-                          Voltar
-                        </button>
-                      )}
-                      <button onClick={handleSubmit} className="btn-primary-serasa flex-1">
-                        Próximo
-                      </button>
-                    </div>
-                  </div>
+                    <MagneticButton 
+                      onClick={handleAddItem} 
+                      className="h-14 px-8 border-2 border-[#426DA9] text-[#426DA9] hover:bg-[#426DA9] hover:text-white rounded-2xl flex items-center justify-center gap-2 font-bold transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-[#426DA9] active:scale-95" 
+                      disabled={!inputValue || inputValue === "0,00"}
+                    >
+                      <Plus size={20} /> Adicionar
+                    </MagneticButton>
+                  </motion.div>
+                </div>
+
+                <motion.div layout className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-gray-700 mt-2 gap-4">
+                  <MagneticButton 
+                    onClick={handleBack} 
+                    disabled={currentStep === 0 && history.length === 0} 
+                    className="bg-gradient-to-r from-[#C1188B] to-[#E80070] hover:from-[#77127B] hover:to-[#C1188B] text-white px-8 py-3.5 rounded-2xl flex items-center gap-3 font-bold shadow-lg shadow-[#E80070]/30 hover:shadow-[#E80070]/50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-[#C1188B] disabled:hover:to-[#E80070] disabled:shadow-none"
+                  >
+                    <ArrowLeft size={20} /> Voltar
+                  </MagneticButton>
+                  <MagneticButton 
+                    onClick={handleNext} 
+                    className="bg-gradient-to-r from-[#C1188B] to-[#E80070] hover:from-[#77127B] hover:to-[#C1188B] text-white px-8 py-3.5 rounded-2xl flex items-center gap-3 font-bold shadow-lg shadow-[#E80070]/30 hover:shadow-[#E80070]/50 transition-all active:scale-95"
+                  >
+                    {currentStep === steps.length - 1 ? "Ver Resultados" : "Próximo"} <ArrowRight size={20} />
+                  </MagneticButton>
                 </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="neu-card p-8"
-                >
-                  <div className="text-center mb-6">
-                    <span className="text-4xl mb-3 block">📊</span>
-                    <h3 className="font-heading font-semibold text-lg text-foreground">
-                      Você deseja uma planilha digital com os dados informados? (.xlsx)
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">Pergunta {questions.length + 1} de {questions.length + 1}</p>
-                  </div>
-                  <div className="flex gap-4 justify-center mb-6">
-                    <button
-                      onClick={() => setForm({ ...form, wantsXlsx: true })}
-                      className={`neu-btn px-8 py-3 font-semibold transition-all duration-300 ${
-                        form.wantsXlsx === true ? "ring-2 ring-primary bg-primary/10 text-primary" : "text-foreground"
-                      }`}
-                    >
-                      Sim
-                    </button>
-                    <button
-                      onClick={() => setForm({ ...form, wantsXlsx: false })}
-                      className={`neu-btn px-8 py-3 font-semibold transition-all duration-300 ${
-                        form.wantsXlsx === false ? "ring-2 ring-primary bg-primary/10 text-primary" : "text-foreground"
-                      }`}
-                    >
-                      Não
-                    </button>
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={() => setStep(step - 1)} className="btn-light-blue-serasa flex-1">
-                      Voltar
-                    </button>
-                    <button
-                      onClick={handleSubmit}
-                      disabled={form.wantsXlsx === null}
-                      className="btn-primary-serasa flex-1 disabled:opacity-50"
-                    >
-                      Ver Resultados
-                    </button>
-                  </div>
-                </motion.div>
-              )}
 
-              {/* Progress bar */}
-              <div className="mt-6 h-2 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.raspberry})` }}
-                  animate={{ width: `${((step + 1) / (questions.length + 1)) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </div>
-          </ScrollReveal>
-        ) : (
-          <ScrollReveal>
-            <div className="max-w-4xl mx-auto">
-              {/* Alerts */}
-              <AlertsPanel renda={form.renda} gastosFixos={form.gastosFixos} gastosVariaveis={form.gastosVariaveis} />
-
-              {/* Charts */}
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <div className="neu-card p-6">
-                  <h3 className="font-heading font-semibold text-foreground mb-4 text-center">Distribuição</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie data={pieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                        {pieData.map((_, i) => (
-                          <Cell key={i} fill={pieColors[i % pieColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="neu-card p-6">
-                  <h3 className="font-heading font-semibold text-foreground mb-4 text-center">Comparativo</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={barData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 85%)" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                      <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                        {barData.map((_, i) => (
-                          <Cell key={i} fill={Object.values(COLORS)[i % 5]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div className="neu-card p-6 mb-6">
-                <h3 className="font-heading font-semibold text-foreground mb-4 text-center">Resumo</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {[
-                    { label: "Renda", value: form.renda, color: "text-primary" },
-                    { label: "Gastos Fixos", value: form.gastosFixos, color: "text-foreground" },
-                    { label: "Gastos Variáveis", value: form.gastosVariaveis, color: "text-raspberry" },
-                    { label: "Dívidas", value: form.dividas, color: "text-magenta" },
-                    { label: "Investimentos", value: form.investimentos, color: "text-secondary" },
-                    { label: "Saldo Livre", value: saldo, color: saldo >= 0 ? "text-primary" : "text-destructive" },
-                  ].map((item) => (
-                    <div key={item.label} className="text-center">
-                      <p className="text-sm text-muted-foreground">{item.label}</p>
-                      <p className={`font-heading font-bold text-lg ${item.color}`}>{formatCurrency(item.value)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4 justify-center">
-                {form.wantsXlsx && (
-                  <button onClick={downloadXlsx} className="btn-primary-serasa flex items-center gap-2">
-                    <Download size={18} />
-                    Baixar Planilha (.xlsx)
-                  </button>
-                )}
-                <button
-                  onClick={() => { setShowResults(false); setStep(0); setForm({ renda: 0, gastosFixos: 0, gastosVariaveis: 0, dividas: 0, investimentos: 0, wantsXlsx: null }); }}
-                  className="btn-light-blue-serasa"
-                >
-                  Recalcular
-                </button>
-              </div>
-            </div>
-          </ScrollReveal>
-        )}
-      </div>
-    </section>
-  );
-};
-
-const AlertsPanel = ({ renda, gastosFixos, gastosVariaveis }: { renda: number; gastosFixos: number; gastosVariaveis: number }) => {
-  if (renda <= 0) return null;
-  const fixosPct = (gastosFixos / renda) * 100;
-  const varPct = (gastosVariaveis / renda) * 100;
-  const alerts: { msg: string; level: "warning" | "danger" }[] = [];
-
-  if (fixosPct > 60) alerts.push({ msg: "Atenção, seus gastos fixos estão muito altos.", level: "danger" });
-  else if (fixosPct >= 51) alerts.push({ msg: "Cuidado, seus gastos fixos estão no limite.", level: "warning" });
-
-  if (varPct > 40) alerts.push({ msg: "Atenção, seus gastos variáveis estão muito altos, é preciso encontrar uma maneira de reduzi-los.", level: "danger" });
-  else if (varPct >= 31) alerts.push({ msg: "Cuidado, seus gastos variáveis estão no limite.", level: "warning" });
-
-  if (alerts.length === 0) return (
-    <div className="mb-6 p-4 neu-card flex items-center gap-3 text-primary">
-      <CheckCircle size={22} />
-      <span className="font-medium">Seus gastos parecem equilibrados. Continue assim!</span>
-    </div>
-  );
-
-  return (
-    <div className="mb-6 flex flex-col gap-3">
-      {alerts.map((a, i) => (
-        <div key={i} className={`p-4 rounded-xl flex items-center gap-3 font-medium ${
-          a.level === "danger" ? "bg-destructive/10 text-destructive" : "bg-magenta/10 text-magenta"
-        }`}>
-          <AlertTriangle size={22} />
-          <span>{a.msg}</span>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
-      ))}
     </div>
   );
-};
-
-export default CalculatorSection;
+}

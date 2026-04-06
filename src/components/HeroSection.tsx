@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import hero1 from "@/assets/hero-1.jpg";
-import hero2 from "@/assets/hero-2.jpg";
+import hero2 from "@/assets/hero-2.png";
 import hero3 from "@/assets/hero-3.jpg";
 
 const slides = [
@@ -14,49 +14,57 @@ const slides = [
   {
     image: hero2,
     title: "Liberte-se das dívidas",
-    subtitle: "Planeje sua saída do endividamento com ferramentas profissionais.",
+    subtitle: "Planeje sua saída do endividamento, simule parcelamentos, tudo com nossas ferramentas profissionais.",
   },
   {
     image: hero3,
     title: "Invista no seu futuro",
-    subtitle: "Aprenda sobre investimentos e faça seu dinheiro trabalhar para você.",
+    subtitle: "Aprenda sobre investimentos, pirâmide de Masllow, entre outros.",
   },
 ];
 
 const HeroSection = () => {
   const [current, setCurrent] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   const next = useCallback(() => setCurrent((p) => (p + 1) % slides.length), []);
   const prev = useCallback(() => setCurrent((p) => (p - 1 + slides.length) % slides.length), []);
 
   useEffect(() => {
+    if (isHovered) return; // Pausa o timer se o mouse estiver sobre o carrossel
+    
     const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
-  }, [next]);
+  }, [next, isHovered]);
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Carousel backgrounds */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={current}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
-          className="absolute inset-0 z-0"
-        >
-          <img
+    <section 
+      id="hero" 
+      className="relative min-h-screen flex items-center overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Base background to prevent white flashes during transition */}
+      <div className="absolute inset-0 z-0 bg-background">
+        <AnimatePresence>
+          <motion.img
+            key={current}
             src={slides[current].image}
             alt=""
-            className="w-full h-full object-cover"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 dark:from-background/95 via-primary/60 dark:via-background/70 to-transparent" />
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+        {/* Light and dark mode gradient overlays kept outside animation to maintain consistent opacity */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-transparent opacity-[0.85] dark:opacity-0" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background to-transparent opacity-0 dark:opacity-[0.90]" />
+      </div>
 
       {/* Content */}
-      <div className="container mx-auto relative z-10 px-4 py-32">
+      <div className="container mx-auto relative z-10 px-6 sm:px-10 md:px-16 lg:px-24 py-24 md:py-32 lg:py-40 flex flex-col justify-center h-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
@@ -78,7 +86,7 @@ const HeroSection = () => {
                 transition: { duration: 0.4 },
               },
             }}
-            className="max-w-3xl"
+            className="max-w-2xl text-left"
           >
             <motion.h1
               variants={{
@@ -95,7 +103,7 @@ const HeroSection = () => {
                 hidden: { opacity: 0, y: 20 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
               }}
-              className="fluid-body text-primary-foreground/90 mb-10 max-w-xl leading-relaxed"
+              className="fluid-body text-primary-foreground/90 mb-10 max-w-lg leading-relaxed"
             >
               {slides[current].subtitle}
             </motion.p>
@@ -109,15 +117,9 @@ const HeroSection = () => {
             >
               <button
                 className="btn-raspberry-serasa text-base px-8 py-3.5"
-                onClick={() => document.querySelector("#calculator")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={() => window.location.href = "/auth"}
               >
                 Começar agora
-              </button>
-              <button
-                className="btn-serasa bg-primary-foreground/15 text-primary-foreground border border-primary-foreground/30 hover:bg-primary-foreground/25 text-base px-8 py-3.5 backdrop-blur-sm"
-                onClick={() => document.querySelector("#education")?.scrollIntoView({ behavior: "smooth" })}
-              >
-                Saiba mais
               </button>
             </motion.div>
           </motion.div>
