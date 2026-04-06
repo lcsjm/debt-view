@@ -20,6 +20,7 @@ import { ChatProvider } from "@/components/chat-context";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import Education from "./pages/Education";
 import DirectMe from "./pages/DirectMe";
+import RecoveryPass from "./pages/RecoveryPass";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +28,7 @@ const AppContent = () => {
   const location = useLocation();
 
   // Esconder o chat na rota de autenticação
-  const hideChatRoutes = ["/auth"]; 
+  const hideChatRoutes = ["/auth", "/reset-password"]; 
   const showChat = !hideChatRoutes.includes(location.pathname);
 
   return (
@@ -47,6 +48,9 @@ const AppContent = () => {
         {/* Redirecionamentos antigos */}
         <Route path="/login" element={<Navigate to="/auth" replace />} />
         <Route path="/register" element={<Navigate to="/auth" replace />} />
+        
+        {/* Recuperação de senha (link vindo do email do Supabase) */}
+        <Route path="/reset-password" element={<RecoveryPass />} />
         
         <Route path="/about" element={<About />} />
         
