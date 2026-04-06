@@ -9,6 +9,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  BotMessageSquare
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -56,7 +57,7 @@ const menuItems = [
   { icon: CreditCard,      label: "Parcelamentos",     id: "debts",   path: "/debts" },
   { icon: User,            label: "Meu Perfil",        id: "profile", path: "/profile" },
   { icon: BookOpen,        label: "Educação Financeira", id: "education", path: "/education" },
-  { icon: Sparkles,        label: "Assistente",        id: "chatbot", path: "#" },
+  { icon: BotMessageSquare ,        label: "Assistente",        id: "chatbot", path: "#" },
   { icon: Mail,            label: "Fale Conosco",      id: "directme", path: "/directme" },
 ];
 

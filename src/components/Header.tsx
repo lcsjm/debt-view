@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn, Sun, Moon, MessageCircle } from "lucide-react";
+import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn, Sun, Moon, MessageCircle, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useChat } from "@/components/chat-context";
@@ -93,7 +93,7 @@ const Header = () => {
 
           <MagneticIcon key="sobre" onClick={() => toAbout()}>
             <div className="flex items-center gap-1.5 text-sm font-medium">
-              <BookOpen size={20} />
+              <UserRound size={20} />
               <span>Sobre</span>
             </div>
           </MagneticIcon>
