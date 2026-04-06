@@ -19,7 +19,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ChatProvider } from "@/components/chat-context";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import Education from "./pages/Education";
-import DirectMe from "./pages/directme";
+import DirectMe from "./pages/DirectMe";
 
 const queryClient = new QueryClient();
 
