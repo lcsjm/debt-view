@@ -1,15 +1,69 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import supabase from "../../utils/supabase";
-import { Trash2, Pencil, X, AlertCircle } from "lucide-react";
+import {
+  AlertCircle, TrendingUp, TrendingDown, Layers, CalendarDays
+} from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import ExportExcelButton from "./exportexcel";
+import { useTransactions } from "@/hooks/useTransactions";
+import { TransactionList } from "./TransactionsList";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Retorna hoje em YYYY-MM-DD no fuso local do usuário */
+export const todayISO = () => {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+/** YYYY-MM-DD → DD/MM/YYYY para exibição */
+export const formatDateDisplay = (iso: string) => {
+  if (!iso) return "";
+  const [yyyy, mm, dd] = iso.split("-");
+  return `${dd}/${mm}/${yyyy}`;
+};
+
+// ─── Config de tipo (Investimento=azul, Renda=verde, Despesa=vermelho) ────────
+
+export const TYPE_CONFIG: Record<string, {
+  color: string; bg: string; border: string;
+  icon: React.ReactNode; label: string; sign: string;
+}> = {
+  Investimento: {
+    color: "#1D4F91",
+    bg: "rgba(29, 79, 145, 0.08)",
+    border: "rgba(29, 79, 145, 0.25)",
+    icon: <Layers size={13} />,
+    label: "Investimento",
+    sign: "▲"
+  },
+  Renda: {
+    color: "#1E8449",
+    bg: "rgba(30, 132, 73, 0.08)",
+    border: "rgba(30, 132, 73, 0.25)",
+    icon: <TrendingUp size={13} />,
+    label: "Renda",
+    sign: "+"
+  },
+  Despesa: {
+    color: "#C0392B",
+    bg: "rgba(192, 57, 43, 0.08)",
+    border: "rgba(192, 57, 43, 0.25)",
+    icon: <TrendingDown size={13} />,
+    label: "Despesa",
+    sign: "−"
+  }
+};
+
+// ─── Schema: ordem Categoria → Valor → Tipo → Data ───────────────────────────
 
 const transactionSchema = z.object({
+  category: z.string().min(3, "Min. 3 letras"),
   value: z.string().min(1, "Obrigatório").refine((val) => {
     const digits = val.replace(/\D/g, "");
     return parseInt(digits, 10) > 0;
@@ -17,10 +71,12 @@ const transactionSchema = z.object({
   type: z.enum(["Renda", "Despesa", "Investimento"], {
     errorMap: () => ({ message: "Obrigatório" })
   }),
-  category: z.string().min(3, "Min. 3 letras")
+  date: z.string().min(1, "Obrigatório")
 });
 
 type TransactionForm = z.infer<typeof transactionSchema>;
+
+// ─── Moeda ────────────────────────────────────────────────────────────────────
 
 const formatCurrencyInput = (value: string) => {
   const digits = value.replace(/\D/g, "");
@@ -39,12 +95,32 @@ const parseCurrencyInput = (value: string) => {
   return parseInt(digits, 10) / 100;
 };
 
+// ─── Estilos compartilhados do form ──────────────────────────────────────────
+
+const labelStyle: React.CSSProperties = { color: "#1D4F91" };
+
+const inputBase = (hasError: boolean): React.CSSProperties => ({
+  border: hasError ? "1.5px solid #C0392B" : "1.5px solid rgba(29,79,145,0.2)",
+  background: "var(--color-background-primary)",
+  color: "var(--color-text-primary)"
+});
+
+const errorColor = "#C0392B";
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
 export default function TransactionSection() {
   const [search, setSearch] = useState("");
-  const [transactions, setTransactions] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const isEditing = editingId !== null;
-  const queryClient = useQueryClient();
+
+  const {
+    transactions = [],
+    isLoading,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction
+  } = useTransactions();
 
   const {
     register,
@@ -56,289 +132,316 @@ export default function TransactionSection() {
   } = useForm<TransactionForm>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
+      category: "",
       value: "",
       type: undefined as any,
-      category: ""
+      date: todayISO()        // ← sempre hoje ao abrir/resetar
     }
   });
 
-  const filteredTransactions = [...transactions]
-    .filter((item) =>
-      item.category.toLowerCase().includes(search.toLowerCase())
-    )
-    .sort((a, b) => {
-      // Define pesos para a ordem: Investimento (1), Renda (2), Despesa (3)
-      const priority: Record<string, number> = { "Investimento": 1, "Renda": 2, "Despesa": 3 };
-      const priorityA = priority[a.type] || 4;
-      const priorityB = priority[b.type] || 4;
+  // ── Lista filtrada por busca (mês é gerenciado internamente pelo filho) ────
+  const filteredTransactions = transactions.filter((item) =>
+    item.category.toLowerCase().includes(search.toLowerCase())
+  );
 
-      if (priorityA !== priorityB) {
-        return priorityA - priorityB;
-      }
-      return b.value - a.value; // Desempate por valor
-    });
-
-  useEffect(() => {
-    loadTransactions();
-  }, []);
-
-  async function loadTransactions() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if(!user) return;
-
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("id", { ascending: false });
-
-    if(error){
-      console.error(error.message);
-      return;
-    }
-    setTransactions(data || []);
-  }
-
+  // ── Submit ────────────────────────────────────────────────────────────────
   async function onSubmit(data: TransactionForm) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if(!user) {
-      toast({ title: "Usuário não autenticado", variant: "destructive" });
-      return;
-    }
-
     const numericValue = parseCurrencyInput(data.value);
-
-    if (isEditing) {
-      const { error } = await supabase
-        .from("transactions")
-        .update({
-          value: numericValue,
-          type: data.type,
-          category: data.category
-        })
-        .eq("id", editingId);
-
-      if(error) {
-        toast({ title: "Erro na edição", description: error.message, variant: "destructive" });
-        return;
-      }
-      toast({ title: "Transação atualizada!" });
-      setEditingId(null);
-    } else {
-      const { error } = await supabase
-        .from("transactions")
-        .insert({
+    try {
+      if (isEditing) {
+        await updateTransaction({
+          id: editingId,
           value: numericValue,
           type: data.type,
           category: data.category,
-          user_id: user.id
+          date: data.date
         });
-
-      if(error) {
-         toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
-         return;
+        toast({ title: "Transação atualizada!" });
+        setEditingId(null);
+      } else {
+        await addTransaction({
+          value: numericValue,
+          type: data.type,
+          category: data.category,
+          date: data.date
+        });
+        toast({ title: "Transação adicionada!" });
       }
-      toast({ title: "Transação adicionada!" });
+      resetForm();
+    } catch (err: any) {
+      toast({
+        title: isEditing ? "Erro na edição" : "Erro ao criar",
+        description: err.message,
+        variant: "destructive"
+      });
     }
-
-    reset();
-    await loadTransactions();
-    queryClient.invalidateQueries({ queryKey: ["transactions"] });
   }
 
-  async function deleteTransaction(id: string) {
-    const { error } = await supabase.from("transactions").delete().eq("id", id);
-    if(error){
-      toast({ title: "Erro ao deletar", description: error.message, variant: "destructive" });
-      return;
+  // ── Delete ────────────────────────────────────────────────────────────────
+  async function handleDelete(id: string) {
+    try {
+      await deleteTransaction(id);
+      toast({ title: "Transação removida" });
+    } catch (err: any) {
+      toast({ title: "Erro ao deletar", description: err.message, variant: "destructive" });
     }
-    await loadTransactions();
-    queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    toast({ title: "Transação removida" });
   }
 
+  // ── Edição ────────────────────────────────────────────────────────────────
   function startEdit(item: any) {
     setEditingId(item.id);
+    setFormValue("category", item.category);
     setFormValue("value", formatCurrencyInput((item.value * 100).toFixed(0)));
     setFormValue("type", item.type as any);
-    setFormValue("category", item.category);
+    setFormValue("date", item.date ?? todayISO());
+  }
+
+  function resetForm() {
+    reset({ category: "", value: "", type: undefined as any, date: todayISO() });
   }
 
   function cancelEdit() {
     setEditingId(null);
-    reset();
+    resetForm();
   }
 
   function toggleEdit(item: any) {
-    if(editingId === item.id) cancelEdit();
-    else startEdit(item);
+    editingId === item.id ? cancelEdit() : startEdit(item);
   }
 
-  return (    
-    <section className="bg-card border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden">
-      
-      <h2 className="font-heading font-bold text-xl mb-6 text-foreground">
-        Lançamentos Manuais
-      </h2>
-
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            handleSubmit(onSubmit)();
-          }
-        }}
-        className="flex flex-wrap items-start gap-4 bg-muted/40 p-5 rounded-xl border border-border mb-8"
+  // ── Render ────────────────────────────────────────────────────────────────
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl p-0 shadow-lg"
+      style={{
+        background: "var(--color-background-primary)",
+        border: "1px solid rgba(29,79,145,0.15)"
+      }}
+    >
+      {/* Header gradiente */}
+      <div
+        className="px-7 pt-6 pb-5"
+        style={{ background: "linear-gradient(135deg, #1D4F91 0%, #426DA9 60%, #77127B 100%)" }}
       >
-        <div className="flex-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Valor</label>
-          <div className="relative flex items-center bg-background rounded-lg border border-border focus-within:ring-2 focus-within:ring-ring transition-all">
-            <span className="pl-3 text-muted-foreground font-medium select-none text-sm">R$</span>
-            <Controller
-              name="value"
-              control={control}
-              render={({ field: { onChange, value } }) => (
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0,00"
-                  className="w-full bg-transparent px-2 py-2.5 text-foreground outline-none text-sm font-semibold"
-                  value={value}
-                  onChange={(e) => onChange(formatCurrencyInput(e.target.value))}
-                />
+        <div className="flex items-center gap-3">
+          <div
+            className="flex items-center justify-center rounded-xl shrink-0"
+            style={{
+              width: 40, height: 40,
+              background: "rgba(255,255,255,0.15)",
+              backdropFilter: "blur(4px)"
+            }}
+          >
+            <Layers size={20} color="#fff" />
+          </div>
+          <div>
+          <h2 className="text-3xl md:text-4xl font-extrabold 
+  text-transparent bg-clip-text 
+  bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+  tracking-tight 
+  drop-shadow-sm">
+    Registre suas Finanças
+  </h2>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+              Receitas, despesas e investimentos
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-7 pt-6 pb-7">
+
+        {/* ── Formulário ─────────────────────────────────────────────────── */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); handleSubmit(onSubmit)(); }
+          }}
+          className="rounded-xl p-5 mb-7"
+          style={{ background: "rgba(29,79,145,0.03)", border: "1px solid rgba(29,79,145,0.12)" }}
+        >
+          <p className="text-xs font-semibold mb-4 uppercase tracking-widest" style={{ color: "#426DA9" }}>
+            {isEditing ? "✎ Editando lançamento" : "Novo lançamento"}
+          </p>
+
+          <div className="flex flex-wrap items-start gap-4">
+
+            {/* 1 ── Categoria */}
+            <div className="flex-[2] min-w-[200px]">
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={labelStyle}>
+                Categoria / Descrição
+              </label>
+              <input
+                {...register("category")}
+                type="text"
+                placeholder="Ex: Supermercado, Salário..."
+                className="w-full rounded-lg px-3 py-2.5 text-sm font-semibold outline-none transition-all h-[42px]"
+                style={inputBase(!!errors.category)}
+              />
+              {errors.category && (
+                <motion.span
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 text-xs mt-1.5 font-medium"
+                  style={{ color: errorColor }}
+                >
+                  <AlertCircle size={11} /> {errors.category.message}
+                </motion.span>
               )}
-            />
-          </div>
-          {errors.value && (
-            <motion.span initial={{opacity:0, y:-5}} animate={{opacity:1, y:0}} className="text-destructive text-xs mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={12}/> {errors.value.message}</motion.span>
-          )}
-        </div>
-    
-        <div className="flex-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Tipo</label>
-          <select 
-            {...register("type")}
-            className="w-full border border-border bg-background rounded-lg px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring transition-all text-sm font-semibold h-[42px]"
-          >
-            <option value="Investimento">Investimento</option>
-            <option value="Renda">Renda fixa</option>
-            <option value="Renda">Renda variável</option>
-            <option value="Despesa">Gasto fixo</option>
-            <option value="Despesa">Gasto variável</option>
-          </select>
-          {errors.type && (
-            <motion.span initial={{opacity:0, y:-5}} animate={{opacity:1, y:0}} className="text-destructive text-xs mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={12}/> {errors.type.message}</motion.span>
-          )}
-        </div>
-       
-        <div className="flex-[2] min-w-[200px]">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Categoria / Descrição</label>
-          <input 
-            {...register("category")}
-            type="text"
-            placeholder="Ex: Supermercado, Salário..."
-            className="w-full border border-border bg-background rounded-lg px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring transition-all text-sm font-semibold h-[42px]"
-          />
-          {errors.category && (
-            <motion.span initial={{opacity:0, y:-5}} animate={{opacity:1, y:0}} className="text-destructive text-xs mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={12}/> {errors.category.message}</motion.span>
-          )}
-        </div>
-        
-        <div className="w-full flex gap-3 justify-end mt-2 md:mt-6 md:w-auto">
-          {isEditing && (
-            <motion.button 
-              type="button"
-              whileTap={{ scale: 0.95 }}
-              onClick={cancelEdit}
-              className="px-4 py-2.5 rounded-lg border border-border text-foreground hover:bg-muted font-medium text-sm transition"
-            >
-              Cancelar
-            </motion.button>
-          )}
-          <motion.button 
-            type="submit"
-            whileTap={{ scale: 0.95 }}
-            disabled={isSubmitting}
-            className="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg hover:opacity-90 font-medium text-sm transition flex items-center gap-2 disabled:opacity-50"
-          >
-             {isSubmitting ? "Processando..." : (isEditing ? "Salvar Edição" : "Lançar")}
-          </motion.button>
-        </div>
-      </form>
-
-      <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sticky top-0 bg-card py-2 z-10 border-b border-border">
-          <h2 className="text-lg font-heading font-bold text-foreground">
-            Histórico Recente
-          </h2>
-          
-         <div className="flex items-center w-full sm:w-auto gap-2">
-            <ExportExcelButton data={filteredTransactions} />
-            <div className="relative flex-1 sm:flex-none sm:w-64">
-                <input
-                  type="text"
-                  placeholder="🔎 Buscar..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="border border-border bg-background rounded-full px-4 py-1.5 w-full text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
-                />
             </div>
-          </div>
-        </div>
 
-        {transactions.length === 0 && (
-          <div className="text-muted-foreground text-center py-10 bg-muted/20 rounded-xl border border-dashed border-border flex flex-col items-center">
-             <p className="font-semibold mb-1">Nenhuma transação registrada.</p>
-             <p className="text-sm">Comece adicionando seus ganhos e gastos no formulário.</p>
-          </div>
-        )}
-
-        <div className="flex flex-col gap-2">
-          {filteredTransactions.map((item) => (
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              key={item.id}
-              className={`flex items-center justify-between p-4 bg-muted/40 hover:bg-muted/70 transition-colors rounded-xl border ${editingId === item.id ? 'border-primary ring-1 ring-primary' : 'border-transparent'}`}
-            >
-              <div className="flex flex-col gap-1 w-1/3">
-                <span className="font-semibold text-foreground text-sm truncate">{item.category}</span>
-                <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{item.type}</span>
+            {/* 2 ── Valor */}
+            <div className="flex-1 min-w-[130px]">
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={labelStyle}>
+                Valor
+              </label>
+              <div
+                className="flex items-center rounded-lg transition-all h-[42px]"
+                style={inputBase(!!errors.value)}
+              >
+                <span className="pl-3 text-sm font-bold select-none" style={{ color: "#426DA9" }}>R$</span>
+                <Controller
+                  name="value"
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0,00"
+                      className="w-full bg-transparent px-2 outline-none text-sm font-bold"
+                      style={{ color: "var(--color-text-primary)" }}
+                      value={value}
+                      onChange={(e) => onChange(formatCurrencyInput(e.target.value))}
+                    />
+                  )}
+                />
               </div>
-
-              <div className={`flex-1 text-right font-bold text-lg ${
-                item.type === "Renda" ? "text-green-500" : item.type === "Investimento" ? "text-blue-500" : "text-destructive"
-              }`}>
-                {item.type === "Renda" ? "+ " : item.type === "Investimento" ? " " : "- "}
-                R$ {item.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-
-              <div className="flex gap-2 ml-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center justify-center p-2 rounded-lg transition-colors ${editingId === item.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
-                  onClick={() => toggleEdit(item)}
+              {errors.value && (
+                <motion.span
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 text-xs mt-1.5 font-medium"
+                  style={{ color: errorColor }}
                 >
-                  {editingId === item.id ? <X size={16} /> : <Pencil size={16} />}
-                </motion.button>
+                  <AlertCircle size={11} /> {errors.value.message}
+                </motion.span>
+              )}
+            </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive hover:text-white p-2 rounded-lg transition-colors"
-                  onClick={() => deleteTransaction(item.id)}
+            {/* 3 ── Tipo */}
+            <div className="flex-1 min-w-[140px]">
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={labelStyle}>
+                Tipo
+              </label>
+              <select
+                {...register("type")}
+                className="w-full rounded-lg px-3 py-2.5 text-sm font-semibold outline-none transition-all h-[42px] cursor-pointer"
+                style={inputBase(!!errors.type)}
+              >
+                <option value="">Selecione...</option>
+                <option value="Investimento">Investimento</option>
+                <option value="Renda">Renda fixa</option>
+                <option value="Renda">Renda variável</option>
+                <option value="Despesa">Gasto fixo</option>
+                <option value="Despesa">Gasto variável</option>
+              </select>
+              {errors.type && (
+                <motion.span
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 text-xs mt-1.5 font-medium"
+                  style={{ color: errorColor }}
                 >
-                  <Trash2 size={16} />
-                </motion.button>
+                  <AlertCircle size={11} /> {errors.type.message}
+                </motion.span>
+              )}
+            </div>
+
+            {/* 4 ── Data */}
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={labelStyle}>
+                Data
+              </label>
+              <div
+                className="flex items-center rounded-lg transition-all h-[42px] gap-2 px-3"
+                style={inputBase(!!errors.date)}
+              >
+                <CalendarDays size={15} style={{ color: "#426DA9", flexShrink: 0 }} />
+                <Controller
+                  name="date"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="date"
+                      className="w-full bg-transparent outline-none text-sm font-semibold"
+                      style={{ color: "var(--color-text-primary)", colorScheme: "light dark" }}
+                      max={todayISO()}
+                      {...field}
+                    />
+                  )}
+                />
               </div>
-            </motion.div>
-          ))}
-        </div>
+              {errors.date && (
+                <motion.span
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 text-xs mt-1.5 font-medium"
+                  style={{ color: errorColor }}
+                >
+                  <AlertCircle size={11} /> {errors.date.message}
+                </motion.span>
+              )}
+            </div>
+
+            {/* ── Botões ── */}
+            <div className="w-full flex gap-3 justify-end mt-1 md:mt-6 md:w-auto">
+              {isEditing && (
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.96 }}
+                  onClick={cancelEdit}
+                  className="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  style={{
+                    border: "1.5px solid rgba(29,79,145,0.25)",
+                    color: "#1D4F91",
+                    background: "transparent"
+                  }}
+                >
+                  Cancelar
+                </motion.button>
+              )}
+              <motion.button
+                type="submit"
+                whileTap={{ scale: 0.96 }}
+                disabled={isSubmitting}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 disabled:opacity-50"
+                style={{
+                  background: isEditing
+                    ? "linear-gradient(135deg, #77127B, #C1188B)"
+                    : "linear-gradient(135deg, #1D4F91, #426DA9)",
+                  color: "#fff",
+                  boxShadow: isEditing
+                    ? "0 4px 14px rgba(193,24,139,0.3)"
+                    : "0 4px 14px rgba(29,79,145,0.3)"
+                }}
+              >
+                {isSubmitting ? "Processando..." : isEditing ? "Salvar Edição" : "Lançar"}
+              </motion.button>
+            </div>
+
+          </div>
+        </form>
+
+        {/* ── Lista ──────────────────────────────────────────────────────── */}
+        <TransactionList
+          transactions={transactions}
+          filteredTransactions={filteredTransactions}
+          search={search}
+          setSearch={setSearch}
+          editingId={editingId}
+          toggleEdit={toggleEdit}
+          deleteTransaction={handleDelete}
+          TYPE_CONFIG={TYPE_CONFIG}
+          formatDateDisplay={formatDateDisplay}
+          isLoading={isLoading}
+        />
+
       </div>
     </section>
   );
