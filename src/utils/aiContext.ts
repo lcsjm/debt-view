@@ -1,14 +1,12 @@
 import supabase from '../../utils/supabase';
 
-const fmt = (v: number) =>
-  `R$ ${v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+const fmt = (v: any) =>
+  `R$ ${Number(v || 0).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 
-export async function getAICachedContext(user: any): Promise<string> {
+export async function getAILiveContext(user: any): Promise<string> {
   if (!user || !user.id) return "";
 
-  const CACHE_KEY = `ai_context_${user.id}`;
-  // Removido o cache de 5 minutos a pedido para testes/uso 100% em tempo real.
-  // if (cachedStr) { ... }
+  // Fetch real-time data from Supabase across all requested tables
 
   try {
     // Fetch real-time data from Supabase across all requested tables
@@ -62,12 +60,6 @@ export async function getAICachedContext(user: any): Promise<string> {
     Simuladores Salvos: ${sim.length > 0 ? sim.map((x: any) => `${x.creditor} - Valor: ${fmt(x.value)} a ${x.rate}% (${x.installments}x de ${fmt(x.payment)})`).join(', ') : 'Nenhum simulador criado.'}
     Status do Histórico de Chat (Table Chat): ${chat ? 'Possui histórico salvo' : 'Sem histórico prévio na tabela'}
     `;
-
-    // Save to Cache
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      context: liveContextStr
-    }));
 
     return liveContextStr;
   } catch (err) {
