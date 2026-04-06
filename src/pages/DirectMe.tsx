@@ -136,14 +136,14 @@ export default function DirectMe() {
                 <div className="p-3.5 rounded-full bg-gradient-to-br from-[#E80070] to-[#C1188B] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
                   <Mail className="text-white" size={24} strokeWidth={2.5} />
                 </div>
-                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">suporte@serasaexperian.com</span>
+                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">suporte.debtview@gmail.com</span>
               </div>
               
               <div className="flex items-center gap-5 group/item cursor-pointer">
                 <div className="p-3.5 rounded-full bg-gradient-to-br from-[#77127B] to-[#C1188B] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
                   <Phone className="text-white" size={24} strokeWidth={2.5} />
                 </div>
-                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">(11) 99999-9999</span>
+                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">(11) 99999-999</span>
               </div>
               
               <div className="flex items-center gap-5 group/item cursor-pointer">
