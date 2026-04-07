@@ -21,8 +21,8 @@ export async function getAILiveContext(user: any): Promise<string> {
       chatReq
     ] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('financial').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('finances').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('financial').select('*').eq('user_id', user.id).order('id', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('finances').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('debts').select('*').eq('user_id', user.id),
       supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
         .then((res: any) => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
