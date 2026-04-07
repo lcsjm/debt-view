@@ -93,9 +93,13 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
           onClick={() => nav("/dashboard")}
           className="flex items-center justify-center gap-3 cursor-pointer group w-full overflow-hidden transition-all"
         >
-          {/* Logo */}
+          {/* Logo - Aqui foi adicionada a classe rounded-xl */}
           <div className="w-9 h-9 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
-            <img src="/favicon.svg" alt="DebtView Logo" className="w-9 h-9 rounded-lg" />
+            <img 
+              src="../public/debtviewlogo.png" 
+              alt="DebtView Logo" 
+              className="w-full h-full object-cover rounded-xl" 
+            />
           </div>
           
           <AnimatePresence>
