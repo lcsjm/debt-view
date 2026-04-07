@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "@/hooks/use-toast";
-import { User, MapPin, Calendar, ShieldCheck, AlertCircle, Mail, Lock, Zap } from "lucide-react";
+import { User, MapPin, Calendar, ShieldCheck, AlertCircle, Mail, Lock, Zap, Camera, Trash } from "lucide-react";
 import supabase from "../../utils/supabase";
 
 // 🎭 Formata o CPF
@@ -76,6 +76,11 @@ export default function ProfilePage() {
   const [activeSection, setActiveSection] = useState("profile");
   const [collapsed, setCollapsed] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const { profile, isLoading, saveProfile, isSaving } = useProfile();
 
   useEffect(() => {
@@ -115,8 +120,51 @@ export default function ProfilePage() {
     }
   }, [profile, reset]);
 
+  useEffect(() => {
+    if (profile?.avatar_url && !avatarFile) {
+      setAvatarPreview(profile.avatar_url);
+    }
+  }, [profile?.avatar_url, avatarFile]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(profile?.avatar_url || null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   async function onSubmit(data: ProfileForm) {
     try {
+      setIsUploading(true);
+      let finalAvatarUrl = profile?.avatar_url || null;
+
+      if (avatarFile) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const fileExt = avatarFile.name.split('.').pop();
+          const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(fileName, avatarFile, { upsert: true });
+
+          if (uploadError) throw new Error("Erro no upload da imagem. Certifique-se que você criou o bucket 'avatars' no Supabase.");
+
+          const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+
+          finalAvatarUrl = publicUrlData.publicUrl;
+        }
+      }
+
       // Converte data (DD/MM/AAAA) de volta para o formato de banco (YYYY-MM-DD)
       let dbBirthDate = null;
       if (data.birth && data.birth.length === 10) {
@@ -131,10 +179,14 @@ export default function ProfilePage() {
         cep: data.cep || null,
         gender: data.gender || null,
         race: data.race || null,
+        avatar_url: finalAvatarUrl,
       });
+      setAvatarFile(null);
       toast({ title: "Perfil atualizado com sucesso! ✅" });
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setIsUploading(false);
     }
   }
 
@@ -195,13 +247,44 @@ export default function ProfilePage() {
                 transition={{ delay: 0.1 }}
                 className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-3xl p-6 flex flex-col items-center text-center gap-4 shadow-xl"
               >
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E80070]/20 to-[#C1188B]/20 border-4 border-[#E80070]/30 flex items-center justify-center relative group backdrop-blur-sm">
-                  <div className="absolute inset-0 rounded-full bg-[#E80070] opacity-0 group-hover:opacity-10 transition-opacity" />
-                  <User className="w-10 h-10 text-[#E80070] dark:text-[#FF66A3]" />
+                <div className="relative group">
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-28 h-28 cursor-pointer rounded-full bg-gradient-to-br from-[#E80070]/20 to-[#C1188B]/20 border-4 border-[#E80070]/30 flex items-center justify-center overflow-hidden relative shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <div className="absolute inset-0 bg-[#E80070] opacity-0 group-hover:opacity-20 transition-opacity z-10 flex flex-col items-center justify-center">
+                      <Camera className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-all drop-shadow-md" />
+                    </div>
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Comprovante Avatar" className="w-full h-full object-cover z-0" />
+                    ) : (
+                      <User className="w-12 h-12 text-[#E80070] dark:text-[#FF66A3] z-0" />
+                    )}
+                  </div>
+                  
+                  {avatarFile && (
+                    <button 
+                      type="button" 
+                      onClick={removeAvatar}
+                      className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-800 text-red-500 hover:text-white hover:bg-red-500 rounded-full p-2 shadow-md border border-slate-200 dark:border-slate-700 transition-colors z-20"
+                      title="Remover foto escolhida"
+                    >
+                      <Trash size={14} />
+                    </button>
+                  )}
+                  
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange}
+                  />
                 </div>
-                <div>
+                
+                <div className="-mt-1">
                   <p className="font-black text-xl text-[#1D4F91] dark:text-white">{watchedName || profile?.name || "Usuário"}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[200px] font-medium">{userEmail || "—"}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[200px] font-medium mx-auto">{userEmail || "—"}</p>
                 </div>
 
                 <div className="w-full bg-white/50 dark:bg-slate-800/50 border border-white/30 dark:border-slate-700/50 rounded-2xl p-4 text-left space-y-3 mt-2">
@@ -352,10 +435,10 @@ export default function ProfilePage() {
                     type="submit"
                     whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(232, 0, 112, 0.4)" }}
                     whileTap={{ scale: 0.97 }}
-                    disabled={isSaving || !isDirty}
+                    disabled={isSaving || isUploading || (!isDirty && !avatarFile)}
                     className="bg-gradient-to-r from-[#E80070] to-[#C1188B] text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:grayscale shadow-lg shadow-[#E80070]/20"
                   >
-                    {isSaving ? "Atualizando..." : "Salvar Alterações"}
+                    {isSaving || isUploading ? "Enviando arquivo..." : "Salvar Alterações"}
                   </motion.button>
                 </div>
 
