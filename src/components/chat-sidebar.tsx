@@ -174,7 +174,7 @@ export function ChatSidebar() {
 
       const newMessages = [...messages, userMsg];
       setMessages(newMessages);
-      saveHistory(newMessages);
+      // NÃO salvamos o histórico do usuário aqui para evitar condição de corrida com a Edge Function
       setInput("");
       setIsTyping(true);
 
