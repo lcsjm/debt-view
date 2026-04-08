@@ -171,7 +171,8 @@ export default function CalculatorIndex() {
   if (showResults) {
     return (
       <div className="w-full relative animate-in fade-in duration-500">
-        <div className="flex justify-between items-center mb-6">
+        {/* Adicionado mt-10 para desgrudar de cima e mb-3 para aproximar da section */}
+        <div className="flex flex-wrap justify-between items-center gap-4 mt-10 mb-3">
           <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
             Raio-X Financeiro
           </h2>
@@ -218,7 +219,8 @@ export default function CalculatorIndex() {
   return (
     <div id="calculator" className="w-full animate-in slide-in-from-bottom-4 duration-500">
       <ScrollReveal>
-        <div className="flex justify-between items-center mb-6">
+        {/* Adicionado mt-10 para desgrudar de cima e mb-3 para aproximar da section */}
+        <div className="flex justify-between items-center mt-10 mb-3">
           <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] tracking-tight">
             Raio-X Financeiro
           </h2>

@@ -1,14 +1,12 @@
 import supabase from '../../utils/supabase';
 
-const fmt = (v: number) =>
-  `R$ ${v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+const fmt = (v: any) =>
+  `R$ ${Number(v || 0).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 
-export async function getAICachedContext(user: any): Promise<string> {
+export async function getAILiveContext(user: any): Promise<string> {
   if (!user || !user.id) return "";
 
-  const CACHE_KEY = `ai_context_${user.id}`;
-  // Removido o cache de 5 minutos a pedido para testes/uso 100% em tempo real.
-  // if (cachedStr) { ... }
+  // Fetch real-time data from Supabase across all requested tables
 
   try {
     // Fetch real-time data from Supabase across all requested tables
@@ -23,8 +21,8 @@ export async function getAICachedContext(user: any): Promise<string> {
       chatReq
     ] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('financial').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('finances').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('financial').select('*').eq('user_id', user.id).order('id', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('finances').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('debts').select('*').eq('user_id', user.id),
       supabase.from('profiles').select('cpf').eq('user_id', user.id).maybeSingle()
         .then((res: any) => res.data?.cpf ? supabase.from('mock_serasa_debts').select('*').eq('user_cpf', res.data.cpf) : { data: [] }),
@@ -62,12 +60,6 @@ export async function getAICachedContext(user: any): Promise<string> {
     Simuladores Salvos: ${sim.length > 0 ? sim.map((x: any) => `${x.creditor} - Valor: ${fmt(x.value)} a ${x.rate}% (${x.installments}x de ${fmt(x.payment)})`).join(', ') : 'Nenhum simulador criado.'}
     Status do Histórico de Chat (Table Chat): ${chat ? 'Possui histórico salvo' : 'Sem histórico prévio na tabela'}
     `;
-
-    // Save to Cache
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      context: liveContextStr
-    }));
 
     return liveContextStr;
   } catch (err) {

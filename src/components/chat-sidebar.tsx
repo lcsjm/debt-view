@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Send, Bot, Sparkles, ArrowRight, Trash2, Maximize2, Minimize2, X, BotMessageSquare } from "lucide-react";
 import supabase from "../../utils/supabase";
-import { getAICachedContext } from "../utils/aiContext";
+import { getAILiveContext } from "../utils/aiContext";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useChat, type FinancialData } from "@/components/chat-context";
 
@@ -174,7 +174,7 @@ export function ChatSidebar() {
 
       const newMessages = [...messages, userMsg];
       setMessages(newMessages);
-      saveHistory(newMessages);
+      // NÃO salvamos o histórico do usuário aqui para evitar condição de corrida com a Edge Function
       setInput("");
       setIsTyping(true);
 
@@ -183,8 +183,8 @@ export function ChatSidebar() {
         let userContext = "";
 
         if (user) {
-          const cachedServerContext = await getAICachedContext(user);
-          userContext = `${cachedServerContext}
+          const liveServerContext = await getAILiveContext(user);
+          userContext = `${liveServerContext}
 Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SIMPLESMENTE FALE NATURALMENTE.`;
         }
 

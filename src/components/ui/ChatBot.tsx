@@ -3,7 +3,7 @@ import { BotMessageSquare, Trash2, SendHorizontal } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import supabase from "../../../utils/supabase";
-import { getAICachedContext } from "../../utils/aiContext";
+import { getAILiveContext } from "../../utils/aiContext";
 
 interface FinancialData {
   divida: number;
@@ -19,8 +19,8 @@ interface Message {
   content: string;
 }
 
-const fmt = (v: number) =>
-  `R$ ${v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+const fmt = (v: any) =>
+  `R$ ${Number(v || 0).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 
 function generateAnalysis(data: FinancialData): string[] {
   const totalRendaFixa = data.rendaFixa.reduce((a, b) => a + b, 0);
@@ -230,7 +230,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
     
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
-    saveHistory(newMessages);
+    // NÃO salvamos o histórico do usuário aqui para evitar condição de corrida caso sobrescreva a resposta do server!
     setInput("");
     setIsTyping(true);
 
@@ -240,7 +240,7 @@ const Chatbot = ({ financialData, compact }: { financialData: FinancialData | nu
       let liveContextStr = buildPromptContext(financialData);
 
       if (user) {
-        const cachedServerContext = await getAICachedContext(user);
+        const cachedServerContext = await getAILiveContext(user);
         liveContextStr = `${cachedServerContext}
 Use essas informações atualizadas agora mesmo para responder o usuário. Responda em Markdown. Seja empático, nunca leia as transações em lista a não ser que pedido, e se sinta à vontade para referenciar que 'acabei de dar uma olhada no seu perfil...'.`;
       }

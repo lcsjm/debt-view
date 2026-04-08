@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Send, ArrowLeft } from "lucide-react";
-import supabase from "../../utils/supabase";
+"use client";
+
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { motion, Variants } from "framer-motion";
+import { Mail, Send, ArrowLeft } from "lucide-react";
+import { useContact } from "@/hooks/usecontatos";
 import Footer from "@/components/footer";
 
 export default function DirectMe() {
@@ -12,102 +14,94 @@ export default function DirectMe() {
     message: "",
   });
 
+  const { sendMessage, loading } = useContact();
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase.from("contatos").insert([
-      {
-        nome: form.name,
-        email: form.email,
-        assunto: form.subject,
-        mensagem: form.message,
-      },
-    ]);
+    try {
+      await sendMessage(form);
 
-    if (error) {
-      console.error("Erro ao enviar:", error.message);
+      alert("Mensagem enviada com sucesso 🚀");
+
+      setForm({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+
+    } catch (err: any) {
+      console.error("Erro:", err.message);
       alert("Erro ao enviar mensagem 😢");
-      return;
     }
-
-    alert("Mensagem enviada com sucesso 🚀");
-
-    setForm({
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-    });
   };
 
   const handleBack = () => {
     window.history.back();
   };
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.1 },
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1,
+      },
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 40 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.25, 0.1, 0.25, 1], // ✅ mantido o original do seu código
+      },
+    },
   };
 
   return (
     <div className="relative min-h-screen text-white flex flex-col bg-[#0A101D] overflow-hidden">
       
-      {/* BACKGROUND DINÂMICO COM FRAMER MOTION */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      {/* BACKGROUND FLUIDO E DINÂMICO OTIMIZADO */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <motion.div 
-          animate={{ 
-            scale: [1, 1.1, 1],
-            opacity: [0.5, 0.7, 0.5]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] bg-[#1D4F91] rounded-full blur-[120px] mix-blend-screen" 
+          animate={{ x: [0, 100, -50, 0], y: [0, 50, -100, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-[#1D4F91] rounded-full blur-[130px] opacity-50 transform-gpu will-change-transform"
         />
         <motion.div 
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.4, 0.6, 0.4]
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute top-[20%] right-[10%] w-[60%] h-[60%] bg-[#77127B] rounded-full blur-[150px] mix-blend-screen" 
+          animate={{ x: [0, -120, 80, 0], y: [0, -80, 120, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[30%] right-[5%] w-[55%] h-[55%] bg-[#77127B] rounded-full blur-[150px] opacity-40 transform-gpu will-change-transform"
         />
         <motion.div 
-          animate={{ 
-            scale: [1, 1.15, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute -bottom-[10%] left-[20%] w-[80%] h-[60%] bg-[#E80070] rounded-full blur-[140px] mix-blend-screen" 
+          animate={{ x: [0, 80, -100, 0], y: [0, -120, 60, 0], scale: [0.9, 1.1, 0.9] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] bg-[#E80070] rounded-full blur-[140px] opacity-30 transform-gpu will-change-transform"
         />
       </div>
 
-      {/* BOTÃO VOLTAR */}
+      {/* BOTÃO VOLTAR MELHORADO */}
       <motion.button
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        whileHover={{ scale: 1.05, x: -5, backgroundColor: "rgba(255,255,255,0.2)" }}
-        whileTap={{ scale: 0.95 }}
         onClick={handleBack}
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/20 shadow-lg transition-colors"
+        whileTap={{ scale: 0.95 }}
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 bg-white/5 hover:bg-white/15 px-5 py-2.5 rounded-full border border-white/10 hover:border-white/30 backdrop-blur-md transition-all duration-300 group text-white/80 hover:text-white shadow-lg"
       >
-        <ArrowLeft size={20} strokeWidth={2.5} />
-        <span className="font-semibold">Voltar</span>
+        <ArrowLeft size={20} className="transition-transform duration-300 group-hover:-translate-x-1" />
+        Voltar
       </motion.button>
 
       {/* CONTEÚDO */}
@@ -116,42 +110,48 @@ export default function DirectMe() {
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="w-full max-w-6xl grid md:grid-cols-2 gap-10 mt-20 md:mt-0"
+          className="w-full max-w-6xl grid md:grid-cols-2 gap-10"
         >
 
           {/* INFO */}
           <motion.div
             variants={itemVariants}
-            className="bg-white/5 backdrop-blur-2xl p-10 rounded-[2rem] shadow-2xl border border-white/10 flex flex-col justify-center relative overflow-hidden group"
+            className="bg-white/5 p-10 rounded-[2rem] border border-white/10 backdrop-blur-sm flex flex-col items-center text-center shadow-2xl"
           >
-            {/* Brilho sutil no card */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            
-            <h2 className="text-5xl font-black mb-8 text-white drop-shadow-md tracking-tight">
+            <h2 className="text-4xl font-bold mb-8">
               Fale Conosco
             </h2>
 
-            <div className="space-y-6 mt-2 relative z-10">
-              <div className="flex items-center gap-5 group/item cursor-pointer">
-                <div className="p-3.5 rounded-full bg-gradient-to-br from-[#E80070] to-[#C1188B] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
-                  <Mail className="text-white" size={24} strokeWidth={2.5} />
-                </div>
-                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">suporte.debtview@gmail.com</span>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 rounded-full bg-gradient-to-br from-[#E80070] to-[#C1188B] shadow-lg shadow-[#E80070]/20">
+                <Mail size={22} />
               </div>
-              
-              <div className="flex items-center gap-5 group/item cursor-pointer">
-                <div className="p-3.5 rounded-full bg-gradient-to-br from-[#77127B] to-[#C1188B] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
-                  <Phone className="text-white" size={24} strokeWidth={2.5} />
-                </div>
-                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">(11) 99999-999</span>
-              </div>
-              
-              <div className="flex items-center gap-5 group/item cursor-pointer">
-                <div className="p-3.5 rounded-full bg-gradient-to-br from-[#1D4F91] to-[#426DA9] shadow-lg group-hover/item:scale-110 transition-transform duration-300">
-                  <MapPin className="text-white" size={24} strokeWidth={2.5} />
-                </div>
-                <span className="text-lg font-medium text-white/90 group-hover/item:text-white transition-colors">São Carlos - SP</span>
-              </div>
+              <span className="text-lg">
+                suporte.debtview@gmail.com
+              </span>
+            </div>
+
+            {/* QR CODE COM HOVER AVANÇADO */}
+            <div className="mt-4 flex flex-col items-center group">
+              <a 
+                href="https://docs.google.com/forms/d/e/1FAIpQLSeqlY90_FbVFchQGoOgrjMuvDfbdXKQqpt0-3XOtAuBAwmVIg/viewform?usp=publish-editor"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="overflow-hidden rounded-xl shadow-lg border border-white/10 transition-transform duration-500 group-hover:scale-105 group-hover:shadow-[#77127B]/30 block cursor-pointer"
+              >
+                <img
+                  src="/qrcode.jpg"
+                  alt="QR Code"
+                  className="w-40 h-40 object-cover"
+                />
+              </a>
+
+              <p className="mt-5 text-sm max-w-xs text-center leading-relaxed text-white/60 transition-colors duration-300 group-hover:text-white/90">
+                Clique ou escaneie o QR Code para responder nosso formulário de avaliação do site.
+                <span className="block mt-2 font-medium text-white/80 group-hover:text-white">
+                  Assim podemos saber onde melhorar!
+                </span>
+              </p>
             </div>
           </motion.div>
 
@@ -159,9 +159,9 @@ export default function DirectMe() {
           <motion.form
             variants={itemVariants}
             onSubmit={handleSubmit}
-            className="bg-[#0b132b]/60 backdrop-blur-3xl p-10 rounded-[2rem] shadow-2xl border border-white/10 flex flex-col gap-6"
+            className="bg-[#0b132b]/60 p-10 rounded-[2rem] border border-white/10 backdrop-blur-sm flex flex-col gap-6 shadow-2xl"
           >
-            <h2 className="text-3xl font-bold text-white mb-2">Envie uma mensagem</h2>
+            <h2 className="text-3xl font-bold">Envie uma mensagem</h2>
 
             <div className="grid md:grid-cols-2 gap-5">
               <input
@@ -171,7 +171,7 @@ export default function DirectMe() {
                 onChange={handleChange}
                 placeholder="Seu nome"
                 required
-                className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#426DA9] focus:ring-2 focus:ring-[#426DA9]/30"
+                className="p-4 rounded-xl bg-white/5 border border-white/10 focus:border-[#E80070]/50 focus:bg-white/10 focus:outline-none transition-all duration-300"
               />
               <input
                 type="email"
@@ -180,7 +180,7 @@ export default function DirectMe() {
                 onChange={handleChange}
                 placeholder="Seu e-mail"
                 required
-                className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#426DA9] focus:ring-2 focus:ring-[#426DA9]/30"
+                className="p-4 rounded-xl bg-white/5 border border-white/10 focus:border-[#E80070]/50 focus:bg-white/10 focus:outline-none transition-all duration-300"
               />
             </div>
 
@@ -191,7 +191,7 @@ export default function DirectMe() {
               onChange={handleChange}
               placeholder="Assunto"
               required
-              className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#77127B] focus:ring-2 focus:ring-[#77127B]/30 w-full"
+              className="p-4 rounded-xl bg-white/5 border border-white/10 focus:border-[#E80070]/50 focus:bg-white/10 focus:outline-none transition-all duration-300"
             />
 
             <textarea
@@ -201,26 +201,31 @@ export default function DirectMe() {
               placeholder="Sua mensagem..."
               required
               rows={4}
-              className="p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/50 outline-none transition-all duration-300 hover:bg-white/10 focus:bg-white/10 focus:border-[#E80070] focus:ring-2 focus:ring-[#E80070]/30 w-full resize-none"
+              className="p-4 rounded-xl bg-white/5 border border-white/10 focus:border-[#E80070]/50 focus:bg-white/10 focus:outline-none transition-all duration-300 resize-none"
             />
 
+            {/* BOTÃO ENVIAR COM EFEITO DE BRILHO E ESTADO DE LOADING */}
             <motion.button
               type="submit"
-              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full mt-2 bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] p-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(232,0,112,0.2)] hover:shadow-[0_0_30px_rgba(232,0,112,0.5)] transition-shadow duration-300"
+              disabled={loading}
+              className="group relative w-full overflow-hidden bg-gradient-to-r from-[#1D4F91] via-[#77127B] to-[#E80070] p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(119,18,123,0.3)] hover:shadow-[0_0_30px_rgba(232,0,112,0.5)] transition-all duration-500 disabled:opacity-50 disabled:hover:shadow-[0_0_20px_rgba(119,18,123,0.3)]"
             >
-              <Send size={20} strokeWidth={2.5} />
-              Enviar Mensagem
+              {/* Efeito de brilho interno (não aparece se estiver desabilitado) */}
+              {!loading && (
+                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              )}
+              
+              <Send size={18} className={`relative z-10 transition-transform duration-300 ${!loading ? 'group-hover:translate-x-1 group-hover:-translate-y-1' : ''}`} />
+              <span className="relative z-10">
+                {loading ? "Enviando..." : "Enviar Mensagem"}
+              </span>
             </motion.button>
           </motion.form>
         </motion.div>
       </div>
 
-      {/* FOOTER */}
-      <div className="relative z-10 mt-auto">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }
