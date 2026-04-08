@@ -120,26 +120,26 @@ const App = () => (
     enableSystem
     disableTransitionOnChange
   >
-    <ContentProtection>
-      <ChatProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AuthProvider>
-              <BrowserRouter
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true,
-                }}
-              >
+    <ChatProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <ContentProtection>
                 <AppContent />
-              </BrowserRouter>
-            </AuthProvider>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ChatProvider>
-    </ContentProtection>
+              </ContentProtection>
+            </BrowserRouter>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ChatProvider>
   </ThemeProvider>
 );
 
