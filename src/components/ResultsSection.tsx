@@ -458,7 +458,14 @@ export default function ResultsSection({ data, onSave }: Props) {
 
                 try {
                   await onSave(valores);
+                  import("sonner").then(({ toast }) => {
+                    toast.success("Valores atualizados com sucesso!");
+                  });
                   setIsEditing(false);
+                } catch (error) {
+                  import("sonner").then(({ toast }) => {
+                    toast.error("Erro ao salvar os valores.");
+                  });
                 } finally {
                   setIsSaving(false);
                 }
