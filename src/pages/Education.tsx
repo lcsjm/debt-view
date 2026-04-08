@@ -1,4 +1,5 @@
 import EducationSection from "@/components/EducationSection";
+import MaslowSection from "@/components/MaslowSection";
 import { useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 
@@ -16,6 +17,8 @@ export default function Education() {
       />
 
       <EducationSection />
+      {/* Componente adicionado logo abaixo da seção de Educação */}
+      <MaslowSection />
     </>
   );
 }
