@@ -79,6 +79,11 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
     nav('/');
   };
 
+  const toDashboard = () => {
+    nav('/dashboard');
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <motion.aside
       onMouseEnter={() => setCollapsed(false)}
@@ -90,15 +95,15 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
       {/* Header com Logo */}
       <div className="flex items-center justify-center px-3 py-6 border-b border-white/10 h-[88px] shrink-0">
         <div 
-          onClick={() => nav("/dashboard")}
-          className="flex items-center justify-center gap-3 cursor-pointer group w-full overflow-hidden transition-all"
+          onClick={toDashboard}
+          className="flex items-center justify-center gap-3 cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95 rounded-xl p-1 w-full overflow-hidden"
         >
-          {/* Logo - Aqui foi adicionada a classe rounded-xl */}
-          <div className="w-9 h-9 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
+          {/* Logo */}
+          <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
             <img 
-              src="../public/debtviewlogo.png" 
+              src="/debtviewlogo.png" 
               alt="DebtView Logo" 
-              className="w-full h-full object-cover rounded-xl" 
+              className="w-full h-full object-cover rounded-xl shadow-md" 
             />
           </div>
           

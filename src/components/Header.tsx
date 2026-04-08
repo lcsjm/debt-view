@@ -1,9 +1,8 @@
 import { useRef, useState, useCallback } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn, Sun, Moon, MessageCircle, UserRound } from "lucide-react";
+import { Menu, X, Home, BarChart3, MessageSquare, BookOpen, LogIn, Sun, Moon, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
-import { useChat } from "@/components/chat-context";
 
 const MagneticIcon = ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => {
   const ref = useRef<HTMLButtonElement>(null);
@@ -11,7 +10,6 @@ const MagneticIcon = ({ children, onClick }: { children: React.ReactNode; onClic
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 300, damping: 20 });
   const springY = useSpring(y, { stiffness: 300, damping: 20 });
-  const nav = useNavigate()
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!ref.current) return;
@@ -53,7 +51,6 @@ const Header = () => {
   const nav = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { toggle: toggleChat } = useChat();
 
   const scrollTo = (href: string) => {
     setMenuOpen(false);
@@ -69,16 +66,29 @@ const Header = () => {
     nav('/about')
   }
 
+  function toHome() {
+    nav('/');
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 dark:bg-background/95 backdrop-blur-md shadow-lg dark:shadow-none border-b border-transparent dark:border-border/40 transition-colors duration-300">
       <div className="container mx-auto flex items-center justify-between py-3 md:py-4 px-4">
-        {/* Logo */}
-        <a href="#hero" className="flex items-center gap-3" onClick={() => scrollTo("#hero")}>
+        
+        {/* Logo Atualizado */}
+        <div 
+          onClick={toHome} 
+          className="flex items-center gap-3 cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95 rounded-xl p-1"
+        >
+          <img 
+            src="/debtviewlogo.png" 
+            alt="DebtView Logo" 
+            className="h-10 w-auto rounded-xl object-cover"
+          />
           <span className="font-heading font-bold text-primary-foreground text-lg hidden sm:inline">
             DebtView
           </span>
-        </a>
+        </div>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
@@ -98,7 +108,8 @@ const Header = () => {
             </div>
           </MagneticIcon>
         </nav>
-        {/* Entrar button with breathing */}
+
+        {/* Actions */}
         <div className="flex items-center gap-3">
           {/* Theme toggle */}
           <button
@@ -126,12 +137,7 @@ const Header = () => {
             </motion.div>
           </button>
 
-          {/* Chat trigger */}
-          <MagneticIcon onClick={toggleChat}>
-            <div className="flex items-center justify-center text-primary-foreground/90 hover:text-primary-foreground" aria-label="Abrir assistente">
-              <MessageCircle className="h-5 w-5" />
-            </div>
-          </MagneticIcon>
+          {/* Login Button */}
           <motion.button
             onClick={() => toLogin()}
             className="btn-raspberry-serasa hidden sm:flex items-center gap-2 text-sm"
@@ -179,6 +185,7 @@ const Header = () => {
                 </motion.button>
               ))}
               <motion.button
+                onClick={() => toLogin()}
                 whileTap={{ scale: 0.95 }}
                 className="btn-raspberry-serasa mt-2 flex items-center justify-center gap-2"
               >
