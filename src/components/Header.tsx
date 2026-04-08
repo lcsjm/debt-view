@@ -81,7 +81,7 @@ const Header = () => {
           className="flex items-center gap-3 cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95 rounded-xl p-1"
         >
           <img 
-            src="/debtviewlogo.png" 
+            src="/debtviewlogo-removebg-preview.png" 
             alt="DebtView Logo" 
             className="h-10 w-auto rounded-xl object-cover"
           />

@@ -101,7 +101,7 @@ export function AppSidebar({ activeSection, onSectionChange, collapsed, setColla
           {/* Logo */}
           <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
             <img 
-              src="/debtviewlogo.png" 
+              src="/debtviewlogo-removebg-preview.png" 
               alt="DebtView Logo" 
               className="w-full h-full object-cover rounded-xl shadow-md" 
             />

@@ -128,9 +128,9 @@ const TeamSection = () => {
         <div className="max-w-[1400px] mx-auto pt-12 px-4 sm:px-6 lg:px-8">
           <a 
             href="/" 
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-medium group"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 dark:bg-black/10 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 font-medium group"
           >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform duration-300" />
             Voltar para a página inicial
           </a>
         </div>
