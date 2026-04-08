@@ -507,7 +507,7 @@ const Auth = () => {
 
                   <div>
                     <h4 className="text-lg font-semibold text-white mb-2">7. Como entrar em contato</h4>
-                    <p>Se você tiver dúvidas sobre esta política, quiser exercer seus direitos ou solicitar a exclusão da sua conta, entre em contato através do e-mail: <a href="mailto:privacidade@debtview.com.br" className="text-[#E80070] hover:text-white transition-colors">privacidade@debtview.com.br</a>.</p>
+                    <p>Se você tiver dúvidas sobre esta política, quiser exercer seus direitos ou solicitar a exclusão da sua conta, entre em contato através do e-mail: <a href="/directme" onClick={() => setActiveModal(null)} className="text-[#E80070] hover:text-white transition-colors">suporte.debtview@gmail.com</a>.</p>
                   </div>
                 </div>
               </>
@@ -561,7 +561,7 @@ const Auth = () => {
 
                   <div>
                     <h4 className="text-lg font-semibold text-white mb-2">7. Contato e Suporte</h4>
-                    <p>Para dúvidas ou problemas técnicos, contate-nos em: <a href="mailto:suporte@debtview.com.br" className="text-[#E80070] hover:text-white transition-colors">suporte@debtview.com.br</a>.</p>
+                    <p>Para dúvidas ou problemas técnicos, contate-nos em: <a href="/directme" onClick={() => setActiveModal(null)} className="text-[#E80070] hover:text-white transition-colors">suporte.debtview@gmail.com</a>.</p>
                   </div>
                 </div>
               </>
