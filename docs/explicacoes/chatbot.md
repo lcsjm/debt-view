@@ -1,5 +1,13 @@
 # Documentação Técnica: Assistente Inteligente (Chatbot AI)
 
+## Resumo Rápido (Executivo)
+
+1. **Inteligência Integrada**: Utiliza a *API* do [Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs/models?hl=pt-br) especializada por um prompt sistemático estrito para focar no alívio de dívidas financeiras.
+2. **Arquitetura Segura**: A comunicação web não interage com os provedores Google diretamente. Passa de forma mascarada através de uma "Edge Function" hospedada dentro do Supabase.
+3. **Contexto Ativo em Tempo Real**: Cada *enter* pressionado mapeia silenciosamente o saldo estático, as dívidas vazadas via Serasa e calculos de simuladores contidos no perfil e injeta eles como plano de subtexto ao robô.
+4. **Otimização Extrema de Custos**: Exclui repasses de históricos pesadissímos. Limita propositalmente ao topo das últimas 15 comunicações e utiliza javascript nativo no Front-End para avaliações iniciais antes de pagar a rede.
+5. **Persistência em PostgreSQL**: O estado da conversa e suas memórias são retidos não só no front end, mas atracados entre as tabelas `chat` relacionais contendo chaves cruzadas que hospedam os grandes JSONs pesados em Arquivamento Storage Bucket.
+
 Este documento descreve detalhadamente o funcionamento e a arquitetura do chatbot inteligente implementado no projeto "DebtView". O objetivo é oferecer uma visão técnica sobre como a interface, a geração de contexto em tempo real e a comunicação segura com o banco de dados Supabase e a API do Gemini foram integradas ao sistema.
 
 ## 1. Visão Geral
