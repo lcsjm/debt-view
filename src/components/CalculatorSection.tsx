@@ -59,10 +59,6 @@ interface FinancialData {
   investimentos: number[];
 }
 
-// --- NOTA DO DESENVOLVEDOR ---
-// As imagens abaixo estão sendo servidas da pasta 'public'.
-// Certifique-se de que as extensões de arquivo (.jpg, .png, etc.)
-// correspondem exatamente aos arquivos reais na sua pasta 'public'.
 const steps = [
   {
     key: "divida",
@@ -76,7 +72,7 @@ const steps = [
     key: "rendaFixa",
     title: "Renda Fixa",
     question: "Deseja adicionar alguma renda fixa?",
-    description: "Renda fixa é todo valor que você recebe regularmente.",
+    description: `Renda fixa é todo valor que você recebe regularmente. Ex: salário.`,
     image: "/rendafixa.png",
     multiple: true,
   },
@@ -84,7 +80,8 @@ const steps = [
     key: "rendaVariavel",
     title: "Renda Variável",
     question: "Deseja adicionar alguma renda variável?",
-    description: "Freelances, comissões ou ganhos sem valor fixo.",
+    description: `Quando há uma oscilação nos ganhos mensais.
+Ex: Motorista de aplicativo; Aulas particulares.`,
     image: "/rendavariavel.png",
     multiple: true,
   },
@@ -92,7 +89,8 @@ const steps = [
     key: "gastosFixos",
     title: "Gastos Fixos",
     question: "Deseja adicionar algum gasto fixo?",
-    description: "Aluguel, financiamentos ou escola.",
+    description: `Despesas recorrentes e previsíveis, que mantêm um padrão.
+Ex: Aluguel; Parcelamentos.`,
     image: "/gastosfixos.png",
     multiple: true,
   },
@@ -100,7 +98,8 @@ const steps = [
     key: "gastosVariaveis",
     title: "Gastos Variáveis",
     question: "Deseja adicionar algum gasto variável?",
-    description: "Alimentação, lazer ou transporte.",
+    description: `Custos que mudam conforme o seu consumo ou estilo de vida.
+Ex: Alimentação, lazer, transporte, entre outros.`,
     image: "/gastosvariaveis.png",
     multiple: true,
   },
@@ -108,7 +107,8 @@ const steps = [
     key: "investimentos",
     title: "Investimentos",
     question: "Você possui algum valor investido mensalmente?",
-    description: "Valores aplicados para multiplicar patrimônio.",
+    description: `O ato de aplicar dinheiro hoje para colher rendimentos e aumentar o patrimônio no futuro.
+Ex: Educação; Bolsa de Valores; Poupança.`,
     image: "/investimentos.png",
     multiple: true,
   },
@@ -429,7 +429,13 @@ export default function CalculatorSection() {
                         setInputValue(formatCurrency(e.target.value))
                       }
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") handleAddItem();
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleNext();
+                        } else if (e.key === "+") {
+                          e.preventDefault();
+                          handleAddItem();
+                        }
                       }}
                       className="w-full h-14 pl-12 pr-4 border-2 border-gray-200 bg-gray-50 text-gray-900 focus:bg-white focus:border-[#E80070] focus:ring-4 focus:ring-[#E80070]/10 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:bg-gray-700 dark:focus:border-[#E80070] dark:focus:text-white dark:focus:ring-[#E80070]/20 rounded-2xl outline-none transition-all font-bold text-lg"
                       placeholder="0,00"
