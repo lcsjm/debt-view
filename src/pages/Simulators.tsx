@@ -87,6 +87,28 @@ const getStatusStyle = (status: string) => {
   return styles[status] || styles["Pendente"];
 };
 
+// Nova função para estilizar o fundo e as interações do Card
+const getCardStatusStyle = (status: string) => {
+  const styles: Record<string, string> = {
+    Pago: "bg-emerald-50/50 dark:bg-emerald-900/10 border-slate-200/50 dark:border-slate-800/50 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 hover:border-emerald-300/50 dark:hover:border-emerald-700/50 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10",
+    Ativa: "bg-[#426DA9]/5 dark:bg-[#426DA9]/10 border-slate-200/50 dark:border-slate-800/50 hover:bg-[#426DA9]/10 dark:hover:bg-[#426DA9]/20 hover:border-[#426DA9]/30 dark:hover:border-[#426DA9]/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#426DA9]/10",
+    Negociando: "bg-amber-50/50 dark:bg-amber-900/10 border-slate-200/50 dark:border-slate-800/50 hover:bg-amber-100/50 dark:hover:bg-amber-900/20 hover:border-amber-300/50 dark:hover:border-amber-700/50 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10",
+    Pendente: "bg-[#E80070]/5 dark:bg-[#E80070]/10 border-slate-200/50 dark:border-slate-800/50 hover:bg-[#E80070]/10 dark:hover:bg-[#E80070]/20 hover:border-[#E80070]/30 dark:hover:border-[#E80070]/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#E80070]/10",
+  };
+  return styles[status] || styles["Pendente"];
+};
+
+// Nova função para estilizar o gradiente no fundo do Card
+const getGradientStyle = (status: string) => {
+  const styles: Record<string, string> = {
+    Pago: "from-emerald-500/10 dark:from-emerald-500/20",
+    Ativa: "from-[#426DA9]/10 dark:from-[#426DA9]/20",
+    Negociando: "from-amber-500/10 dark:from-amber-500/20",
+    Pendente: "from-[#E80070]/10 dark:from-[#E80070]/20",
+  };
+  return styles[status] || styles["Pendente"];
+};
+
 const calculateEffectiveMonthlyRate = (
   rateDec: number,
   period: string,
@@ -184,7 +206,7 @@ const CustomTooltip = ({ active, payload }: any) => {
           <p className="text-sm font-semibold text-[#426DA9] dark:text-[#8CB4F5] bg-[#426DA9]/10 py-1.5 px-3 rounded-lg inline-block mt-2">
             {parcLabel}: {data.parcela.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
           </p>
-         )}
+        )}
       </div>
     );
   }
@@ -351,13 +373,15 @@ export default function Simulators() {
     setEditingId(debt.id || null);
     const formattedValue = formatCurrencyInput((debt.value * 100).toString());
     const formattedDownPayment = debt.downPayment
-      ? formatCurrencyInput((debt.downPayment * 100).toString())
+      ?
+      formatCurrencyInput((debt.downPayment * 100).toString())
       : "";
 
     const instStr = debt.installments ? debt.installments.toString() : "12";
     const typeStr = debt.interestType || "Composto";
     const entryStr = debt.date || debt.date || new Date().toISOString();
-    const periodStr = debt.ratePeriod || "Mensal";
+    const periodStr = debt.ratePeriod ||
+      "Mensal";
 
     reset({
       creditor: debt.creditor,
@@ -385,7 +409,6 @@ export default function Simulators() {
       original: principal,
       total: chartData[chartData.length - 1].valor + downPayment,
     });
-    
     // Rolar suavemente para o formulário de edição
     setTimeout(() => {
       const element = document.getElementById("formulario-parcelamento");
@@ -448,7 +471,8 @@ export default function Simulators() {
     simulators?.reduce((acc, d) => {
       const financiado = (d.value || 0) - ((d as any).downPayment || 0);
       return acc + financiado + (d.payment || 0);
-    }, 0) || 0;
+    }, 0) ||
+    0;
 
   const statusPriority: Record<string, number> = {
     "Pendente": 1,
@@ -456,7 +480,6 @@ export default function Simulators() {
     "Ativa": 3,
     "Pago": 4,
   };
-
   const filteredsimulators =
     (simulators?.filter((d) => filterStatus === "Todos" || d.status === filterStatus) || [])
     .sort((a, b) => {
@@ -472,7 +495,6 @@ export default function Simulators() {
       
       return creditorA.localeCompare(creditorB);
     });
-
   const handleStatusClick = (status: string) => {
     setFilterStatus(status);
     setTimeout(() => {
@@ -486,11 +508,9 @@ export default function Simulators() {
   // Inputs muito mais dinâmicos com hover, focus ring, sombras suaves e efeito de elevação
   const fieldClass =
     "w-full border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none hover:bg-white/80 dark:hover:bg-slate-900/80 hover:border-[#426DA9]/50 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-[#426DA9]/20 focus:border-[#426DA9] hover:shadow-md focus:shadow-lg focus:-translate-y-0.5 transition-all duration-300 text-sm backdrop-blur-md";
-  
   // Classe semelhante para os wrappers de inputs de moeda para que eles compartilhem do mesmo dinamismo
   const currencyWrapperClass = 
     "flex items-center bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-white/80 dark:hover:bg-slate-900/80 hover:border-[#426DA9]/50 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#426DA9]/20 focus-within:border-[#426DA9] hover:shadow-md focus-within:shadow-lg focus-within:-translate-y-0.5 transition-all duration-300 backdrop-blur-md";
-
   return (
     <div className="min-h-screen relative overflow-hidden text-slate-900 dark:text-slate-100">
       <style
@@ -501,7 +521,7 @@ export default function Simulators() {
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #426DA9; border-radius: 10px; opacity: 0.5; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #1D4F91; }
         @keyframes gradientMove {
-               0% { background-position: 0% 50%; }
+          0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
@@ -524,7 +544,8 @@ export default function Simulators() {
       />
 
       <main
-        className={`relative z-10 transition-all duration-300 p-4 md:p-8 space-y-8 ${collapsed ? "ml-[72px]" : "ml-[72px] md:ml-[260px]"}`}
+        className={`relative z-10 transition-all duration-300 p-4 md:p-8 space-y-8 ${collapsed ?
+"ml-[72px]" : "ml-[72px] md:ml-[260px]"}`}
       >
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/60 dark:bg-slate-900/60 p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl shadow-sm">
@@ -537,14 +558,14 @@ export default function Simulators() {
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
               Simule, analise os juros e registre seus parcelamentos ativos.
-            </p>
+</p>
           </div>
           <motion.button
             onClick={exportToExcel}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center justify-center gap-2 border border-[#426DA9]/30 bg-white/90 dark:bg-slate-900/90 text-[#1D4F91] dark:text-slate-200 px-5 py-3 rounded-xl text-sm font-semibold hover:bg-[#426DA9] hover:text-white transition-all shadow-sm group"
-           >
+            >
             <Download className="w-4 h-4 group-hover:animate-bounce" /> Exportar Excel
           </motion.button>
         </div>
@@ -577,14 +598,16 @@ export default function Simulators() {
             className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-[#77127B]/20 rounded-3xl p-6 shadow-lg shadow-[#77127B]/5 group hover:border-[#77127B]/40 transition-colors flex flex-col h-full min-h-[160px]"
           >
             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#77127B] dark:text-[#C1188B] pointer-events-none">
-               <Target size={64} />
+               <Target size={64} 
+/>
             </div>
             <p className="relative z-10 text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
               Nº de Parcelamentos
             </p>
             <div className="flex-1 flex items-center justify-center mt-2">
               <p className="relative z-10 text-4xl lg:text-5xl font-black text-[#77127B] dark:text-white">
-                {simulators?.length || 0}
+                {simulators?.length ||
+0}
               </p>
             </div>
           </motion.div>
@@ -603,28 +626,32 @@ export default function Simulators() {
                 onClick={() => handleStatusClick("Pendente")}
                 className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-[#E80070]/20 dark:hover:bg-[#E80070]/30 transition-all duration-300 border border-transparent hover:border-[#E80070]/30 flex flex-col items-center justify-center p-2 rounded-xl bg-[#E80070]/10 text-[#E80070] dark:bg-[#E80070]/20 dark:text-[#FF85BB]"
               >
-                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Pendente").length || 0}</span>
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Pendente").length ||
+0}</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Pendente</span>
               </div>
               <div 
                 onClick={() => handleStatusClick("Negociando")}
                 className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all duration-300 border border-transparent hover:border-amber-400/30 flex flex-col items-center justify-center p-2 rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
               >
-                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Negociando").length || 0}</span>
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Negociando").length ||
+0}</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Negociando</span>
               </div>
               <div 
                 onClick={() => handleStatusClick("Ativa")}
                 className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-[#426DA9]/20 dark:hover:bg-[#426DA9]/30 transition-all duration-300 border border-transparent hover:border-[#426DA9]/30 flex flex-col items-center justify-center p-2 rounded-xl bg-[#426DA9]/10 text-[#426DA9] dark:bg-[#426DA9]/20 dark:text-[#8CB4F5]"
               >
-                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Ativa").length || 0}</span>
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Ativa").length ||
+0}</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Ativo</span>
               </div>
               <div 
                 onClick={() => handleStatusClick("Pago")}
                 className="cursor-pointer hover:-translate-y-1 hover:shadow-md hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-all duration-300 border border-transparent hover:border-emerald-400/30 flex flex-col items-center justify-center p-2 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
               >
-                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Pago").length || 0}</span>
+                <span className="text-2xl font-black">{simulators?.filter((d) => d.status === "Pago").length ||
+0}</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider mt-1">Pago</span>
               </div>
             </div>
@@ -637,22 +664,26 @@ export default function Simulators() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border ${editingId ? "border-[#E80070]/50 shadow-[#E80070]/10" : "border-slate-200/50 dark:border-slate-800/50"} rounded-3xl p-6 md:p-8 shadow-sm transition-all`}
+          className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border ${editingId ?
+"border-[#E80070]/50 shadow-[#E80070]/10" : "border-slate-200/50 dark:border-slate-800/50"} rounded-3xl p-6 md:p-8 shadow-sm transition-all`}
         >
           <div className="flex justify-between items-center mb-8">
             <h2 className="font-bold text-xl flex items-center gap-3 text-[#1D4F91] dark:text-white">
               <div
-                className={`p-2 rounded-lg ${editingId ? "bg-[#E80070]/20 text-[#E80070]" : "bg-[#E80070]/10 text-[#E80070]"}`}
+                className={`p-2 rounded-lg ${editingId ?
+"bg-[#E80070]/20 text-[#E80070]" : "bg-[#E80070]/10 text-[#E80070]"}`}
               >
-                {editingId ? <Edit2 className="w-5 h-5" /> : <Calculator className="w-5 h-5" />}
+                {editingId ?
+<Edit2 className="w-5 h-5" /> : <Calculator className="w-5 h-5" />}
               </div>
-              {editingId ? "Editando Parcelamento" : "Simular & Registrar Parcelamento"}
+              {editingId ?
+"Editando Parcelamento" : "Simular & Registrar Parcelamento"}
             </h2>
             {editingId && (
               <button
                 onClick={cancelEdit}
                 className="text-sm flex items-center gap-1 bg-[#E80070]/10 px-4 py-2 rounded-xl text-[#E80070] font-bold hover:bg-[#E80070]/20 hover:text-[#C1188B] hover:scale-105 transition-all shadow-sm"
-               >
+                >
                 <X size={16} /> Fechar Edição
               </button>
             )}
@@ -662,7 +693,8 @@ export default function Simulators() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
-                  Credor | Compra *
+                  Credor |
+Compra *
                 </label>
                 <input
                   {...register("creditor")}
@@ -673,7 +705,7 @@ export default function Simulators() {
                 {errors.creditor && (
                   <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
                     <AlertCircle size={12} />
-                     {errors.creditor.message}
+                    {errors.creditor.message}
                   </p>
                 )}
               </div>
@@ -683,13 +715,13 @@ export default function Simulators() {
                   Valor Original *
                 </label>
                 <div className={currencyWrapperClass}>
-                  <span className="pl-4 text-slate-500 text-sm font-medium select-none pointer-events-none">R$</span>
+                  <span className="pl-4 pr-1 text-slate-500 dark:text-slate-400 font-medium">R$</span>
                   <Controller
                     name="value"
                     control={control}
                     render={({ field: { onChange, value } }) => (
                       <input
-                       type="text"
+                        type="text"
                         inputMode="numeric"
                         placeholder="0,00"
                         className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
@@ -708,14 +740,14 @@ export default function Simulators() {
                     {errors.value.message}
                   </p>
                 )}
-               </div>
+              </div>
 
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Entrada (Opcional)
                 </label>
                 <div className={currencyWrapperClass}>
-                  <span className="pl-4 text-slate-500 text-sm font-medium select-none pointer-events-none">R$</span>
+                  <span className="pl-4 pr-1 text-slate-500 dark:text-slate-400 font-medium">R$</span>
                   <Controller
                     name="downPayment"
                     control={control}
@@ -727,9 +759,9 @@ export default function Simulators() {
                         className="w-full bg-transparent px-3 py-3 text-slate-800 dark:text-slate-100 outline-none text-sm font-semibold placeholder:text-slate-500"
                         value={value}
                         onChange={(e) => {
-                           onChange(formatCurrencyInput(e.target.value));
-                           clearAnalysis();
-                         }}
+                          onChange(formatCurrencyInput(e.target.value));
+                          clearAnalysis();
+                        }}
                       />
                     )}
                   />
@@ -747,25 +779,27 @@ export default function Simulators() {
                   <option value="Pago">Pago</option>
                 </select>
                 {errors.status && (
-                   <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
+                  <p className="text-[#E80070] text-xs mt-2 flex items-center gap-1">
                     <AlertCircle size={12} />
                     {errors.status.message}
                   </p>
                 )}
-               </div>
+              </div>
 
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Início
                 </label>
                 <div className="relative group">
-                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-[#426DA9] transition-colors" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-[#426DA9] transition-colors" 
+/>
                   <Controller
                     name="date"
                     control={control}
                     render={({ field: { onChange, value } }) => (
                       <DatePicker
-                        selected={value ? new Date(value) : null}
+                        selected={value ?
+new Date(value) : null}
                         onChange={(date) => {
                           onChange(date ? date.toISOString() : null);
                           clearAnalysis();
@@ -774,13 +808,13 @@ export default function Simulators() {
                         locale={ptBR}
                         placeholderText="DD/MM/AAAA"
                         className={`${fieldClass} pl-10`}
-                       />
+                      />
                     )}
                   />
                 </div>
               </div>
 
-               <div className="lg:col-span-3">
+              <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Tipo de Juros *
                 </label>
@@ -797,7 +831,7 @@ export default function Simulators() {
                 </select>
               </div>
 
-               <div className="lg:col-span-3">
+              <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
                   Taxa de Juros (%) *
                 </label>
@@ -825,7 +859,7 @@ export default function Simulators() {
                     <option value="Anual">a.a</option>
                   </select>
                 </div>
-               </div>
+              </div>
 
               <div className="lg:col-span-3">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 block">
@@ -837,8 +871,8 @@ export default function Simulators() {
                   min="0"
                   className={fieldClass}
                   onChange={(e) => {
-                     register("installments").onChange(e);
-                     clearAnalysis();
+                    register("installments").onChange(e);
+                    clearAnalysis();
                   }}
                 />
               </div>
@@ -847,49 +881,51 @@ export default function Simulators() {
             {/* Renderização do Gráfico & Resumo */}
             <AnimatePresence>
               {analysisData && simulatedSummary && (
-                 <motion.div
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   className="pt-8 border-t border-slate-100 dark:border-slate-800/50"
-                 >
-                  <h3 className="font-bold text-xl mb-6 text-[#1D4F91] dark:text-white flex items-center gap-2">
-                    <TrendingUp className="text-[#E80070] w-5 h-5" />
+                >
+                  <h3 className="font-bold text-[#1D4F91] dark:text-white mb-6 flex items-center gap-2">
+                    <TrendingUp className="text-[#C1188B]" size={20} />
                     Projeção de Pagamento
                   </h3>
-                  
-                  <div className="h-[320px] w-full mb-8">
+                  <div className="h-[300px] w-full mb-8">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={analysisData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+                      <AreaChart
+                        data={analysisData}
+                        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                      >
                         <defs>
                           <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#E80070" stopOpacity={0.6} />
+                            <stop offset="5%" stopColor="#E80070" stopOpacity={0.3} />
                             <stop offset="95%" stopColor="#E80070" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#cbd5e1" opacity={0.5} />
-                        <XAxis 
-                          dataKey="shortName" 
-                          tick={{ fill: '#426DA9', fontSize: 13, fontWeight: 600 }} 
-                          tickMargin={15} 
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis
+                          dataKey="shortName"
+                          tick={{ fill: '#426DA9', fontSize: 13, fontWeight: 600 }}
+                          tickMargin={15}
                           axisLine={{ stroke: '#94a3b8' }}
                           tickLine={false}
                         />
-                        <YAxis 
-                          tick={{ fill: '#C1188B', fontSize: 12, fontWeight: 600 }} 
-                          tickFormatter={(val) => `R$ ${val}`} 
+                        <YAxis
+                          tick={{ fill: '#C1188B', fontSize: 12, fontWeight: 600 }}
+                          tickFormatter={(val) => `R$ ${val}`}
                           axisLine={false}
                           tickLine={false}
                         />
                         <Tooltip content={<CustomTooltip />} />
-                        <Area 
-                          type="monotone" 
-                          dataKey="valor" 
-                          stroke="#E80070" 
-                          strokeWidth={4} 
-                          fillOpacity={1} 
-                          fill="url(#colorValor)" 
-                         />
+                        <Area
+                          type="monotone"
+                          dataKey="valor"
+                          stroke="#E80070"
+                          strokeWidth={4}
+                          fillOpacity={1}
+                          fill="url(#colorValor)"
+                        />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -901,7 +937,10 @@ export default function Simulators() {
                         Valor Original
                       </p>
                       <p className="text-2xl md:text-3xl font-black text-[#1D4F91] dark:text-white">
-                        {simulatedSummary.original.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        {simulatedSummary.original.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
                       </p>
                     </div>
                     <div className="text-right pl-4">
@@ -909,7 +948,10 @@ export default function Simulators() {
                         Valor Total c/ Juros
                       </p>
                       <p className="text-2xl md:text-3xl font-black text-[#C1188B] dark:text-[#FF66A3]">
-                        {simulatedSummary.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        {simulatedSummary.total.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
                       </p>
                     </div>
                   </div>
@@ -917,8 +959,9 @@ export default function Simulators() {
               )}
             </AnimatePresence>
 
-            <div className={`flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-100 dark:border-slate-800/50 ${editingId ? 'justify-end' : ''}`}>
-              {!editingId && (
+            <div className={`flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-100 dark:border-slate-800/50 ${editingId ?
+'justify-end' : ''}`}>
+              {!editingId && !analysisData && (
                 <button
                   type="button"
                   onClick={handleAnalyze}
@@ -927,7 +970,6 @@ export default function Simulators() {
                   <TrendingUp size={18} /> Simular Análise
                 </button>
               )}
-
               {(analysisData || editingId) && (
                 <motion.button
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -940,7 +982,11 @@ export default function Simulators() {
                     editingId ? "px-6 py-2.5 text-sm w-full sm:w-auto" : "flex-1 px-6 py-4"
                   }`}
                 >
-                  {isSaving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                  {isSaving ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Plus className="w-5 h-5" />
+                  )}
                   {editingId ? "Atualizar Parcelamento" : "Registrar Parcelamento"}
                 </motion.button>
               )}
@@ -956,27 +1002,27 @@ export default function Simulators() {
           transition={{ delay: 0.5 }}
           className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 md:p-8 shadow-sm"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <h2 className="font-bold text-xl flex items-center gap-3 text-[#1D4F91] dark:text-white">
-              <div className="p-2 bg-[#1D4F91]/10 rounded-lg text-[#1D4F91] dark:text-[#8CB4F5]">
+              <div className="p-2 bg-[#426DA9]/10 text-[#426DA9] rounded-lg">
                 <CreditCard className="w-5 h-5" />
               </div>
               Parcelamentos Registrados
             </h2>
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-[#426DA9]/50 transition-colors">
-               <Filter className="w-4 h-4 text-slate-400 ml-2" />
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
+              <Filter className="w-4 h-4 text-slate-500 ml-2" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="bg-transparent border-none text-sm text-slate-700 dark:text-slate-300 outline-none pr-4 cursor-pointer"
-               >
-                <option value="Todos">Todos</option>
+                className="bg-transparent text-sm font-semibold outline-none text-slate-700 dark:text-slate-300 pr-4 py-1"
+              >
+                <option value="Todos">Todos os Status</option>
                 <option value="Ativa">Ativos</option>
-                <option value="Pendente">Pendentes</option>
                 <option value="Negociando">Negociando</option>
+                <option value="Pendente">Pendentes</option>
                 <option value="Pago">Pagos</option>
               </select>
-             </div>
+            </div>
           </div>
 
           {!filteredsimulators.length ? (
@@ -992,12 +1038,14 @@ export default function Simulators() {
                 {filteredsimulators.map((d) => {
                   const valorOriginal = d.value || 0;
                   const entrada = (d as any).downPayment || 0;
-                  const totalComJuros = valorOriginal - entrada + (d.payment || 0);
-
+                  const totalComJuros = valorOriginal + (d.payment || 0);
+                  
                   const startDateStr = d.date ? new Date(d.date) : new Date();
                   const installmentsCount = parseInt(String((d as any).installments || 1), 10);
+                  
                   const endDateObj = new Date(startDateStr);
                   endDateObj.setMonth(endDateObj.getMonth() + installmentsCount);
+                  
                   const formatMY = (dObj: Date) => {
                     const m = dObj.toLocaleDateString("pt-BR", { month: "long" });
                     return `${m.charAt(0).toUpperCase() + m.slice(1)}/${dObj.getFullYear()}`;
@@ -1005,7 +1053,14 @@ export default function Simulators() {
 
                   const startMY = formatMY(startDateStr);
                   const endMY = formatMY(endDateObj);
-                  const valorParcela = installmentsCount > 0 ? totalComJuros / installmentsCount : 0;
+
+                  const rawRateDec = d.rate ? d.rate / 100 : 0;
+                  const typeStr = d.interestType || d.interest || "Composto";
+                  const isCompound = typeStr === "Composto";
+                  const periodStr = d.ratePeriod || d.year || "Mensal";
+                  const effectiveRate = calculateEffectiveMonthlyRate(rawRateDec, periodStr, isCompound);
+                  const financed = valorOriginal - entrada;
+                  const valorParcela = calculateInstallment(financed, effectiveRate, installmentsCount, isCompound);
 
                   return (
                     <motion.div
@@ -1015,87 +1070,121 @@ export default function Simulators() {
                       exit={{ opacity: 0, scale: 0.95 }}
                       key={d.id}
                       onClick={() => handleEdit(d)}
-                      className={`group bg-white dark:bg-slate-900 border ${
+                      className={`group border p-5 rounded-2xl cursor-pointer transition-all duration-300 relative overflow-hidden ${
                         editingId === d.id
-                          ? "border-[#E80070] shadow-md shadow-[#E80070]/10"
-                          : "border-slate-100 dark:border-slate-800 hover:border-[#426DA9]/30 hover:-translate-y-1 hover:shadow-lg"
-                      } rounded-2xl p-5 transition-all duration-300 cursor-pointer relative overflow-hidden`}
+                          ? "bg-white dark:bg-slate-900 border-[#E80070] shadow-md shadow-[#E80070]/20 ring-2 ring-[#E80070]/10 scale-[1.02] z-10"
+                          : getCardStatusStyle(d.status || "Ativa")
+                      }`}
                     >
-                      <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[#1D4F91] to-[#426DA9] opacity-50" />
-                      <div className="flex justify-between items-start mb-4 pl-2">
+                      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${getGradientStyle(d.status || "Ativa")} to-transparent rounded-bl-full pointer-events-none transition-transform duration-500 group-hover:scale-125`} />
+                      
+                      <div className="flex justify-between items-start mb-4 relative z-10">
                         <div>
-                          <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 truncate pr-2 group-hover:text-[#1D4F91] dark:group-hover:text-[#8CB4F5] transition-colors">
+                          <h3 className="font-black text-lg text-slate-800 dark:text-white line-clamp-1 group-hover:text-[#426DA9] dark:group-hover:text-[#8CB4F5] transition-colors">
                             {d.creditor}
                           </h3>
-                          <div className="flex items-center gap-3 mt-3 flex-wrap">
+                          <div className="flex items-center gap-2 mt-1">
                             <span
-                              className={`text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md ${getStatusStyle(
-                                d.status,
+                              className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md ${getStatusStyle(
+                                d.status || "Ativa"
                               )}`}
                             >
-                              {d.status}
+                              {d.status || "Ativa"}
                             </span>
-                            {(d as any).installments && (
-                              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                                {(d as any).installments} parcelas
-                              </span>
-                            )}
-                            {(d.rate || 0) > 0 && (
-                              <span className="text-sm font-medium text-[#C1188B] dark:text-[#E88CEE]">
-                                Taxa: {d.rate}% {(d as any).ratePeriod === "Anual" ? "a.a." : "a.m."}
-                              </span>
-                            )}
-
-                            <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-full mt-1">
-                              Início: {startMY} • Término: {endMY}
+                            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
+                              {d.interestType === "Simples"
+                                ? "J. Simples"
+                                : "J. Composto"}
                             </span>
-
-                            {valorParcela > 0 && (
-                              <span className="text-sm font-bold text-[#426DA9] dark:text-[#8CB4F5] mt-1">
-                                Parcela: {valorParcela.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                              </span>
-                            )}
-                         </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-end border-t border-slate-100 dark:border-slate-800 mt-2 pt-4 pl-2">
-                        <div>
-                          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
-                            Valor Total c/ Juros
-                          </p>
-                          <p className="font-black text-xl text-[#1D4F91] dark:text-white flex items-baseline gap-2">
-                            {entrada > 0 && (
-                              <span className="text-sm text-slate-400">
-                                Entrada: <strong className="text-emerald-500 dark:text-emerald-400">
-                                  {entrada.toLocaleString("pt-BR", {
-                                    style: "currency",
-                                    currency: "BRL",
-                                  })}
-                                </strong>
-                              </span>
-                            )}
-                            {totalComJuros.toLocaleString("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            })}
-                          </p>
+                      <div className="space-y-4 relative z-10">
+                        <div className="flex items-center justify-between p-3 bg-white/60 dark:bg-slate-950/40 rounded-xl border border-white/40 dark:border-white/5">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">
+                              Valor Original
+                            </p>
+                            <p className="font-bold text-[#426DA9] dark:text-[#8CB4F5]">
+                              {valorOriginal.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">
+                              Taxa
+                            </p>
+                            <p className="font-bold text-slate-700 dark:text-slate-200">
+                              {d.rate}% <span className="text-xs font-normal text-slate-500">{d.ratePeriod === "Anual" ? "a.a" : "a.m"}</span>
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <motion.button
-                            whileHover={{
-                              scale: 1.1,
-                              backgroundColor: "#E80070",
-                              color: "white",
-                            }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => d.id && handleDelete(e, d.id)}
-                            className="p-2.5 bg-[#E80070]/10 text-[#E80070] dark:bg-[#E80070]/20 dark:text-[#FF66A3] rounded-xl transition-colors flex-shrink-0"
-                            title="Excluir parcelamento"
-                          >
-                            <Trash2 size={18} />
-                          </motion.button>
+                        <div className="flex items-center justify-between px-1">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">
+                              Parcelas
+                            </p>
+                            <p className="text-[#1D4F91] dark:text-white font-black">
+                              {installmentsCount}x de{" "}
+                              {valorParcela.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">
+                              Período
+                            </p>
+                            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                              {startMY} - {endMY}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-end pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
+                          <div className="text-left">
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">
+                              Total c/ Juros
+                            </p>
+                            <p className="font-bold text-[#E80070] dark:text-[#FF66A3]">
+                              {entrada > 0 && (
+                                <span className="text-[10px] text-slate-500 block -mt-1 mb-1">
+                                  Entrada:{" "}
+                                  <strong className="text-emerald-500 dark:text-emerald-400">
+                                    {entrada.toLocaleString("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    })}
+                                  </strong>
+                                </span>
+                              )}
+                              {totalComJuros.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              })}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{
+                                scale: 1.1,
+                                backgroundColor: "#E80070",
+                                color: "white",
+                              }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => d.id && handleDelete(e, d.id)}
+                              className="p-2.5 bg-[#E80070]/10 text-[#E80070] dark:bg-[#E80070]/20 dark:text-[#FF66A3] rounded-xl transition-colors flex-shrink-0"
+                              title="Excluir parcelamento"
+                            >
+                              <Trash2 size={18} />
+                            </motion.button>
+                          </div>
                         </div>
                       </div>
                     </motion.div>

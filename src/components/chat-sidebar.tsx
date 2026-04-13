@@ -293,7 +293,7 @@ Lembre-se: NÃO MENCIONE QUE VOCÊ TEM ACESSO AOS DADOS DO BANCO DIRETAMENTE, SI
       {/* Container Unificado (Faz o morph de Sidebar para Widget) */}
       <div
         className={`fixed z-50 flex flex-col bg-background border-border shadow-2xl overflow-hidden
-          ${isDragging ? 'transition-none' : 'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]'}
+          ${isDragging ? 'transition-none' : 'transition-all duration-500 [transition-timing-function:cubic-bezier(0.25,1,0.5,1)]'}
         `}
         style={{
           // Dimensões fluidas

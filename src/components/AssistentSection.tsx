@@ -349,12 +349,12 @@ const AssistentSection = ({
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-stretch w-full">
             
             {/* 1ª Div — Limpa Nome & Desenrola */}
-            <div className={`w-full transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex justify-center ${isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'}`}>
+            <div className={`w-full transition-all duration-700 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] flex justify-center ${isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'}`}>
               <StoryCard slides={col1Slides} revealDelay={0} />
             </div>
 
             {/* 2ª Div — Container Inteligente do Chatbot (Gera o Morphing) */}
-            <div className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex justify-center items-center ${isChatbotFloating ? 'w-0 md:w-0' : 'w-full md:w-[50%]'}`}>
+            <div className={`transition-all duration-700 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] flex justify-center items-center ${isChatbotFloating ? 'w-0 md:w-0' : 'w-full md:w-[50%]'}`}>
               
               <div
                 onMouseDown={isChatbotFloating ? handleMouseDown : undefined}
@@ -449,7 +449,7 @@ const AssistentSection = ({
             </div>
 
             {/* 3ª Div — Amortização & Feirão */}
-            <div className={`w-full transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex justify-center ${isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'}`}>
+            <div className={`w-full transition-all duration-700 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] flex justify-center ${isChatbotFloating ? 'md:w-[50%]' : 'md:w-[25%]'}`}>
               <StoryCard slides={col3Slides} revealDelay={200} />
             </div>
 

@@ -28,6 +28,7 @@ import Education from "./pages/Education";
 import DirectMe from "./pages/DirectMe";
 import RecoveryPass from "./pages/RecoveryPass";
 import { ContentProtection } from "./components/ContentProtection";
+import RecoveryPass from "./pages/RecoveryPass";
 
 const queryClient = new QueryClient();
 
@@ -123,6 +124,8 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/reset-password" element={<RecoveryPass />} />
 
         {/* CATCH-ALL */}
         <Route path="*" element={<NotFound />} />
